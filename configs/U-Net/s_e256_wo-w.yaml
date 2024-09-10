@@ -1,0 +1,98 @@
+work_dir: experiment/s_e256_wo-w
+
+data:
+  train:
+    dataset:
+      type: SpectralDataset
+      data_root: data/demo/
+      gt_path: data/demo.txt
+    dataloader:
+      batch_size: 4
+      shuffle: true
+  val:
+    dataset:
+      type: SpectralDataset
+      data_root: data/demo/
+      gt_path: data/demo.txt
+    dataloader:
+      batch_size: 4
+      shuffle: true
+
+model:
+  type: SpatialUNet
+  #  embedding:
+  #    type: PatchEmbedding
+  #    img_size: 4
+  #    patch_size: 1
+  #    in_chans: 330
+  #    embed_dim: 512
+  #    norm_layer: nn.LayerNorm
+  embedding:
+    type: TokenEmbedding
+    in_channel: 330
+    embed_dim: 256
+    norm_layer: nn.LayerNorm
+  basemodule:
+    type: ChannelTransformerLayers
+    dims: 256, 512, 512, 256
+    input_resolutions: 4, 2, 2, 4
+    depths: 4, 2, 2, 4
+    num_heads: 8, 16, 16, 8
+    mlp_ratio: 4.0
+    qkv_bias: true
+    qk_scale: null
+    drop: 0.2 # drop_rate
+    attn_drop: 0.0
+    drop_path_rate: 0.2
+    norm_layer: nn.LayerNorm
+  downsample:
+    type: PixelUnShuffle
+    factor: 2
+    in_channel: 256
+    out_channel: 512
+#  bottleneck:
+#    type: ConvBottle
+#    in_channel: 1024
+#    out_channel: 1024
+  bottleneck:
+    type: LinearBottle
+    in_channel: 512
+    out_channel: 512
+  upsample:
+    type: PixelShuffle
+    factor: 2
+    in_channel: 512
+    out_channel: 256
+#  fusion:
+#    type: CatConvs
+#    in_channels: 2048, 1024
+  fusion:
+    type: CatLinears
+    in_channels: 1024, 512
+    out_channels: 512, 256
+  head:
+    type: FCHead
+    embed_dim: 256
+    pred_num: 2
+
+loss:
+  type: MSE
+
+optimizer:
+  type: AdamW
+  lr: 0.001
+  weight_decay: 0.01
+#  type: Adam
+#  lr: 0.001
+
+train:
+  epoch: 100
+
+val:
+  val_freq: 5
+  metric: MAE
+
+checkpoint:
+  save_freq: 5
+  resume_from: null
+  auto_resume: false

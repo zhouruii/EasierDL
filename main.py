@@ -1,0 +1,101 @@
+import argparse
+from datetime import datetime
+from os.path import join
+
+from tensorboardX import SummaryWriter
+
+from uchiha.apis import train_by_epoch, validate
+from uchiha.datasets.builder import build_dataset, build_dataloader
+from uchiha.models.builder import build_model
+from uchiha.cores.builder import build_criterion, build_optimizer, build_scheduler
+
+from uchiha.utils import count_parameters, load_config, get_root_logger, print_log, save_checkpoint, \
+    load_checkpoint, auto_resume_helper
+
+
+def parse_args():
+    args_parser = argparse.ArgumentParser()
+    args_parser.add_argument('--config', '-c', type=str, default='configs/ViT/base.yaml')
+    args_parser.add_argument('--no_validate', '-n', action='store_true')
+
+    return args_parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    cfg = load_config(args.config)
+
+    # log: tensorboard & logger
+    work_dir = cfg.work_dir
+    log_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+
+    writer = SummaryWriter(log_dir=join(f'{work_dir}/tb_logger', log_time))
+
+    logger = get_root_logger(log_file=join(f'{work_dir}/logs', f'{log_time}.log'))
+    logger.info(f'Config:\n{cfg}')
+
+    # dataset & dataloader
+    trainset = build_dataset(cfg.data.train.dataset.to_dict())
+    trainloader = build_dataloader(trainset, cfg.data.train.dataloader.to_dict())
+
+    valset = build_dataset(cfg.data.val.dataset.to_dict())
+    valloader = build_dataloader(valset, cfg.data.val.dataloader.to_dict())
+
+    # model
+    model = build_model(cfg.model.to_dict()).cuda()
+    total_params = count_parameters(model)
+    logger.info(f'total_params: {total_params}')
+
+    # loss function
+    criterion = build_criterion(cfg.loss.to_dict())
+
+    # optimizer & scheduler
+    optimizer = build_optimizer(model.parameters(), cfg.optimizer.to_dict())
+    scheduler = build_scheduler(optimizer, cfg.scheduler.to_dict())
+
+    # resume
+    logger.info('start loading checkpoint...')
+    auto_resume = cfg.checkpoint.auto_resume
+    resume_from = cfg.checkpoint.resume_from
+    if auto_resume:
+        resume = auto_resume_helper(work_dir)
+    else:
+        if resume_from:
+            resume = join(work_dir, f'epoch_{resume_from}.pth')
+        else:
+            resume = None
+    if resume:
+        meta = load_checkpoint(resume, model, optimizer)
+        start_epoch = meta.get('epoch', 0)
+        logger.info(f'checkpoint:{resume} was loaded successfully, start_epoch: {start_epoch + 1}')
+    else:
+        start_epoch = 0
+        logger.info(f'no checkpoint was loaded! start_epoch: {start_epoch + 1}')
+
+    # train & val
+    print_freq = cfg.val.val_freq
+    save_freq = cfg.checkpoint.save_freq
+    total_epoch = cfg.train.epoch
+    logger.info('start training...')
+
+    for epoch in range(start_epoch, total_epoch):
+        # train
+        writer, model, optimizer, scheduler = (
+            train_by_epoch(epoch, trainloader, model, optimizer, scheduler, criterion, writer))
+
+        # val
+        if (epoch + 1) % print_freq == 0:
+            print_log(f'epoch:{epoch + 1}/{total_epoch}, validate...', logger)
+            _ = validate(epoch, valloader, model, writer)
+
+        # save checkpoint
+        if (epoch + 1) % save_freq == 0:
+            logger.info(f'saving checkpoint in epoch: {epoch + 1}')
+            meta = dict(epoch=epoch + 1)
+            save_checkpoint(model, optimizer, join(work_dir, f'epoch_{epoch + 1}.pth'), meta)
+
+    writer.close()
+
+
+if __name__ == '__main__':
+    main()
