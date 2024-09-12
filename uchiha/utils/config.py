@@ -1,4 +1,9 @@
+import os.path
+import shutil
+
 import yaml
+
+from uchiha.utils.misc import get_extension
 
 
 class Config:
@@ -33,8 +38,19 @@ class Config:
 
 
 def load_config(file_path):
-    with open(file_path, 'r') as file:
-        config_dict = yaml.safe_load(file)
+    ext = get_extension(file_path)
+
+    if ext == 'yaml' or ext == 'yml':
+        with open(file_path, 'r') as file:
+            config_dict = yaml.safe_load(file)
+    else:
+        raise NotImplementedError('not supported yet')
+
+    work_dir = config_dict['work_dir']
+    if not os.path.exists(work_dir):
+        os.mkdir(work_dir)
+    shutil.copy(file_path, work_dir)
+
     return Config(**config_dict)
 
 

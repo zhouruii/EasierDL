@@ -4,7 +4,7 @@ from os.path import join
 
 from tensorboardX import SummaryWriter
 
-from uchiha.apis import train_by_epoch, validate
+from uchiha.apis import train_by_epoch, validate, set_random_seed
 from uchiha.datasets.builder import build_dataset, build_dataloader
 from uchiha.models.builder import build_model
 from uchiha.cores.builder import build_criterion, build_optimizer, build_scheduler
@@ -15,7 +15,8 @@ from uchiha.utils import count_parameters, load_config, get_root_logger, print_l
 
 def parse_args():
     args_parser = argparse.ArgumentParser()
-    args_parser.add_argument('--config', '-c', type=str, default='configs/ViT/base.yaml')
+    args_parser.add_argument('--seed', type=int, default=49)
+    args_parser.add_argument('--config', '-c', type=str, default='configs/U-Net/exp.yaml')
     args_parser.add_argument('--no_validate', '-n', action='store_true')
 
     return args_parser.parse_args()
@@ -27,12 +28,16 @@ def main():
 
     # log: tensorboard & logger
     work_dir = cfg.work_dir
-    log_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    log_time = datetime.now().strftime("%Y-%m-%d-%H-%M")
 
-    writer = SummaryWriter(log_dir=join(f'{work_dir}/tb_logger', log_time))
+    writer = SummaryWriter(log_dir=join(f'{work_dir}/tb_loggers', log_time))
 
     logger = get_root_logger(log_file=join(f'{work_dir}/logs', f'{log_time}.log'))
     logger.info(f'Config:\n{cfg}')
+
+    # 随机数种子
+    set_random_seed(args.seed)
+    logger.info(f'set random seed= {args.seed}')
 
     # dataset & dataloader
     trainset = build_dataset(cfg.data.train.dataset.to_dict())
@@ -58,10 +63,10 @@ def main():
     auto_resume = cfg.checkpoint.auto_resume
     resume_from = cfg.checkpoint.resume_from
     if auto_resume:
-        resume = auto_resume_helper(work_dir)
+        resume = auto_resume_helper(f'{work_dir}/checkpoints')
     else:
         if resume_from:
-            resume = join(work_dir, f'epoch_{resume_from}.pth')
+            resume = join(f'{work_dir}/checkpoints', f'{resume_from}.pth')
         else:
             resume = None
     if resume:
@@ -92,7 +97,7 @@ def main():
         if (epoch + 1) % save_freq == 0:
             logger.info(f'saving checkpoint in epoch: {epoch + 1}')
             meta = dict(epoch=epoch + 1)
-            save_checkpoint(model, optimizer, join(work_dir, f'epoch_{epoch + 1}.pth'), meta)
+            save_checkpoint(model, optimizer, join(f'{work_dir}/checkpoints', f'{epoch + 1}.pth'), meta)
 
     writer.close()
 

@@ -5,6 +5,8 @@ from ..utils import Registry
 
 DATASET = Registry('dataset')
 
+PIPELINES = Registry('pipelines')
+
 SPECTRAL_DATASET = DATASET
 
 

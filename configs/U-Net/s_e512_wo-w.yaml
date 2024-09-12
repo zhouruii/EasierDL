@@ -4,16 +4,32 @@ data:
   train:
     dataset:
       type: SpectralDataset2d
-      data_root: data/demo/
-      gt_path: data/demo.txt
+      data_root: data/spectral/train/reflectivity
+      gt_path: data/spectral/train/label.txt
+      elements: Zn, SOM
+      pipelines:
+        - type: Pad
+          size_divisor: 2
+          pad_val: 0
+        - type: Normalize
+          scope: spatial
+        - type: EasyToTensor
+          mode: CHW
     dataloader:
       batch_size: 4
       shuffle: true
   val:
     dataset:
       type: SpectralDataset2d
-      data_root: data/demo/
-      gt_path: data/demo.txt
+      data_root: data/spectral/val/reflectivity
+      gt_path: data/spectral/val/label.txt
+      elements: Zn, SOM
+      pipelines:
+        - type: Pad
+          size_divisor: 2
+          pad_val: 0
+        - type: EasyToTensor
+          mode: CHW
     dataloader:
       batch_size: 4
       shuffle: true
@@ -24,7 +40,7 @@ model:
     type: PatchEmbedding
     img_size: 4
     patch_size: 1
-    in_chans: 330
+    in_channel: 330
     embed_dim: 512
     norm_layer: nn.LayerNorm
   basemodule:
@@ -63,7 +79,7 @@ model:
     pred_num: 2
 
 loss:
-  type: MSE
+  type: MSELoss
 
 optimizer:
   type: AdamW
@@ -74,8 +90,8 @@ optimizer:
 
 scheduler:
   type: StepLR
-  step_size: 10
-  gamma: 0.1
+  step_size: 20
+  gamma: 0.5
 
 train:
   epoch: 100

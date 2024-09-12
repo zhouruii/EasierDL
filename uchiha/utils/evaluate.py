@@ -1,3 +1,4 @@
+import collections.abc
 import random
 
 import torch
@@ -15,7 +16,10 @@ def tensor2np(x):
 
 
 def evaluate(preds, targets, elements):
-    result = {element: 0 for element in elements}
+    if isinstance(elements, collections.abc.Sequence):
+        result = {element: 0 for element in elements}
+    else:
+        result = {elements: 0}
 
     for i in range(len(preds)):
         pred = tensor2np(preds[i])
@@ -33,7 +37,6 @@ def evaluate(preds, targets, elements):
 
 
 def print_metrics(result):
-
     header = ['Element', 'MAE']
     table_data = [header]
     for key, value in result.items():

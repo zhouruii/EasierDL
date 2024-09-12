@@ -13,6 +13,10 @@ def save_checkpoint(model: torch.nn.Module,
     if meta is None:
         meta = {}
 
+    file_dir = os.path.dirname(filepath)
+    if not os.path.exists(file_dir):
+        os.mkdir(file_dir)
+
     checkpoint = {
         'meta': meta,
         'state_dict': model.state_dict(),

@@ -1,3 +1,8 @@
+import random
+
+import numpy as np
+import torch
+
 from ..utils import print_log, get_root_logger
 
 
@@ -5,7 +10,7 @@ def train_by_epoch(epoch, dataloader, model, optimizer, scheduler, criterion, wr
     model.train()
     for idx, data in enumerate(dataloader):
         # data
-        spectral_data = data['spectral_data'].cuda()
+        spectral_data = data['sample'].cuda()
         target = data['target'].cuda().float()
 
         # forward & loss
@@ -28,3 +33,22 @@ def train_by_epoch(epoch, dataloader, model, optimizer, scheduler, criterion, wr
     scheduler.step()
 
     return writer, model, optimizer, scheduler
+
+
+def set_random_seed(seed, deterministic=False):
+    """Set random seed.
+
+    Args:
+        seed (int): Seed to be used.
+        deterministic (bool): Whether to set the deterministic option for
+            CUDNN backend, i.e., set `torch.backends.cudnn.deterministic`
+            to True and `torch.backends.cudnn.benchmark` to False.
+            Default: False.
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    if deterministic:
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False

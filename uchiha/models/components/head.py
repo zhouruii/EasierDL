@@ -5,11 +5,12 @@ from ..builder import HEAD
 
 @HEAD.register_module()
 class FCHead(nn.Module):
-    def __init__(self, embed_dim, pred_num):
+    def __init__(self, embed_dim, pred_num, post_process=None):
         super().__init__()
         self.pooling = nn.AdaptiveAvgPool1d(1)
         self.head = nn.Linear(embed_dim, pred_num)
-        self.activate = nn.Sigmoid()
+
+        self.activate = post_process if post_process else nn.Identity()
 
     def forward(self, x):
         # B,L,C = x.shape

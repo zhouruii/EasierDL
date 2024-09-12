@@ -1,4 +1,4 @@
-work_dir: experiment/s_e256_wo-w
+work_dir: experiment/e512_pe_nc_patch2_1111_wob_L1
 
 data:
   train:
@@ -9,7 +9,8 @@ data:
       elements: Zn, SOM
       pipelines:
         - type: Pad
-          size_divisor: 1
+          size_divisor: 2
+          mode: edge
           pad_val: 0
         - type: Normalize
           scope: channel
@@ -26,7 +27,8 @@ data:
       elements: Zn, SOM
       pipelines:
         - type: Pad
-          size_divisor: 1
+          size_divisor: 2
+          mode: edge
           pad_val: 0
         - type: Normalize
           scope: channel
@@ -38,23 +40,18 @@ data:
 
 model:
   type: SpatialUNet
-  #  embedding:
-  #    type: PatchEmbedding
-  #    img_size: 4
-  #    patch_size: 1
-  #    in_chans: 330
-  #    embed_dim: 512
-  #    norm_layer: nn.LayerNorm
   embedding:
-    type: TokenEmbedding
+    type: PatchEmbedding
+    img_size: 4
+    patch_size: 2
     in_channel: 330
-    embed_dim: 256
+    embed_dim: 512
     norm_layer: nn.LayerNorm
   basemodule:
     type: ChannelTransformerLayers
-    dims: 256, 512, 512, 256
+    dims: 512, 1024, 1024, 512
     input_resolutions: 4, 2, 2, 4
-    depths: 4, 2, 2, 4
+    depths: 1, 1, 1, 1
     num_heads: 8, 16, 16, 8
     mlp_ratio: 4.0
     qkv_bias: true
@@ -66,35 +63,28 @@ model:
   downsample:
     type: PixelUnShuffle
     factor: 2
-    in_channel: 256
-    out_channel: 512
+    in_channel: 512
+    out_channel: 1024
 #  bottleneck:
 #    type: ConvBottle
 #    in_channel: 1024
 #    out_channel: 1024
-  bottleneck:
-    type: LinearBottle
-    in_channel: 512
-    out_channel: 512
   upsample:
     type: PixelShuffle
     factor: 2
-    in_channel: 512
-    out_channel: 256
-#  fusion:
-#    type: CatConvs
-#    in_channels: 2048, 1024
+    in_channel: 1024
+    out_channel: 512
   fusion:
-    type: CatLinears
-    in_channels: 1024, 512
-    out_channels: 512, 256
+    type: CatConvs
+    in_channels: 2048, 1024
+    out_channels: 1024, 512
   head:
     type: FCHead
-    embed_dim: 256
+    embed_dim: 512
     pred_num: 2
 
 loss:
-  type: MSELoss
+  type: L1Loss
 
 optimizer:
   type: AdamW

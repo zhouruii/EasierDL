@@ -1,3 +1,4 @@
+import os.path
 from typing import Union
 
 
@@ -9,11 +10,14 @@ def strings_to_list(x: Union[str, dict]):
             else:
                 continue
             if len(splits) > 1:
-                new_value = [int(num) for num in splits]
+                new_value = [int(num) if num.strip().isdigit() else num.strip() for num in splits]
                 x[key] = new_value
     else:
         splits = x.split(',')
-        if len(splits) > 1:
-            return [int(num) for num in splits]
+        return [int(num) if num.strip().isdigit() else num.strip() for num in splits]
     return x
 
+
+def get_extension(path):
+    basename = os.path.basename(path)
+    return basename.split('.')[-1]

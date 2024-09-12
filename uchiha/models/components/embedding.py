@@ -7,8 +7,11 @@ from ..builder import EMBEDDING
 @EMBEDDING.register_module()
 class PatchEmbedding(nn.Module):
 
-    def __init__(self, img_size=3, patch_size=1, in_chans=330, embed_dim=512, norm_layer=None):
+    def __init__(self, img_size=4, patch_size=1, in_channel=330, embed_dim=512, norm_layer=None):
         super().__init__()
+        assert img_size % patch_size == 0, \
+            f'img_size:{img_size} cannot be divided by patch_size:{patch_size}'
+
         img_size = to_2tuple(img_size)
         patch_size = to_2tuple(patch_size)
         patches_resolution = [img_size[0] // patch_size[0], img_size[1] // patch_size[1]]
@@ -17,10 +20,10 @@ class PatchEmbedding(nn.Module):
         self.patches_resolution = patches_resolution
         self.num_patches = patches_resolution[0] * patches_resolution[1]
 
-        self.in_chans = in_chans
+        self.in_channel = in_channel
         self.embed_dim = embed_dim
 
-        self.proj = nn.Sequential(nn.Conv2d(in_chans, embed_dim, 1, 1, 0, bias=False),
+        self.proj = nn.Sequential(nn.Conv2d(in_channel, embed_dim, 1, 1, 0, bias=False),
                                   nn.GELU(),
                                   nn.Conv2d(embed_dim, embed_dim, 1, 1, 0, bias=False),
                                   nn.GELU()

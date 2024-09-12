@@ -12,12 +12,12 @@ def validate(epoch, dataloader, model, writer):
     with torch.no_grad():
         for idx, data in enumerate(dataloader):
             # data
-            spectral_data = data['spectral_data'].cuda()
+            spectral_data = data['sample'].cuda()
             targets.append(data['target'])
 
             # forward
             with torch.no_grad():
-                pred = model(spectral_data).squeeze()
+                pred = model(spectral_data)
                 preds.append(pred)
 
     # evaluate

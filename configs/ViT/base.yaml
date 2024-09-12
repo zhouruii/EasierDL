@@ -3,17 +3,17 @@ work_dir: experiment/base
 data:
   train:
     dataset:
-      type: SpectralDataset1d
-      data_root: data/demo1d/
-      gt_path: data/demo.txt
+      type: SpectralDataset2d
+      data_root: data/spectral/train/reflectivity
+      gt_path: data/spectral/train/label.txt
     dataloader:
       batch_size: 4
       shuffle: true
   val:
     dataset:
-      type: SpectralDataset1d
-      data_root: data/demo1d/
-      gt_path: data/demo.txt
+      type: SpectralDataset2d
+      data_root: data/spectral/val/reflectivity
+      gt_path: data/spectral/val/label.txt
     dataloader:
       batch_size: 4
       shuffle: true
@@ -21,8 +21,8 @@ data:
 model:
   type: ViT1d
   embedding:
-    type: TokenEmbedding
-    in_channel: 147
+    type: PatchEmbedding
+    in_channel: 330
     embed_dim: 512
     norm_layer: nn.LayerNorm
   basemodule:
@@ -39,7 +39,7 @@ model:
     pred_num: 2
 
 loss:
-  type: MSE
+  type: MSELoss
 
 optimizer:
   type: AdamW
@@ -50,8 +50,8 @@ optimizer:
 
 scheduler:
   type: StepLR
-  step_size: 10
-  gamma: 0.1
+  step_size: 20
+  gamma: 0.5
 
 train:
   epoch: 100
