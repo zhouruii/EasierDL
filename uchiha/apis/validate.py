@@ -1,30 +1,27 @@
 import torch
 
-from uchiha.utils import evaluate
 
-
-def validate(epoch, dataloader, model, writer):
+def validate(epoch, dataloader, model, writer, metric):
     dataset = dataloader.dataset
-    elements = dataset.ELEMENTS
     targets = []
     preds = []
     model.eval()
     with torch.no_grad():
         for idx, data in enumerate(dataloader):
             # data
-            spectral_data = data['sample'].cuda()
+            sample = data['sample'].cuda()
             targets.append(data['target'])
 
             # forward
             with torch.no_grad():
-                pred = model(spectral_data)
+                pred = model(sample)
                 preds.append(pred)
 
     # evaluate
-    result = evaluate(preds, targets, elements)
+    results = dataset.evaluate(preds, targets, metric)
 
     # log
-    for i in range(len(elements)):
-        writer.add_scalar(f'{elements[i]}_metric', result[elements[i]], epoch)
+    for ele in results:
+        writer.add_scalar(f'{ele}_{metric}', results[ele], epoch)
 
-    return result
+    return results

@@ -1,2 +1,2 @@
-from .channel_transformer import ChannelTransformerLayer, ChannelTransformerLayers
+from .channel_transformer import *
 from .basic_transformer import BasicTransformer

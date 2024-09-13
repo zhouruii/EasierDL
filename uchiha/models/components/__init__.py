@@ -5,3 +5,4 @@ from .fusion import *
 from .head import *
 from .preprocessor import *
 from .upsample import *
+from .postprocessor import *

@@ -1,15 +1,14 @@
 from torch.utils.data import Dataset
-import torch.nn.functional as F
 
 from .builder import SPECTRAL_DATASET
 from .piplines import Compose
 from .utils import read_npy, read_txt
+from ..utils.evaluate import regression_eval
 from ..utils.misc import strings_to_list
 
 
 @SPECTRAL_DATASET.register_module()
 class SpectralDataset2d(Dataset):
-
     ELEMENTS = ['Zn', 'Others']
 
     def __init__(self, data_root, gt_path, elements=None, pipelines=None):
@@ -45,6 +44,15 @@ class SpectralDataset2d(Dataset):
             raise ValueError(f'Unsupported type {type(elements)} of elements.')
 
         return element_names
+
+    def evaluate(self, preds, targets=None, metric='MAE'):
+        elements = self.ELEMENTS
+        if targets is None:
+            targets = self.gt
+
+        results = regression_eval(preds, targets, elements, metric)
+
+        return results
 
 
 @SPECTRAL_DATASET.register_module()

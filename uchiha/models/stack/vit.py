@@ -1,6 +1,6 @@
 from torch import nn
 
-from ..builder import build_basemodule, build_embedding, build_preprocessor, build_head, MODEL
+from uchiha.models.builder import build_basemodule, build_embedding, build_preprocessor, build_head, MODEL
 
 
 @MODEL.register_module()

@@ -1,0 +1,101 @@
+work_dir: experiment/Zn_e256_p0_ns_patch1_L1
+data:
+  train:
+    dataset:
+      type: SpectralDataset2d
+      data_root: data/spectral/train/reflectivity
+      gt_path: data/spectral/train/labelZn.txt
+      elements: Zn
+      pipelines:
+        - type: Pad
+          size_divisor: 2
+#          mode: edge
+          pad_val: 0
+        - type: Normalize
+          scope: spatial
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 4
+      shuffle: true
+  val:
+    dataset:
+      type: SpectralDataset2d
+      data_root: data/spectral/val/reflectivity
+      gt_path: data/spectral/val/labelZn.txt
+      elements: Zn
+      pipelines:
+        - type: Pad
+          size_divisor: 2
+#          mode: edge
+          pad_val: 0
+        - type: Normalize
+          scope: spatial
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 4
+      shuffle: true
+
+model:
+  type: ChannelTransformer
+  embedding:
+    type: PatchEmbedding
+    img_size: 4
+    patch_size: 2
+    in_channel: 330
+    embed_dim: 512
+    norm_layer: nn.LayerNorm
+  basemodule:
+    type: UnetChannelTransformerLayers
+    dims: 512, 1024
+    input_resolutions: 2, 1
+    depths: 1, 1
+    num_heads: 8, 16, 16, 8
+    mlp_ratio: 4.0
+    qkv_bias: true
+    qk_scale: null
+    drop: 0.2 # drop_rate
+    attn_drop: 0.0
+    drop_path_rate: 0.2
+    norm_layer: nn.LayerNorm
+  downsample:
+    type: PixelUnShuffle
+    factor: 2
+    in_channel: 512
+    out_channel: 1024
+  head:
+    type: FCHead
+    embed_dim: 1024
+    pred_num: 1
+
+loss:
+#  type: MSELoss
+  type: L1Loss
+
+optimizer:
+  type: AdamW
+  lr: 7.0e-3
+  weight_decay: 0.01
+#  type: Adam
+#  lr: 0.001
+
+scheduler:
+  type: StepLR
+  step_size: 10
+  gamma: 0.5
+#  type: CosineAnnealingLR
+#  T_max: 100
+#  eta_min: 0.000001
+
+train:
+  epoch: 100
+
+val:
+  val_freq: 1
+  metric: MAE
+
+checkpoint:
+  save_freq: 100
+  resume_from: null
+  auto_resume: false

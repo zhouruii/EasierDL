@@ -10,12 +10,18 @@ EMBEDDING = MODEL
 FUSION = MODEL
 HEAD = MODEL
 PREPROCESSOR = MODEL
+POSTPROCESSOR = MODEL
 UPSAMPLE = MODEL
 
 
 def build_preprocessor(cfg):
     if cfg is not None:
         return PREPROCESSOR.build(cfg)
+
+
+def build_postprocessor(cfg):
+    if cfg is not None:
+        return POSTPROCESSOR.build(cfg)
 
 
 def build_embedding(cfg):

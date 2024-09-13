@@ -10,30 +10,40 @@ from .metric import mean_absolute_error
 
 
 def tensor2np(x):
+    if isinstance(x, list):
+        for idx, data in enumerate(x):
+            x[idx] = tensor2np(data)
     if isinstance(x, torch.Tensor):
         x = x.cpu().numpy()
     return x
 
 
-def evaluate(preds, targets, elements):
+def regression_eval(preds, targets, elements, metric='MAE'):
     if isinstance(elements, collections.abc.Sequence):
-        result = {element: 0 for element in elements}
+        results = {element: 0 for element in elements}
     else:
-        result = {elements: 0}
+        results = {elements: 0}
 
-    for i in range(len(preds)):
-        pred = tensor2np(preds[i])
-        target = tensor2np(targets[i])
+    preds = tensor2np(preds)
+    targets = tensor2np(targets)
+    for pred, target in zip(preds, targets):
         for j in range(len(elements)):
-            metric = mean_absolute_error(pred[:, j], target[:, j])
-            result[elements[j]] += metric
+            metric_value = compute_metric(pred[:, j], target[:, j], metric)
+            results[elements[j]] += metric_value
 
     for element in elements:
-        result[element] /= len(preds)
+        results[element] /= len(preds)
 
-    print_metrics(result)
+    print_metrics(results)
 
-    return result
+    return results
+
+
+def compute_metric(pred, target, metric='MAE'):
+    if metric == 'MAE':
+        return mean_absolute_error(pred, target)
+    else:
+        raise NotImplementedError(f'metric:{metric} is not supported yet')
 
 
 def print_metrics(result):

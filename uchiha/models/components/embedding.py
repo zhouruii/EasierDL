@@ -23,11 +23,7 @@ class PatchEmbedding(nn.Module):
         self.in_channel = in_channel
         self.embed_dim = embed_dim
 
-        self.proj = nn.Sequential(nn.Conv2d(in_channel, embed_dim, 1, 1, 0, bias=False),
-                                  nn.GELU(),
-                                  nn.Conv2d(embed_dim, embed_dim, 1, 1, 0, bias=False),
-                                  nn.GELU()
-                                  )
+        self.proj = nn.Sequential(nn.Conv2d(in_channel, embed_dim, kernel_size=patch_size, stride=patch_size, bias=False))
         if norm_layer is not None:
             if norm_layer == 'nn.LayerNorm':
                 self.norm = nn.LayerNorm(embed_dim)

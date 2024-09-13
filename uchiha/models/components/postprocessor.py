@@ -1,0 +1,45 @@
+import torch
+from pytorch_wavelets import DWT1DInverse, DWTInverse
+from torch import nn
+
+from ..builder import POSTPROCESSOR
+
+
+@POSTPROCESSOR.register_module()
+class IDWT2d(nn.Module):
+    def __init__(self,
+                 wave='haar'):
+        super().__init__()
+        self.IDWT = DWTInverse(wave=wave)
+
+    def forward(self, x):
+        # x.shape:B, C, H, W
+        out = self.wavlet_transform(x)
+        LL, H = out
+        LH, HL, HH = H[0][:, :, 0, :, :], H[0][:, :, 1, :, :], H[0][:, :, 2, :, :]
+        return torch.cat((LL, LH, HL, HH), dim=1)
+
+
+@POSTPROCESSOR.register_module()
+class IDWT1d(nn.Module):
+    def __init__(self,
+                 wave='haar',
+                 in_channel=1024,
+                 out_channel=1):
+        super().__init__()
+        self.IDWT = DWT1DInverse(wave=wave)
+        self.pooling = nn.AdaptiveAvgPool1d(1)
+        self.fc = nn.Linear(in_channel, out_channel)
+
+    def forward(self, x):
+        L,H = x
+        H = (H,)
+        out = self.IDWT((L,H))
+        pooling = self.pooling(out.transpose(1, 2)).squeeze(2)
+        return self.fc(pooling)
+
+
+if __name__ == '__main__':
+    dwt = DWT1DInverse(wave='haar')
+    X = torch.randn(10, 5, 100)
+    yl, yh = dwt(X)

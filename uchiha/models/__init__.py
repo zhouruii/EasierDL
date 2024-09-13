@@ -1,4 +1,5 @@
 from .components import *
-from .UNet import *
+from .unet import *
 from .basemodules import *
-from .ViT import *
+from .stack import *
+from .parallel import *

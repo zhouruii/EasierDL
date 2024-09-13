@@ -16,7 +16,7 @@ from uchiha.utils import count_parameters, load_config, get_root_logger, print_l
 def parse_args():
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument('--seed', type=int, default=49)
-    args_parser.add_argument('--config', '-c', type=str, default='configs/U-Net/exp.yaml')
+    args_parser.add_argument('--config', '-c', type=str, default='configs/parallel/channel_transformer/Zn.yaml')
     args_parser.add_argument('--no_validate', '-n', action='store_true')
 
     return args_parser.parse_args()
@@ -79,6 +79,7 @@ def main():
 
     # train & val
     print_freq = cfg.val.val_freq
+    metric = cfg.val.metric
     save_freq = cfg.checkpoint.save_freq
     total_epoch = cfg.train.epoch
     logger.info('start training...')
@@ -91,7 +92,7 @@ def main():
         # val
         if (epoch + 1) % print_freq == 0:
             print_log(f'epoch:{epoch + 1}/{total_epoch}, validate...', logger)
-            _ = validate(epoch, valloader, model, writer)
+            _ = validate(epoch, valloader, model, writer, metric)
 
         # save checkpoint
         if (epoch + 1) % save_freq == 0:

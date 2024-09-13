@@ -129,22 +129,24 @@ class ChannelTransformerBlock(nn.Module):
 
 @BASEMODULE.register_module()
 class ChannelTransformerLayer(nn.Module):
-    def __init__(self, dim, input_resolution, depth, num_heads,
+    def __init__(self, dim, input_resolution, depth, num_head,
                  mlp_ratio=4., qkv_bias=True, qk_scale=None, drop=0., attn_drop=0.,
-                 drop_path=0., norm_layer=nn.LayerNorm, ):
+                 drop_path_rate=0., norm_layer=nn.LayerNorm, ):
         super().__init__()
         self.dim = dim
-        self.input_resolution = input_resolution
+        self.input_resolution = to_2tuple(input_resolution)
         self.depth = depth
+
+        self.dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]
 
         # build blocks
         self.blocks = nn.ModuleList([
-            ChannelTransformerBlock(dim=dim, input_resolution=input_resolution,
-                                    num_heads=num_heads,
+            ChannelTransformerBlock(dim=dim, input_resolution=self.input_resolution,
+                                    num_heads=num_head,
                                     mlp_ratio=mlp_ratio,
                                     qkv_bias=qkv_bias, qk_scale=qk_scale,
                                     drop=drop, attn_drop=attn_drop,
-                                    drop_path=drop_path[i] if isinstance(drop_path, list) else drop_path,
+                                    drop_path=self.dpr[i],
                                     norm_layer=norm_layer)
             for i in range(depth)])
 
@@ -156,7 +158,7 @@ class ChannelTransformerLayer(nn.Module):
 
 
 @BASEMODULE.register_module()
-class ChannelTransformerLayers(nn.Module):
+class UnetChannelTransformerLayers(nn.Module):
     def __init__(self,
                  dims,
                  input_resolutions,
@@ -168,7 +170,7 @@ class ChannelTransformerLayers(nn.Module):
                  drop=0.,
                  attn_drop=0.,
                  drop_path_rate=0.1,
-                 norm_layer=nn.LayerNorm, ):
+                 norm_layer=nn.LayerNorm):
         super().__init__()
         self.dim = dims
         self.input_resolution = input_resolutions
@@ -190,6 +192,53 @@ class ChannelTransformerLayers(nn.Module):
             drop_path = self.dpr[sum(depths[:i]):sum(depths[:i + 1])]
             if i >= self.num_layers:
                 drop_path = self.dec_dpr[sum(depths[self.num_layers:i]):sum(depths[self.num_layers:i + 1])]
+
+            # build layer (blocks)
+            layer = nn.Sequential(*[
+                ChannelTransformerBlock(dim=dim, input_resolution=input_resolution,
+                                        num_heads=num_heads,
+                                        mlp_ratio=mlp_ratio,
+                                        qkv_bias=qkv_bias, qk_scale=qk_scale,
+                                        drop=drop, attn_drop=attn_drop,
+                                        drop_path=drop_path[j],
+                                        norm_layer=norm_layer)
+                for j in range(self.depth[i])])
+
+            self.layers.append(layer)
+
+
+@BASEMODULE.register_module()
+class ChannelTransformerLayers(nn.Module):
+    def __init__(self,
+                 dims,
+                 input_resolutions,
+                 depths,
+                 num_heads,
+                 mlp_ratio=4.,
+                 qkv_bias=True,
+                 qk_scale=None,
+                 drop=0.,
+                 attn_drop=0.,
+                 drop_path_rate=0.1,
+                 norm_layer=nn.LayerNorm):
+        super().__init__()
+        self.dim = dims
+        self.input_resolution = input_resolutions
+        self.depth = depths
+        self.num_heads = num_heads
+        self.num_layers = len(dims)
+
+        # stochastic depth
+        self.dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]
+
+        # build layers
+        self.layers = nn.ModuleList()
+
+        for i in range(self.num_layers):
+            dim = self.dim[i]
+            input_resolution = to_2tuple(self.input_resolution[i])
+            num_heads = self.num_heads[i]
+            drop_path = self.dpr[sum(depths[:i]):sum(depths[:i + 1])]
 
             # build layer (blocks)
             layer = nn.Sequential(*[
