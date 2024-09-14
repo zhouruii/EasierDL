@@ -16,7 +16,7 @@ from uchiha.utils import count_parameters, load_config, get_root_logger, print_l
 def parse_args():
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument('--seed', type=int, default=49)
-    args_parser.add_argument('--config', '-c', type=str, default='configs/parallel/channel_transformer/Zn.yaml')
+    args_parser.add_argument('--config', '-c', type=str, default='configs/parallel/channel_transformer/Zn_ws_channel.yaml')
     args_parser.add_argument('--no_validate', '-n', action='store_true')
 
     return args_parser.parse_args()

@@ -1,4 +1,4 @@
-work_dir: experiment/parallel/Zn
+work_dir: experiment/Zn_e256_p0_ns_patch1_L1
 data:
   train:
     dataset:
@@ -9,10 +9,10 @@ data:
       pipelines:
         - type: Pad
           size_divisor: 2
-#          mode: edge
+          mode: edge
           pad_val: 0
         - type: Normalize
-          scope: spatial
+          scope: channel
         - type: EasyToTensor
           mode: CHW
     dataloader:
@@ -27,10 +27,10 @@ data:
       pipelines:
         - type: Pad
           size_divisor: 2
-#          mode: edge
+          mode: edge
           pad_val: 0
         - type: Normalize
-          scope: spatial
+          scope: channel
         - type: EasyToTensor
           mode: CHW
     dataloader:
@@ -65,6 +65,10 @@ model:
         drop: 0.2 # drop_rate
         attn_drop: 0.0
         drop_path_rate: 0.1
+      head:
+        type: FCHead
+        embed_dim: 256
+        pred_num: 1
     - type: ChannelTransformer
       embedding:
         type: PatchEmbedding
@@ -85,30 +89,38 @@ model:
         drop: 0.2 # drop_rate
         attn_drop: 0.0
         drop_path_rate: 0.1
+      head:
+        type: FCHead
+        embed_dim: 256
+        pred_num: 1
   postprocessor:
-    type: IDWT1d
-    wave: haar
-    in_channel: 512
-    out_channel: 1
+    type: WeightedSum
+    weights:
+      - 0.8
+      - 0.2
 
 loss:
 #  type: MSELoss
+#  type: MultiL1Loss
+#  weights:
+#    - 0.8
+#    - 0.2
   type: L1Loss
 
 optimizer:
   type: AdamW
-  lr: 3.0e-4
+  lr: 1.0e-4
   weight_decay: 0.01
 #  type: Adam
 #  lr: 0.001
 
 scheduler:
-#  type: StepLR
-#  step_size: 10
-#  gamma: 0.7
-  type: CosineAnnealingLR
-  T_max: 100
-  eta_min: 1.0e-6
+  type: StepLR
+  step_size: 10
+  gamma: 0.2
+#  type: CosineAnnealingLR
+#  T_max: 10
+#  eta_min: 1.0e-6
 
 train:
   epoch: 100

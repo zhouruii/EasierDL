@@ -1,4 +1,4 @@
-work_dir: experiment/Zn_e256_p0_ns_patch1_L1
+work_dir: experiment/stack/SOM
 data:
   train:
     dataset:

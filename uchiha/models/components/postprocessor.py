@@ -1,6 +1,7 @@
+from typing import List
 import torch
 from pytorch_wavelets import DWT1DInverse, DWTInverse
-from torch import nn
+from torch import nn, Tensor
 
 from ..builder import POSTPROCESSOR
 
@@ -32,11 +33,25 @@ class IDWT1d(nn.Module):
         self.fc = nn.Linear(in_channel, out_channel)
 
     def forward(self, x):
-        L,H = x
+        L, H = x
         H = (H,)
-        out = self.IDWT((L,H))
+        out = self.IDWT((L, H))
         pooling = self.pooling(out.transpose(1, 2)).squeeze(2)
         return self.fc(pooling)
+
+
+@POSTPROCESSOR.register_module()
+class WeightedSum(nn.Module):
+    def __init__(self, weights):
+        super().__init__()
+        self.weights = weights
+
+    def forward(self, x: List[Tensor]):
+        result = torch.zeros_like(x[0])
+        for idx, parallel in enumerate(x):
+            result += self.weights[idx] * parallel
+
+        return result
 
 
 if __name__ == '__main__':

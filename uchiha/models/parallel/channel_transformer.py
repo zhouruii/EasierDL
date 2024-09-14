@@ -21,8 +21,8 @@ class ParallelChannelTransformer(nn.Module):
         self.postprocessor = build_postprocessor(postprocessor)
 
     def forward(self, x):
-
-        x_parallel = self.preprocessor(x)
+        if self.preprocessor:
+            x_parallel = self.preprocessor(x)
 
         # core
         y_parallel = []
@@ -30,7 +30,10 @@ class ParallelChannelTransformer(nn.Module):
             y = self.workflows[idx](x)
             y_parallel.append(y)
 
-        out = self.postprocessor(y_parallel)
+        if self.postprocessor:
+            out = self.postprocessor(y_parallel)
+        else:
+            out = y_parallel
 
         return out
 

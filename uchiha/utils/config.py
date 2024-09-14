@@ -48,7 +48,7 @@ def load_config(file_path):
 
     work_dir = config_dict['work_dir']
     if not os.path.exists(work_dir):
-        os.mkdir(work_dir)
+        os.makedirs(work_dir, exist_ok=True)
     shutil.copy(file_path, work_dir)
 
     return Config(**config_dict)
