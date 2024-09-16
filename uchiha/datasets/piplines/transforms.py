@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from ..builder import PIPELINES
-from ..utils import impad, impad_to_multiple, img_normalize
+from ...utils import impad, impad_to_multiple, img_normalize
 
 
 @PIPELINES.register_module()

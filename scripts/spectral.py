@@ -37,12 +37,13 @@ def read(sample_dir, save_dir, to_tensor=True):
             torch.save(data, join(save_dir, f'{sample_idx}.pt'))
         else:
             data = np.array(data)
-            length, channel = data.shape
-            data = data.reshape(int(length ** 0.5), int(length ** 0.5), channel)
+            data = data.transpose(0, 1).reshape(10, 33, -1)
+            # length, channel = data.shape
+            # data = data.reshape(int(length ** 0.5), int(length ** 0.5), channel)
             np.save(join(save_dir, f'{sample_idx}.npy'), data)
 
 
 if __name__ == '__main__':
     sample_dir = '/home/disk1/ZR/datasets/spectral'
-    save_dir = '/home/disk1/ZR/PythonProjects/uchiha/data/spectral/train/reflectivity'
+    save_dir = '/home/disk1/ZR/PythonProjects/uchiha/data/spectral_img/train/reflectivity'
     read(sample_dir, save_dir, to_tensor=False)

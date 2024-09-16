@@ -2,7 +2,7 @@ from torch.utils.data import Dataset
 
 from .builder import SPECTRAL_DATASET
 from .piplines import Compose
-from .utils import read_npy, read_txt
+from ..utils import read_npy, read_txt
 from ..utils.evaluate import regression_eval
 from ..utils.misc import strings_to_list
 

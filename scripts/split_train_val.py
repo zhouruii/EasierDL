@@ -7,8 +7,8 @@ import random
 def parse_args():
     """Parse arguments."""
     parser = argparse.ArgumentParser(description='Splitting images')
-    parser.add_argument("--train", type=str, default='data/spectral/train/reflectivity', )
-    parser.add_argument("--val", type=str, default='data/spectral/val/reflectivity', )
+    parser.add_argument("--train", type=str, default='data/spectral_img/train/reflectivity', )
+    parser.add_argument("--val", type=str, default='data/spectral_img/val/reflectivity', )
     parser.add_argument("--nproc", type=int, default=10)
     args = parser.parse_args()
     return args

@@ -1,0 +1,77 @@
+work_dir: experiment/resnet/Zn_scale
+data:
+  train:
+    dataset:
+      type: SpectralDataset2d
+      data_root: data/spectral_img/train/reflectivity
+      gt_path: data/spectral_img/train/labelZn_scale.txt
+      elements: Zn
+      pipelines:
+        - type: Normalize
+          scope: spatial
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 4
+      shuffle: true
+  val:
+    dataset:
+      type: SpectralDataset2d
+      data_root: data/spectral_img/val/reflectivity
+      gt_path: data/spectral_img/val/labelZn_scale.txt
+      elements: Zn
+      pipelines:
+        - type: Normalize
+          scope: spatial
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 4
+      shuffle: false
+
+model:
+  type: ResNet
+  block: BasicResidualBlock
+  layers:
+    - 2
+    - 2
+    - 2
+    - 2
+  in_channel: 9
+  num_classes: 1
+
+
+loss:
+#  type: MSELoss
+#  type: MultiL1Loss
+#  weights:
+#    - 0.8
+#    - 0.2
+  type: L1Loss
+
+optimizer:
+  type: AdamW
+  lr: 1.0e-4
+  weight_decay: 0.01
+#  type: Adam
+#  lr: 0.001
+
+scheduler:
+  type: StepLR
+  step_size: 5
+  gamma: 0.7
+#  type: CosineAnnealingLR
+#  T_max: 100
+#  eta_min: 1.0e-6
+
+train:
+  epoch: 100
+
+val:
+  val_freq: 1
+  metric: R2
+
+checkpoint:
+  save_freq: 100
+  resume_from: null
+  auto_resume: false

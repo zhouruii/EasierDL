@@ -4,6 +4,7 @@ from torch import nn
 import torch.nn.functional as F
 
 from ..builder import BASEMODULE
+from ...utils import build_norm
 
 
 class Mlp(nn.Module):
@@ -97,8 +98,8 @@ class ChannelTransformerBlock(nn.Module):
         self.num_heads = num_heads
         self.mlp_ratio = mlp_ratio
 
-        if norm_layer == 'nn.LayerNorm':
-            norm_layer = nn.LayerNorm
+        if isinstance(norm_layer, str):
+            norm_layer = build_norm(norm_layer)
         self.norm1 = norm_layer(dim)
 
         self.attn_C = ChannelAttention(

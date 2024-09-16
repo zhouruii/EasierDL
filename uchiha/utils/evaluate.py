@@ -1,12 +1,10 @@
-import collections.abc
-import random
-
+import numpy as np
 import torch
 from terminaltables import AsciiTable
 
 from uchiha.utils import get_root_logger
 from uchiha.utils.logger import print_log
-from .metric import mean_absolute_error
+from .metric import mean_absolute_error, r2_score
 
 
 def tensor2np(x):
@@ -19,22 +17,20 @@ def tensor2np(x):
 
 
 def regression_eval(preds, targets, elements, metric='MAE'):
-    if isinstance(elements, collections.abc.Sequence):
-        results = {element: 0 for element in elements}
+
+    results = {element: 0 for element in elements}
+
+
+    preds = np.vstack(tensor2np(preds))
+    targets = np.vstack(tensor2np(targets))
+    metrics = compute_metric(preds, targets, metric)
+    if len(results) == 1:
+        results[elements[0]] = metrics
     else:
-        results = {elements: 0}
+        for idx, element in enumerate(elements):
+            results[element] = metrics[idx]
 
-    preds = tensor2np(preds)
-    targets = tensor2np(targets)
-    for pred, target in zip(preds, targets):
-        for j in range(len(elements)):
-            metric_value = compute_metric(pred[:, j], target[:, j], metric)
-            results[elements[j]] += metric_value
-
-    for element in elements:
-        results[element] /= len(preds)
-
-    print_metrics(results)
+    print_metrics(results, metric)
 
     return results
 
@@ -42,12 +38,14 @@ def regression_eval(preds, targets, elements, metric='MAE'):
 def compute_metric(pred, target, metric='MAE'):
     if metric == 'MAE':
         return mean_absolute_error(pred, target)
+    elif metric == 'R2':
+        return 1 - (np.sum((target - pred) ** 2) / np.sum((target - np.mean(target)) ** 2))
     else:
         raise NotImplementedError(f'metric:{metric} is not supported yet')
 
 
-def print_metrics(result):
-    header = ['Element', 'MAE']
+def print_metrics(result, metric):
+    header = ['Element', f'{metric}']
     table_data = [header]
     for key, value in result.items():
         row_data = [key, f'{value:.6f}']
@@ -61,9 +59,3 @@ def print_metrics(result):
     print_log('\n' + table.table, logger=logger)
 
 
-if __name__ == '__main__':
-    txt = 'dataset/demo.txt'
-    with open(txt, 'w', encoding='utf-8') as f:
-        for _ in range(70):
-            f.write(f'{random.uniform(0, 100):.3f} {random.uniform(0, 100):.3f}')
-            f.write(f'\n')
