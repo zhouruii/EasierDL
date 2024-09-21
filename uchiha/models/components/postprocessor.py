@@ -44,9 +44,13 @@ class IDWT1d(nn.Module):
 class WeightedSum(nn.Module):
     def __init__(self, weights):
         super().__init__()
-        self.weights = weights
+        if isinstance(weights,list):
+            self.weights = weights
+        else:
+            self.weights = nn.ParameterList([nn.Parameter(torch.tensor(1/weights)) for _ in range(weights)])
 
     def forward(self, x: List[Tensor]):
+
         result = torch.zeros_like(x[0])
         for idx, parallel in enumerate(x):
             result += self.weights[idx] * parallel

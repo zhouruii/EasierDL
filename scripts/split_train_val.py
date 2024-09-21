@@ -7,8 +7,10 @@ import random
 def parse_args():
     """Parse arguments."""
     parser = argparse.ArgumentParser(description='Splitting images')
-    parser.add_argument("--train", type=str, default='data/spectral_img/train/reflectivity', )
-    parser.add_argument("--val", type=str, default='data/spectral_img/val/reflectivity', )
+    parser.add_argument('--seed', type=int, default=45)
+    parser.add_argument("--train", type=str, default='data/spectral_01/train/reflectivity')
+    parser.add_argument("--val", type=str, default='data/spectral_01/val/reflectivity')
+    parser.add_argument("--ratio", type=float, default=0.1)
     parser.add_argument("--nproc", type=int, default=10)
     args = parser.parse_args()
     return args
@@ -17,7 +19,7 @@ def parse_args():
 def main():
     args = parse_args()
     # 设置随机种子，以便每次运行都能得到相同的划分结果
-    random.seed(42)
+    random.seed(args.seed)
 
     # 源目录和目标目录
     train_dir = args.train
@@ -31,7 +33,7 @@ def main():
     all_images = sorted(all_images, key=lambda x: int(x.split('.')[0]))
 
     # 设置验证集的比例，例如 20%
-    val_ratio = 0.3
+    val_ratio = args.ratio
 
     # 计算验证集的大小
     val_size = int(len(all_images) * val_ratio)

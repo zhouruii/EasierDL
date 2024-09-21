@@ -28,9 +28,11 @@ class DWT1d(nn.Module):
     def __init__(self,
                  scales=1,
                  wave='haar',
-                 padding='zero'):
+                 padding='zero',
+                 origin=False):
         super().__init__()
         self.wavlet_transform = DWT1DForward(J=scales, wave=wave, mode=padding)
+        self.origin = origin
 
     def forward(self, x):
         # x.shape:B, C, H, W
@@ -41,9 +43,13 @@ class DWT1d(nn.Module):
 
         parallel = []
         parallel.append(sequence_to_image(L))
-        for idx,h in enumerate(H):
+        for idx, h in enumerate(H):
             parallel.append(sequence_to_image(h))
-        return parallel
+
+        if self.origin:
+            return x, parallel
+        else:
+            return parallel
 
 
 if __name__ == '__main__':

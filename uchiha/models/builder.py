@@ -3,15 +3,15 @@ from ..utils import Registry
 
 MODEL = Registry('model')
 
-BASEMODULE = MODEL
-BOTTLENECK = MODEL
-DOWNSAMPLE = MODEL
-EMBEDDING = MODEL
-FUSION = MODEL
-HEAD = MODEL
-PREPROCESSOR = MODEL
-POSTPROCESSOR = MODEL
-UPSAMPLE = MODEL
+BASEMODULE = Registry('basemodule')
+BOTTLENECK = Registry('bottleneck')
+DOWNSAMPLE = Registry('downsample')
+EMBEDDING = Registry('embedding')
+FUSION = Registry('fusion')
+HEAD = Registry('head')
+PREPROCESSOR = Registry('preprocessor')
+POSTPROCESSOR = Registry('postprocessor')
+UPSAMPLE = Registry('upsample')
 
 
 def build_preprocessor(cfg):

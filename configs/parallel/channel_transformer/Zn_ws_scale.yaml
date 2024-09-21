@@ -38,14 +38,14 @@ data:
       shuffle: false
 
 model:
-  type: ParallelChannelTransformer
+  type: Parallel
   preprocessor:
     type: DWT1d
     scales: 1
     wave: haar
     padding: zero
   parallels:
-    - type: ChannelTransformer
+    - type: Stack
       embedding:
         type: PatchEmbedding
         img_size: 4
@@ -53,23 +53,23 @@ model:
         in_channel: 165
         embed_dim: 256
         norm_layer: nn.LayerNorm
-      basemodule:
-        type: ChannelTransformerLayer
-        dim: 256
-        input_resolution: 2
-        depth: 2
-        num_head: 16
-        mlp_ratio: 2.0
-        qkv_bias: true
-        qk_scale: null
-        drop: 0.2 # drop_rate
-        attn_drop: 0.0
-        drop_path_rate: 0.1
+      stacks:
+        - type: ChannelTransformerLayer
+          dim: 256
+          input_resolution: 2
+          depth: 2
+          num_head: 16
+          mlp_ratio: 2.0
+          qkv_bias: true
+          qk_scale: null
+          drop: 0.2 # drop_rate
+          attn_drop: 0.0
+          drop_path_rate: 0.1
       head:
         type: FCHead
         embed_dim: 256
         pred_num: 1
-    - type: ChannelTransformer
+    - type: Stack
       embedding:
         type: PatchEmbedding
         img_size: 4
@@ -77,18 +77,18 @@ model:
         in_channel: 165
         embed_dim: 256
         norm_layer: nn.LayerNorm
-      basemodule:
-        type: ChannelTransformerLayer
-        dim: 256
-        input_resolution: 2
-        depth: 1
-        num_head: 16
-        mlp_ratio: 2.0
-        qkv_bias: true
-        qk_scale: null
-        drop: 0.2 # drop_rate
-        attn_drop: 0.0
-        drop_path_rate: 0.1
+      stacks:
+        - type: ChannelTransformerLayer
+          dim: 256
+          input_resolution: 2
+          depth: 1
+          num_head: 16
+          mlp_ratio: 2.0
+          qkv_bias: true
+          qk_scale: null
+          drop: 0.2 # drop_rate
+          attn_drop: 0.0
+          drop_path_rate: 0.1
       head:
         type: FCHead
         embed_dim: 256
@@ -127,7 +127,7 @@ train:
 
 val:
   val_freq: 1
-  metric: MAE
+  metric: R2
 
 checkpoint:
   save_freq: 100

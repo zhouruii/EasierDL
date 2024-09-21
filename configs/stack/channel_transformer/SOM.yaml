@@ -3,8 +3,8 @@ data:
   train:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/train/reflectivity
-      gt_path: data/spectral/train/labelSOM.txt
+      data_root: data/spectral_01/train/reflectivity
+      gt_path: data/spectral_01/train/gt.txt
       elements: SOM
       pipelines:
         - type: Pad
@@ -21,8 +21,8 @@ data:
   val:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/val/reflectivity
-      gt_path: data/spectral/val/labelSOM.txt
+      data_root: data/spectral_01/val/reflectivity
+      gt_path: data/spectral_01/val/gt.txt
       elements: SOM
       pipelines:
         - type: Pad
@@ -97,7 +97,7 @@ train:
 
 val:
   val_freq: 1
-  metric: MAE
+  metric: R2
 
 checkpoint:
   save_freq: 100

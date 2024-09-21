@@ -6,13 +6,13 @@ from ...utils.misc import strings_to_list
 
 
 @MODEL.register_module()
-class ParallelChannelTransformer(nn.Module):
+class ParallelSpatialChannelTransformer(nn.Module):
     def __init__(self,
-                 preprocessor=None,
+                 embedding=None,
                  parallels=None,
                  postprocessor=None):
         super().__init__()
-        self.preprocessor = build_preprocessor(preprocessor)
+        self.embedding = build_embedding(embedding)
 
         self.workflows = nn.ModuleList()
         for workflow in parallels:
@@ -21,10 +21,9 @@ class ParallelChannelTransformer(nn.Module):
         self.postprocessor = build_postprocessor(postprocessor)
 
     def forward(self, x):
-        if self.preprocessor:
-            x_parallel = self.preprocessor(x)
-        else:
-            x_parallel = x
+
+        x = self.embedding(x)
+        x_parallel = [x, x]
 
         # core
         y_parallel = []
@@ -38,4 +37,3 @@ class ParallelChannelTransformer(nn.Module):
             out = y_parallel
 
         return out
-

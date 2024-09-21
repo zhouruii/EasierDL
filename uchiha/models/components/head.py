@@ -10,7 +10,10 @@ class FCHead(nn.Module):
         self.pooling = nn.AdaptiveAvgPool1d(1)
         self.head = nn.Linear(embed_dim, pred_num)
 
-        self.activate = post_process if post_process else nn.Identity()
+        if post_process == 'RELU':
+            self.activate = nn.ReLU()
+        else:
+            self.activate = nn.Identity()
 
     def forward(self, x):
         # B,L,C = x.shape

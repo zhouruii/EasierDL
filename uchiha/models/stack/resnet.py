@@ -8,7 +8,7 @@ import torch
 from torch import nn, Tensor
 from torch.hub import load_state_dict_from_url
 
-from ..basemodules.basicresnet import BasicResidualBlock, ResidualBottleneck, conv1x1
+from ..basemodules.basic_resnet import BasicResidualBlock, ResidualBottleneck, conv1x1
 
 from ..builder import build_basemodule, MODEL
 

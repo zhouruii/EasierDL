@@ -88,12 +88,13 @@ class Normalize:
             default is true.
     """
 
-    def __init__(self, mean=None, std=None, to_rgb=True, scope='spatial'):
+    def __init__(self, mean=None, std=None, to_rgb=True, scope='spatial', mode='standard'):
 
         self.mean = np.array(mean, dtype=np.float32) if mean else None
         self.std = np.array(std, dtype=np.float32) if std else None
         self.to_rgb = to_rgb
         self.scope = scope
+        self.mode = mode
 
     def __call__(self, results):
         """Call function to normalize images.
@@ -106,7 +107,7 @@ class Normalize:
                 result dict.
         """
         results['sample'] = img_normalize(results['sample'], self.mean, self.std,
-                                     self.to_rgb, self.scope)
+                                     self.to_rgb, self.scope, self.mode)
         if self.mean and self.std:
             results['norm_cfg'] = dict(
                 mean=self.mean, std=self.std, to_rgb=self.to_rgb, scope=self.scope)

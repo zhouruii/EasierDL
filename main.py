@@ -35,7 +35,7 @@ def main():
     logger = get_root_logger(log_file=join(f'{work_dir}/logs', f'{log_time}.log'))
     logger.info(f'Config:\n{cfg}')
 
-    # 随机数种子
+    # random seed
     set_random_seed(args.seed)
     logger.info(f'set random seed= {args.seed}')
 

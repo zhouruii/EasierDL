@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 
 
-def img_normalize(img, mean, std, to_rgb=True, scope='spatial'):
+def img_normalize(img, mean, std, to_rgb=True, scope='spatial', mode='standard'):
     """Normalize an image with mean and std.
 
     Args:
@@ -20,10 +20,10 @@ def img_normalize(img, mean, std, to_rgb=True, scope='spatial'):
         ndarray: The normalized image.
     """
     img = img.copy().astype(np.float32)
-    return img_normalize_(img, mean, std, to_rgb, scope)
+    return img_normalize_(img, mean, std, to_rgb, scope, mode)
 
 
-def img_normalize_(img, mean, std, to_rgb=True, scope='spatial'):
+def img_normalize_(img, mean, std, to_rgb=True, scope='spatial', mode='standard'):
     """Inplace normalize an image with mean and std.
 
     Args:
@@ -41,8 +41,10 @@ def img_normalize_(img, mean, std, to_rgb=True, scope='spatial'):
     channel = img.shape[-1]
     mean = np.float64(mean.reshape(1, -1)) if mean else None
     stdinv = 1 / np.float64(std.reshape(1, -1)) if std else None
+
     if to_rgb and channel == 3:
         cv2.cvtColor(img, cv2.COLOR_BGR2RGB, img)  # inplace
+
     if scope == 'spatial':
         if not mean:
             mean = np.float64(np.mean(img, axis=(0, 1)).reshape(1, -1))
@@ -51,6 +53,8 @@ def img_normalize_(img, mean, std, to_rgb=True, scope='spatial'):
             mask = std != 0
             stdinv = np.zeros_like(std)
             stdinv[mask] = 1 / std[mask]
+        _min = np.float64(np.min(img, axis=(0, 1)).reshape(1, -1))
+        _max = np.float64(np.max(img, axis=(0, 1)).reshape(1, -1))
     else:
         if not mean:
             mean = np.float32(np.mean(img, axis=2))[:, :, None]
@@ -59,8 +63,18 @@ def img_normalize_(img, mean, std, to_rgb=True, scope='spatial'):
             std = np.float32(np.std(img, axis=2))[:, :, None]
             std = np.tile(std, (1, 1, channel))
             stdinv = 1 / std
-    cv2.subtract(img, mean, img)  # inplace
-    cv2.multiply(img, stdinv, img)  # inplace
+        _min = np.tile(np.float32(np.min(img, axis=2))[:, :, None], (1, 1, channel))
+        _max = np.tile(np.float32(np.max(img, axis=2))[:, :, None], (1, 1, channel))
+
+    if mode == 'standard':
+        cv2.subtract(img, mean, img)  # inplace
+        cv2.multiply(img, stdinv, img)  # inplace
+    elif mode == 'minmax':
+        cv2.subtract(img, _min, img)  # inplace
+        cv2.multiply(img, 1/(_max-_min), img)  # inplace
+    else:
+        raise NotImplementedError(f"normalize mode:{mode} is not supported yet")
+
     return img
 
 

@@ -4,7 +4,7 @@ data:
     dataset:
       type: SpectralDataset2d
       data_root: data/spectral/train/reflectivity
-      gt_path: data/spectral/train/labelZn.txt
+      gt_path: data/spectral/train/labelZn_scale.txt
       elements: Zn
       pipelines:
         - type: Pad
@@ -22,7 +22,7 @@ data:
     dataset:
       type: SpectralDataset2d
       data_root: data/spectral/val/reflectivity
-      gt_path: data/spectral/val/labelZn.txt
+      gt_path: data/spectral/val/labelZn_scale.txt
       elements: Zn
       pipelines:
         - type: Pad
@@ -93,7 +93,7 @@ train:
 
 val:
   val_freq: 1
-  metric: MAE
+  metric: R2
 
 checkpoint:
   save_freq: 100
