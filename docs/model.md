@@ -6,4 +6,3 @@
 #### 1.1 base
 
 ![](images/parallel_base.jpg)
-![](images%2Fparallel_base.svg)
