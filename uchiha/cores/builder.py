@@ -8,6 +8,16 @@ SCHEDULER = Registry('scheduler')
 
 
 def build_optimizer(params, cfg):
+    """ build optimizer based on configuration
+
+    Args:
+        params (): parameters of the model  # TODO 补充参数的类型
+        cfg (dict): Configuration information, where the first key is type
+
+    Returns:
+        returns the built optimizer
+
+    """
     logger = get_root_logger()
     logger.info("start building criterion...")
 
@@ -19,6 +29,15 @@ def build_optimizer(params, cfg):
 
 
 def build_criterion(cfg):
+    """ build loss function based on configuration
+
+    Args:
+        cfg (dict): Configuration information, where the first key is type
+
+    Returns:
+        returns the built loss function
+
+    """
     logger = get_root_logger()
     logger.info("start building criterion...")
 
@@ -29,6 +48,16 @@ def build_criterion(cfg):
 
 
 def build_scheduler(optimizer, cfg):
+    """ build lr scheduler based on configuration
+
+    Args:
+        optimizer (class): the optimizer already built before
+        cfg (dict): Configuration information, where the first key is type
+
+    Returns:
+        returns the built scheduler
+
+    """
     logger = get_root_logger()
     logger.info("start building criterion...")
 

@@ -7,21 +7,21 @@ from ..utils import print_log, get_root_logger
 
 
 def train_by_epoch(epoch, dataloader, model, optimizer, scheduler, criterion, writer):
-    """ 训练一轮
+    """ train for one epoch
 
     Prints logs based on the configured frequency (based on the number of iterations)
 
     Args:
-        epoch (int): 训练的轮数
-        dataloader (torch.utils.data.Dataloader): 构建好的训练数据加载器
-        model (torch.nn.Module): 构建好的模型
-        optimizer (class): 构建好的优化器
-        scheduler (class): 构建好的学习率调度器
-        criterion (class): 构建好的损失函数
-        writer (SummaryWriter): 基于tensorboard的记录器 目前支持tensorboardX
+        epoch (int): the number of epoch trained
+        dataloader (torch.utils.data.Dataloader): training set's dataloader
+        model (torch.nn.Module): model built from configuration file
+        optimizer (class): optimizer built from configuration file
+        scheduler (class): lr scheduler built from configuration file
+        criterion (class): loss function built from configuration file
+        writer (SummaryWriter): tensorboard-based loggers currently support tensorboardX
 
     Returns:
-        writer (dict): 更新记录器 同时会返回更新的模型，优化器与调度器
+        writer (dict): The updated logger, also return the updated model, optimizer and scheduler.
 
     """
     model.train()

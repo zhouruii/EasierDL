@@ -13,24 +13,26 @@ CRITERION.register_module(module=HuberLoss)
 
 @CRITERION.register_module()
 class MultiL1Loss(nn.Module):
-    def __init__(self, weights):
+    def __init__(self,
+                 weights=2):
+        """ multi-branch L1Loss
+
+        When the network has multiple pipelines, the loss is calculated for
+        each pipeline and then these losses are weighted and constitute the final loss.
+
+        Args:
+            weights (List[int] | int): weights of each pipeline
+                When a list is provided, the weighted sum is based on the elements in the list,
+                when an integer is provided, the weights are randomly initialized and updated with backpropagation.
+                Default: 2
+        """
         super(MultiL1Loss, self).__init__()
         self.weights = weights
 
     def forward(self, prediction, target):
-        # Example: Mean squared error with an additional penalty
         loss = 0
         for idx, pred in enumerate(prediction):
             loss += F.l1_loss(pred, target) * self.weights[idx]
 
         return loss
 
-
-@CRITERION.register_module()
-class LogCoshLoss(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, y_pred, y_true):
-        loss = torch.log(torch.cosh(y_pred - y_true))
-        return loss.mean()
