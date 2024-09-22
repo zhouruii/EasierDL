@@ -108,7 +108,7 @@ def impad(img: np.ndarray,
               value on the edge. For example, padding [1, 2, 3, 4] with 2
               elements on both sides in reflect mode will result in
               [3, 2, 1, 2, 3, 4, 3, 2].
-            - : pads with reflection of image repeating the last value
+            - symmetric: pads with reflection of image repeating the last value
               on the edge. For example, padding [1, 2, 3, 4] with 2 elements on
               both sides in symmetric mode will result in
               [2, 1, 1, 2, 3, 4, 4, 3]
@@ -116,7 +116,6 @@ def impad(img: np.ndarray,
     Returns:
         ndarray: The padded image.
     """
-
     assert (shape is not None) ^ (padding is not None)
     if shape is not None:
         width = max(shape[1] - img.shape[1], 0)

@@ -40,6 +40,7 @@ def compute_metric(pred, target, metric='MAE'):
         return mean_absolute_error(pred, target)
     elif metric == 'R2':
         return 1 - (np.sum((target - pred) ** 2) / np.sum((target - np.mean(target)) ** 2))
+        # return (np.sum((pred - np.mean(target)) ** 2) / np.sum((target - np.mean(target)) ** 2))
     else:
         raise NotImplementedError(f'metric:{metric} is not supported yet')
 

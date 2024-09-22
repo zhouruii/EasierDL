@@ -7,6 +7,23 @@ from ..utils import print_log, get_root_logger
 
 
 def train_by_epoch(epoch, dataloader, model, optimizer, scheduler, criterion, writer):
+    """ 训练一轮
+
+    Prints logs based on the configured frequency (based on the number of iterations)
+
+    Args:
+        epoch (int): 训练的轮数
+        dataloader (torch.utils.data.Dataloader): 构建好的训练数据加载器
+        model (torch.nn.Module): 构建好的模型
+        optimizer (class): 构建好的优化器
+        scheduler (class): 构建好的学习率调度器
+        criterion (class): 构建好的损失函数
+        writer (SummaryWriter): 基于tensorboard的记录器 目前支持tensorboardX
+
+    Returns:
+        writer (dict): 更新记录器 同时会返回更新的模型，优化器与调度器
+
+    """
     model.train()
     for idx, data in enumerate(dataloader):
         # data
@@ -23,6 +40,7 @@ def train_by_epoch(epoch, dataloader, model, optimizer, scheduler, criterion, wr
         optimizer.step()
 
         # log
+        # TODO 这里打印日志的频次需要根据配置的值动态调整
         if (idx + 1) % 5 == 0:
             current_lr = optimizer.param_groups[0]['lr']
             print_log(f'epoch:[{epoch + 1}], iter:[{idx + 1}/{len(dataloader)}], loss: {loss}, lr:{current_lr}',

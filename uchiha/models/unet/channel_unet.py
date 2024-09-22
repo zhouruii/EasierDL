@@ -2,7 +2,7 @@ import torch
 
 from torch import nn
 
-from ..utils import strings_to_list
+from ...utils.misc import strings_to_list
 
 from ..builder import build_preprocessor, build_embedding, build_basemodule, build_downsample, build_upsample, \
     build_bottleneck, build_head, build_fusion, MODEL

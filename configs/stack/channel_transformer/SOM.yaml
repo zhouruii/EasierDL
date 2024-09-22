@@ -65,7 +65,7 @@ model:
 #    in_channel: 512
 #    out_channel: 1024
   downsample:
-    type: Stride2Conv
+    type: DownsampleConv
     in_channel: 512
     out_channel: 1024
   head:

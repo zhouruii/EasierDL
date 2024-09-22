@@ -24,10 +24,15 @@ class PixelUnShuffle(nn.Module):
 
 
 @DOWNSAMPLE.register_module()
-class Stride2Conv(nn.Module):
-    def __init__(self, in_channel=512, out_channel=1024):
+class DownsampleConv(nn.Module):
+    def __init__(self,
+                 in_channel=512,
+                 out_channel=1024,
+                 kernel_size=3,
+                 stride=2,
+                 padding=1):
         super().__init__()
-        self.downsample = nn.Conv2d(in_channel, out_channel, 3, 2, 1)
+        self.downsample = nn.Conv2d(in_channel, out_channel, kernel_size, stride, padding)
         self.activate = nn.GELU()
 
     def forward(self, x):

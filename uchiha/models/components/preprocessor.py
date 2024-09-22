@@ -52,6 +52,35 @@ class DWT1d(nn.Module):
             return parallel
 
 
+@PREPROCESSOR.register_module()
+class SimpleConv(nn.Module):
+    def __init__(self,
+                 in_channel=3,
+                 out_channel=64,
+                 depth=2,
+                 stride=1,
+                 copies=1):
+        super().__init__()
+        self.depth = depth
+
+        self.convs = nn.ModuleList()
+        self.convs.append(nn.Conv2d(in_channel, out_channel, 3, stride, 1))
+        for i in range(1, self.depth):
+            self.convs.append(nn.Conv2d(out_channel, out_channel, 3, 1, 1))
+
+        self.bns = nn.ModuleList([nn.BatchNorm2d(out_channel) for _ in range(self.depth)])
+        self.activate = nn.ReLU(inplace=True)
+
+        self.copies = copies
+
+    def forward(self, x):
+        for conv, bn in zip(self.convs, self.bns):
+            x = conv(x)
+            x = bn(x)
+            x = self.activate(x)
+        return x if self.copies == 1 else [x for _ in range(self.copies)]
+
+
 if __name__ == '__main__':
     dwt = DWT1DForward(wave='db6', J=3)
     X = torch.randn(10, 5, 100)
