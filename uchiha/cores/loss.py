@@ -13,19 +13,20 @@ CRITERION.register_module(module=HuberLoss)
 
 @CRITERION.register_module()
 class MultiL1Loss(nn.Module):
+    """ multi-branch L1Loss
+
+    When the network has multiple pipelines, the loss is calculated for
+    each pipeline and then these losses are weighted and constitute the final loss.
+
+    Args:
+        weights (List[int] | int): weights of each pipeline
+            When a list is provided, the weighted sum is based on the elements in the list,
+            when an integer is provided, the weights are randomly initialized and updated with backpropagation.
+            Default: 2
+    """
     def __init__(self,
                  weights=2):
-        """ multi-branch L1Loss
 
-        When the network has multiple pipelines, the loss is calculated for
-        each pipeline and then these losses are weighted and constitute the final loss.
-
-        Args:
-            weights (List[int] | int): weights of each pipeline
-                When a list is provided, the weighted sum is based on the elements in the list,
-                when an integer is provided, the weights are randomly initialized and updated with backpropagation.
-                Default: 2
-        """
         super(MultiL1Loss, self).__init__()
         self.weights = weights
 

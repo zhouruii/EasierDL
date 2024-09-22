@@ -14,13 +14,22 @@ class Pad:
     There are two padding modes:
     (1) pad to a fixed size
     (2) pad to the minimum size that is divisible by some number.
-    Added keys are "pad_shape", "pad_fixed_size", "pad_size_divisor",
+    there are four ways to handle edges:
+    (1) constant: pad with a constant -> the given pad_val
+    (2) edge: pad with the last value at the edge of the image.
+    (3) reflect: pads with reflection of image without repeating the last value on the edge.
+        For example: padding [1, 2, 3, 4] with 2 elements on both sides in reflect mode
+        will result in [3, 2, 1, 2, 3, 4, 3, 2].
+    (4) symmetric: pads with reflection of image repeating the last value on the edge.
+        For example, padding [1, 2, 3, 4] with 2 elements on both sides in symmetric mode
+        will result in [2, 1, 1, 2, 3, 4, 4, 3]
+    Added key is 'pad_cfg'.
 
     Args:
-        size (tuple, optional): Fixed padding size.
-        size_divisor (int, optional): The divisor of padded size.
-        pad_val (dict, optional): A dict for padding value, the default
-            value is `0`.
+        size (tuple, optional): Fixed padding size -> mode(1).
+        size_divisor (int, optional): The divisor of padded size -> mode(2).
+        pad_val (dict, optional): A dict for padding value, Default: `0`.
+        mode: (str): the way to handle edges
     """
 
     def __init__(self,
@@ -56,13 +65,13 @@ class Pad:
         results['pad_cfg']['pad_shape'] = padded_img.shape
 
     def __call__(self, results):
-        """Call function to pad images, masks, semantic segmentation maps.
+        """Call function to pad images.
 
         Args:
             results (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Updated result dict.
+            dict: Updated result dict,'pad_cfg' key is added into result dict.
         """
         self._pad_img(results)
         return results
@@ -79,13 +88,22 @@ class Pad:
 class Normalize:
     """Normalize the image.
 
+    When the mean and standard deviation are given,the data will be normalized according to the given data,
+    otherwise the mean and standard deviation of the input data will be calculated for normalization.
+    There are two normalization modes:
+    (1) standardize: (x-mean)/std
+    (2) normalize(minmax): (x-min)/(max-min)
+    There are two normalization scopes:
+    (1) spatial: normalize the spatial data for each channel
+    (2) channel: normalize the channel data for each pixel in space
     Added key is "img_norm_cfg".
 
     Args:
-        mean (sequence): Mean values of 3 channels.
-        std (sequence): Std values of 3 channels.
-        to_rgb (bool): Whether to convert the image from BGR to RGB,
-            default is true.
+        mean (sequence): Mean values of 3 channels. Default: None.
+        std (sequence): Std values of 3 channels. Default: None.
+        to_rgb (bool): Whether to convert the image from BGR to RGB. Default: true.
+        mode (str): normalization mode.
+        scope (str): normalization scope
     """
 
     def __init__(self, mean=None, std=None, to_rgb=True, scope='spatial', mode='standard'):
@@ -100,11 +118,10 @@ class Normalize:
         """Call function to normalize images.
 
         Args:
-            results (dict): Result dict from loading pipeline.
+            results (dict): Result dict from pipeline.
 
         Returns:
-            dict: Normalized results, 'img_norm_cfg' key is added into
-                result dict.
+            dict: Normalized results, 'img_norm_cfg' key is added into result dict.
         """
         results['sample'] = img_normalize(results['sample'], self.mean, self.std,
                                      self.to_rgb, self.scope, self.mode)
@@ -124,10 +141,26 @@ class Normalize:
 
 @PIPELINES.register_module()
 class EasyToTensor:
+    """ convert data to tensor
+
+    The default input data is in `BHWC` form, converting it to `BCHW` form
+
+    Args:
+        mode (str): data order form
+    """
     def __init__(self, mode='CHW'):
+
         self.mode = mode
 
     def __call__(self, results):
+        """Call function to convert the type of the data.
+
+        Args:
+            results (dict): Result dict from pipeline.
+
+        Returns:
+            dict: converted results
+        """
         assert 'sample' in results and 'target' in results, 'sample and target should be loaded to results'
 
         if self.mode == 'CHW':

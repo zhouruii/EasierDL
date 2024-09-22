@@ -11,6 +11,15 @@ SPECTRAL_DATASET = DATASET
 
 
 def build_dataset(cfg):
+    """ build dataset based on configuration
+
+    Args:
+        cfg (dict): Configuration information, where the first key is type
+
+    Returns:
+        Dataset: the built optimizer
+
+    """
     logger = get_root_logger()
     logger.info("start building dataset...")
 
@@ -20,11 +29,21 @@ def build_dataset(cfg):
     return dataset
 
 
-def build_dataloader(dataset, kwargs):
+def build_dataloader(dataset, cfg):
+    """ build dataloader based on configuration
+
+    Args:
+        dataset (Dataset): the dataset already built before
+        cfg (dict): Configuration information, where the first key is type
+
+    Returns:
+        Dataloader: the built dataloader
+
+    """
     logger = get_root_logger()
     logger.info("start building dataloader...")
 
-    dataloader = DataLoader(dataset, **kwargs)
+    dataloader = DataLoader(dataset, **cfg)
     logger.info('success!')
 
     return dataloader
