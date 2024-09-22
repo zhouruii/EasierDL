@@ -4,6 +4,7 @@ import torch.nn as nn
 import math
 import torch.utils.model_zoo as model_zoo
 
+from .basic_resnet import conv3x3
 from ..builder import BASEMODULE, build_downsample
 
 model_urls = {
@@ -15,21 +16,21 @@ model_urls = {
 }
 
 
-def conv3x3(in_planes, out_planes, stride=1):
-    "3x3 convolution with padding"
-    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
-                     padding=1, bias=False)
-
-
 class CAM(nn.Module):
     def __init__(self, in_planes, ratio=16):
+        """ Channel Attention Module based on Conv
+
+        Args:
+            in_planes (int): number of input channels
+            ratio (int): The ratio of the hidden layer to the input dimension when extracting the channel mask
+        """
         super(CAM, self).__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.max_pool = nn.AdaptiveMaxPool2d(1)
 
-        self.fc = nn.Sequential(nn.Conv2d(in_planes, in_planes // 16, 1, bias=False),
+        self.fc = nn.Sequential(nn.Conv2d(in_planes, in_planes // ratio, 1, bias=False),
                                 nn.ReLU(),
-                                nn.Conv2d(in_planes // 16, in_planes, 1, bias=False))
+                                nn.Conv2d(in_planes // ratio, in_planes, 1, bias=False))
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
@@ -40,6 +41,12 @@ class CAM(nn.Module):
 
 
 class SAM(nn.Module):
+    """ Spatial Attention Module based on Conv
+
+    Args:
+        kernel_size (): kernel size of the convolution operation performed when extracting the spatial mask
+    """
+
     def __init__(self, kernel_size=7):
         super(SAM, self).__init__()
 
@@ -56,9 +63,19 @@ class SAM(nn.Module):
 
 @BASEMODULE.register_module()
 class BasicCAM(nn.Module):
+    """ basic Channel Attention Module(CAM)
+
+    Args:
+        in_channel (int): number of input channels
+        out_channel (int): number of output channels
+        stride (int): the stride for the convolution operation. Default: 1
+        downsample (nn.Module): operations performed when residual is applied. Default: None
+    """
+
     expansion = 1
 
     def __init__(self, in_channel, out_channel, stride=1, downsample=None):
+
         super(BasicCAM, self).__init__()
         self.conv1 = conv3x3(in_channel, out_channel, stride)
         self.bn1 = nn.BatchNorm2d(out_channel)
@@ -94,9 +111,19 @@ class BasicCAM(nn.Module):
 
 @BASEMODULE.register_module()
 class BasicSAM(nn.Module):
+    """ basic Spatial Attention Module(SAM)
+
+    Args:
+        in_channel (int): number of input channels
+        out_channel (int): number of output channels
+        stride (int): the stride for the convolution operation. Default: 1
+        downsample (nn.Module): operations performed when residual is applied. Default: None
+    """
+
     expansion = 1
 
     def __init__(self, in_channel, out_channel, stride=1, downsample=None):
+
         super(BasicSAM, self).__init__()
         self.conv1 = conv3x3(in_channel, out_channel, stride)
         self.bn1 = nn.BatchNorm2d(out_channel)
@@ -131,6 +158,15 @@ class BasicSAM(nn.Module):
 
 
 class BasicCBAM(nn.Module):
+    """ Conv*2 ==> CAM ==> SAM ==>
+
+    Args:
+        inplanes (int): number of input channels
+        planes (int): number of output channels
+        stride (int): the stride for the convolution operation. Default: 1
+        downsample (nn.Module): operations performed when residual is applied. Default: None
+    """
+
     expansion = 1
 
     def __init__(self, inplanes, planes, stride=1, downsample=None):
@@ -170,6 +206,17 @@ class BasicCBAM(nn.Module):
 
 
 class Bottleneck(nn.Module):
+    """ Conv*3 ==> CAM ==> SAM ==>
+
+    the actual number of output channels is expanded by expansion
+
+    Args:
+        inplanes (int): number of input channels
+        planes (int): number of output channels
+        stride (int): the stride for the convolution operation. Default: 1
+        downsample (nn.Module): operations performed when residual is applied. Default: None
+    """
+
     expansion = 4
 
     def __init__(self, inplanes, planes, stride=1, downsample=None):
@@ -179,11 +226,11 @@ class Bottleneck(nn.Module):
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
                                padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(planes * 4)
+        self.conv3 = nn.Conv2d(planes, planes * self.expansion, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(planes * self.expansion)
         self.relu = nn.ReLU(inplace=True)
 
-        self.ca = CAM(planes * 4)
+        self.ca = CAM(planes * self.expansion)
         self.sa = SAM()
 
         self.downsample = downsample
@@ -276,7 +323,7 @@ class ResNet(nn.Module):
 
 
 def resnet18_cbam(pretrained=False, **kwargs):
-    """Constructs a ResNet-18 model.
+    """Constructs a ResNet-18 model based on CBAM.
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
@@ -291,7 +338,7 @@ def resnet18_cbam(pretrained=False, **kwargs):
 
 
 def resnet34_cbam(pretrained=False, **kwargs):
-    """Constructs a ResNet-34 model.
+    """Constructs a ResNet-34 model based on CBAM.
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
@@ -306,7 +353,7 @@ def resnet34_cbam(pretrained=False, **kwargs):
 
 
 def resnet50_cbam(pretrained=False, **kwargs):
-    """Constructs a ResNet-50 model.
+    """Constructs a ResNet-50 model based on CBAM.
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
@@ -321,7 +368,7 @@ def resnet50_cbam(pretrained=False, **kwargs):
 
 
 def resnet101_cbam(pretrained=False, **kwargs):
-    """Constructs a ResNet-101 model.
+    """Constructs a ResNet-101 model based on CBAM.
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
@@ -336,7 +383,7 @@ def resnet101_cbam(pretrained=False, **kwargs):
 
 
 def resnet152_cbam(pretrained=False, **kwargs):
-    """Constructs a ResNet-152 model.
+    """Constructs a ResNet-152 model based on CBAM.
 
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet

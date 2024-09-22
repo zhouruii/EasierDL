@@ -1,40 +1,50 @@
 import torch
+import torch.nn.functional as F
 from timm.layers import DropPath, to_2tuple
 from torch import nn
-import torch.nn.functional as F
 
 from ..builder import BASEMODULE
 from ...utils import build_norm
 
 
 class Mlp(nn.Module):
-    def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
+    """ MLP in Channel Transformer
+
+    Args:
+        in_features (int): number of input channels
+        hidden_features (int): number of hidden layer channels
+        out_features (int): number of output channels
+        act_layer (nn.Module): activation function
+        drop (float): the rate of `Dropout` layer. Default: 0.0
+    """
+
+    def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop: float = 0.):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
         self.fc1 = nn.Linear(in_features, hidden_features)
         self.act = act_layer()
         self.fc2 = nn.Linear(hidden_features, out_features)
-        self.drop = nn.Dropout(drop)
+        self.dropout = nn.Dropout(drop)
 
     def forward(self, x):
         x = self.fc1(x)
         x = self.act(x)
-        x = self.drop(x)
+        x = self.dropout(x)
         x = self.fc2(x)
-        x = self.drop(x)
+        x = self.dropout(x)
         return x
 
 
 class ChannelAttention(nn.Module):
-    r""" Window based multi-head self attention (W-MSA) module with relative position bias.
-    It supports both of shifted and non-shifted window.
+    r""" attention operations at the channel
+
+    draw inspiration from Window based multi-head self attention (W-MSA)
 
     Args:
         dim (int): Number of input channels.
-        window_size (tuple[int]): The height and width of the window.
-        num_heads (int): Number of attention heads.
-        qkv_bias (bool, optional):  If True, add a learnable bias to query, key, value. Default: True
+        num_heads (int): Number of heads in `Multi-Head Attention`
+        qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
         qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set
         attn_drop (float, optional): Dropout ratio of attention weight. Default: 0.0
         proj_drop (float, optional): Dropout ratio of output. Default: 0.0
@@ -88,10 +98,29 @@ class ChannelAttention(nn.Module):
 
 
 class ChannelTransformerBlock(nn.Module):
+    """ The block containing Channel Attention, norm and MLP
+
+    DropPath: Randomly dropout the entire path, usually at the network structure level,
+    dropout a computational path, such as the residual path of the network or some sub-module in the Transformer.
+
+    Args:
+        dim (int): Number of input channels.
+        input_resolution (int): spatial resolution of input features # TODO 这里的数据类型需要确认
+        num_heads (int): Number of heads in `Multi-Head Attention`
+        mlp_ratio (float): ratio of hidden layer to input channel in MLP
+        qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
+        qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set
+        drop (): Dropout ratio of output of Attention. Default: 0.0
+        attn_drop (float, optional): Dropout ratio of attention weight. Default: 0.0
+        drop_path (float): Dropout ratio of entire path
+        act_layer (nn.Module): activation function
+        norm_layer (nn.Module): normalization layer before Attention and MLP. Default: None
+    """
 
     def __init__(self, dim, input_resolution, num_heads,
                  mlp_ratio=4., qkv_bias=True, qk_scale=None, drop=0., attn_drop=0., drop_path=0.,
                  act_layer=nn.GELU, norm_layer=nn.LayerNorm):
+
         super().__init__()
         self.dim = dim
         self.input_resolution = input_resolution
@@ -130,9 +159,28 @@ class ChannelTransformerBlock(nn.Module):
 
 @BASEMODULE.register_module()
 class ChannelTransformerLayer(nn.Module):
+    """ Stacked Channel-Transformer-Block
+
+    Args:
+        dim (int): Number of input channels.
+        input_resolution (int): spatial resolution of input features # TODO 这里的数据类型需要确认
+        depth (int): number of stacked channel-transformer-blocks
+        num_head (int): Number of heads in `Multi-Head Attention`
+        mlp_ratio (float): ratio of hidden layer to input channel in MLP
+        qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
+        qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set
+        drop (): Dropout ratio of output of Attention. Default: 0.0
+        attn_drop (float, optional): Dropout ratio of attention weight. Default: 0.0
+        drop_path_rate (float): Rate required to generate drop path, it will be called by
+            `torch.linspace(0, drop_path_rate, depth)`
+            designed to increase the probability of DropPath as the depth increases
+        norm_layer (nn.Module): normalization layer before Attention and MLP. Default: None
+    """
+
     def __init__(self, dim, input_resolution, depth, num_head,
                  mlp_ratio=4., qkv_bias=True, qk_scale=None, drop=0., attn_drop=0.,
                  drop_path_rate=0., norm_layer=nn.LayerNorm, ):
+
         super().__init__()
         self.dim = dim
         self.input_resolution = to_2tuple(input_resolution)
@@ -160,6 +208,23 @@ class ChannelTransformerLayer(nn.Module):
 
 @BASEMODULE.register_module()
 class UnetChannelTransformerLayers(nn.Module):
+    """ Collection of Channel-Transformer-Layer in the shape of unet
+
+    Args:
+        dims (int): Number of input channels.
+        input_resolutions (int): spatial resolution of input features # TODO 这里的数据类型需要确认
+        depths (int): number of stacked channel-transformer-blocks
+        num_heads (int): Number of heads in `Multi-Head Attention`
+        mlp_ratio (float): ratio of hidden layer to input channel in MLP
+        qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
+        qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set
+        drop (): Dropout ratio of output of Attention. Default: 0.0
+        attn_drop (float, optional): Dropout ratio of attention weight. Default: 0.0
+        drop_path_rate (float): Rate required to generate drop path, it will be called by
+            `torch.linspace(0, drop_path_rate, depth)`
+            designed to increase the probability of DropPath as the depth increases
+        norm_layer (nn.Module): normalization layer before Attention and MLP. Default: None
+    """
     def __init__(self,
                  dims,
                  input_resolutions,

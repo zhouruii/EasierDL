@@ -6,18 +6,53 @@ from ..builder import BASEMODULE
 
 
 def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:
-    """3x3 convolution with padding"""
+    """ 3x3 Convolution Layer
+
+    Args:
+        in_planes (int): number of input channels
+        out_planes (int): number of output channels
+        stride (int): the stride for the convolution operation. Default: 1
+        groups (int): the groups for the convolution operation. Default: 1
+        dilation (int): the dilation for the convolution operation. Default: 1
+
+    Returns:
+        nn.Conv2d: Convolution Layer
+    """
+
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                      padding=dilation, groups=groups, bias=False, dilation=dilation)
 
 
 def conv1x1(in_planes: int, out_planes: int, stride: int = 1) -> nn.Conv2d:
-    """1x1 convolution"""
+    """ 1x1 Convolution Layer
+
+    Args:
+        in_planes (int): number of input channels
+        out_planes (int): number of output channels
+        stride (int): the stride for the convolution operation. Default: 1
+
+    Returns:
+        nn.Conv2d: Convolution Layer
+    """
+
     return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
 
 
 @BASEMODULE.register_module()
 class BasicResidualBlock(nn.Module):
+    """ basic residual block (RB)
+
+    Args:
+        inplanes (int): number of input channels
+        planes (int): number of output channels
+        stride (int): the stride for the convolution operation. Default: 1
+        downsample (nn.Module): operations performed when residual is applied. Default: None
+        groups (int): the groups for the convolution operation. Default: 1
+        base_width (int): base width of image. Default: 64
+        dilation (int): the dilation for the convolution operation. Default: 1
+        norm_layer (nn.Module): normalization layer after convolution layer. Default: None
+    """
+
     expansion: int = 1
 
     def __init__(
@@ -31,6 +66,7 @@ class BasicResidualBlock(nn.Module):
             dilation: int = 1,
             norm_layer: Optional[Callable[..., nn.Module]] = None
     ) -> None:
+
         super(BasicResidualBlock, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
@@ -68,11 +104,24 @@ class BasicResidualBlock(nn.Module):
 
 @BASEMODULE.register_module()
 class ResidualBottleneck(nn.Module):
-    # Bottleneck in torchvision places the stride for downsampling at 3x3 convolution(self.conv2)
-    # while original implementation places the stride at the first 1x1 convolution(self.conv1)
-    # according to "Deep residual learning for image recognition"https://arxiv.org/abs/1512.03385.
-    # This variant is also known as ResNet V1.5 and improves accuracy according to
-    # https://ngc.nvidia.com/catalog/model-scripts/nvidia:resnet_50_v1_5_for_pytorch.
+    """ basic residual bottleneck
+
+    Bottleneck in torchvision places the stride for downsampling at 3x3 convolution(self.conv2)
+    while original implementation places the stride at the first 1x1 convolution(self.conv1)
+    according to "Deep residual learning for image recognition"https://arxiv.org/abs/1512.03385.
+    This variant is also known as ResNet V1.5 and improves accuracy according to
+    https://ngc.nvidia.com/catalog/model-scripts/nvidia:resnet_50_v1_5_for_pytorch.
+
+    Args:
+        inplanes (int): number of input channels
+        planes (int): number of output channels
+        stride (int): the stride for the convolution operation. Default: 1
+        downsample (nn.Module): operations performed when residual is applied. Default: None
+        groups (int): the groups for the convolution operation. Default: 1
+        base_width (int): base width of image. Default: 64
+        dilation (int): the dilation for the convolution operation. Default: 1
+        norm_layer (nn.Module): normalization layer after convolution layer. Default: None
+    """
 
     expansion: int = 4
 
@@ -87,6 +136,7 @@ class ResidualBottleneck(nn.Module):
             dilation: int = 1,
             norm_layer: Optional[Callable[..., nn.Module]] = None
     ) -> None:
+
         super(ResidualBottleneck, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
