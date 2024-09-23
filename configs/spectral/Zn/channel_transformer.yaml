@@ -47,7 +47,7 @@ model:
     embed_dim: 512
     norm_layer: nn.LayerNorm
   basemodule:
-    type: UnetChannelTransformerLayers
+    type: ChannelTransformerLayers
     dims: 512, 1024
     input_resolutions: 2, 1
     depths: 1, 1
@@ -59,11 +59,11 @@ model:
     attn_drop: 0.0
     drop_path_rate: 0.2
     norm_layer: nn.LayerNorm
-  downsample:
-    type: PixelUnShuffle
-    factor: 2
-    in_channel: 512
-    out_channel: 1024
+    downsamples:
+      type: PixelUnShuffle
+      factor: 2
+      in_channel: 512
+      out_channel: 1024
   head:
     type: FCHead
     embed_dim: 1024

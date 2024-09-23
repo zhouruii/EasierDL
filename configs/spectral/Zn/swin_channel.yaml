@@ -4,8 +4,8 @@ data:
     dataset:
       type: SpectralDataset2d
       data_root: data/spectral/train/reflectivity
-      gt_path: data/spectral/train/labelSOM_normalize.txt
-      elements: SOM
+      gt_path: data/spectral/train/labelZn_scale.txt
+      elements: Zn
       pipelines:
         - type: Pad
           size_divisor: 2
@@ -22,8 +22,8 @@ data:
     dataset:
       type: SpectralDataset2d
       data_root: data/spectral/val/reflectivity
-      gt_path: data/spectral/val/labelSOM_normalize.txt
-      elements: SOM
+      gt_path: data/spectral/val/labelZn_scale.txt
+      elements: Zn
       pipelines:
         - type: Pad
           size_divisor: 2
@@ -49,39 +49,41 @@ model:
   parallels:
     - type: Stack
       stacks:
-        - type: ChannelTransformerLayer
-          dim: 512
-          input_resolution: 2
-          depth: 2
-          num_head: 16
-          mlp_ratio: 2.0
-          qkv_bias: true
-          qk_scale: null
-          drop: 0.2 # drop_rate
-          attn_drop: 0.0
-          drop_path_rate: 0.1
-      head:
-        type: FCHead
-        embed_dim: 512
-        pred_num: 1
+        - basemodule:
+            type: ChannelTransformerLayer
+            dim: 512
+            input_resolution: 2
+            depth: 2
+            num_heads: 16
+            mlp_ratio: 2.0
+            qkv_bias: true
+            qk_scale: null
+            drop: 0.2 # drop_rate
+            attn_drop: 0.0
+            drop_path: 0.1
+        - head:
+            type: FCHead
+            embed_dim: 512
+            pred_num: 1
     - type: Stack
       stacks:
-        - type: SwinTransformerLayer
-          dim: 512
-          input_resolution: 2
-          depth: 1
-          num_head: 16
-          window_size: 2
-          mlp_ratio: 2.0
-          qkv_bias: true
-          qk_scale: null
-          drop: 0.2 # drop_rate
-          attn_drop: 0.0
-          drop_path: 0.1
-      head:
-        type: FCHead
-        embed_dim: 512
-        pred_num: 1
+        - basemodule:
+            type: SwinTransformerLayer
+            dim: 512
+            input_resolution: 2
+            depth: 1
+            num_head: 16
+            window_size: 2
+            mlp_ratio: 2.0
+            qkv_bias: true
+            qk_scale: null
+            drop: 0.2 # drop_rate
+            attn_drop: 0.0
+            drop_path: 0.1
+        - head:
+            type: FCHead
+            embed_dim: 512
+            pred_num: 1
   postprocessor:
     type: WeightedSum
     weights: 2

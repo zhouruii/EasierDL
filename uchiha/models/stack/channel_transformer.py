@@ -1,57 +1,49 @@
 from torch import nn
 
-from ..builder import (build_preprocessor, build_embedding, build_basemodule,
-                       build_downsample, build_head, MODEL)
+from ..builder import MODEL
+from .base import Stack
 from ...utils.misc import strings_to_list
 
 
 @MODEL.register_module()
-class ChannelTransformer(nn.Module):
-    # TODO 结构优化
+class ChannelTransformer(Stack):
+    """ Channel Transformer Network
+
+    Args:
+        embedding (dict): Config information for building the embedding. Default: None.
+        basemodule (dict): Config information for building the basemodule. Default: None.
+        head (dict): Config information for building the head. Default: None.
+    """
+
     def __init__(self,
-                 preprocessor=None,
                  embedding=None,
                  basemodule=None,
-                 downsample=None,
-                 head=None, ):
-        super().__init__()
-        self.preprocessor = build_preprocessor(preprocessor)
-        self.embedding = build_embedding(embedding)
+                 head=None):
 
-        self.basemodule = build_basemodule(strings_to_list(basemodule))
+        basemodule = strings_to_list(basemodule)
+        super().__init__(stacks=[{'embedding': embedding},
+                                 {'basemodule': basemodule},
+                                 {'head': head}])
+        self.embedding: nn.Module = self.stacks[0]
+        self.basemodule: nn.Module = self.stacks[1]
+        self.head: nn.Module = self.stacks[2]
+
         if hasattr(self.basemodule, 'layers'):
             self.layers = self.basemodule.layers
             self.num_layers = len(self.layers)
         else:
-            self.layers = self.basemodule
+            self.layers = nn.ModuleList([self.basemodule])
             self.num_layers = 1
 
-        self.downsample = build_downsample(downsample)
-
-        self.head = build_head(head)
-
     def forward_features(self, x):
-        # preprocess
-        if self.preprocessor:
-            x = self.preprocessor(x)
-
         # embedding
-        x = self.embedding(x)
+        out = self.embedding(x)
 
         # core
-        if self.num_layers > 1:
-            for i in range(self.num_layers):
-                if i < self.num_layers - 1:
-                    x = self.downsample(self.layers[i](x))
-                else:
-                    x = self.layers[i](x)
-        else:
-            if self.downsample:
-                x = self.downsample(self.layers(x))
-            else:
-                x = self.layers(x)
+        for layer in self.layers:
+            out = layer(out)
 
-        return x
+        return out
 
     def forward(self, x):
         out = self.forward_features(x)

@@ -1,3 +1,5 @@
+from torch import nn
+
 from ..utils import get_root_logger
 from ..utils import Registry
 
@@ -14,7 +16,7 @@ POSTPROCESSOR = Registry('postprocessor')
 UPSAMPLE = Registry('upsample')
 
 
-def build_preprocessor(cfg):
+def build_preprocessor(cfg) -> nn.Module:
     """ build preprocessor based on configuration
 
     Args:
@@ -28,7 +30,7 @@ def build_preprocessor(cfg):
         return PREPROCESSOR.build(cfg)
 
 
-def build_postprocessor(cfg):
+def build_postprocessor(cfg) -> nn.Module:
     """ build postprocessor based on configuration
 
     Args:
@@ -42,7 +44,7 @@ def build_postprocessor(cfg):
         return POSTPROCESSOR.build(cfg)
 
 
-def build_embedding(cfg):
+def build_embedding(cfg) -> nn.Module:
     """ build embedding based on configuration
 
     Args:
@@ -56,7 +58,7 @@ def build_embedding(cfg):
         return EMBEDDING.build(cfg)
 
 
-def build_basemodule(cfg):
+def build_basemodule(cfg) -> nn.Module:
     """ build basemodule based on configuration
 
     Args:
@@ -70,7 +72,7 @@ def build_basemodule(cfg):
         return BASEMODULE.build(cfg)
 
 
-def build_downsample(cfg):
+def build_downsample(cfg) -> nn.Module:
     """ build downsample based on configuration
 
     Args:
@@ -84,7 +86,7 @@ def build_downsample(cfg):
         return DOWNSAMPLE.build(cfg)
 
 
-def build_upsample(cfg):
+def build_upsample(cfg) -> nn.Module:
     """ build upsample based on configuration
 
     Args:
@@ -98,7 +100,7 @@ def build_upsample(cfg):
         return UPSAMPLE.build(cfg)
 
 
-def build_bottleneck(cfg):
+def build_bottleneck(cfg) -> nn.Module:
     """ build bottleneck based on configuration
 
     Args:
@@ -112,7 +114,7 @@ def build_bottleneck(cfg):
         return BOTTLENECK.build(cfg)
 
 
-def build_head(cfg):
+def build_head(cfg) -> nn.Module:
     """ build head based on configuration
 
     Args:
@@ -126,7 +128,7 @@ def build_head(cfg):
         return HEAD.build(cfg)
 
 
-def build_fusion(cfg):
+def build_fusion(cfg) -> nn.Module:
     """ build fusion based on configuration
 
     Args:
@@ -140,7 +142,7 @@ def build_fusion(cfg):
         return FUSION.build(cfg)
 
 
-def build_model(cfg):
+def build_model(cfg) -> nn.Module:
     """ build model based on configuration
 
     Args:

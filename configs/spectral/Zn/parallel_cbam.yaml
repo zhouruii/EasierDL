@@ -1,0 +1,118 @@
+work_dir: experiment/exp
+data:
+  train:
+    dataset:
+      type: SpectralDataset2d
+      data_root: data/spectral/train/reflectivity
+      gt_path: data/spectral/train/labelZn_scale.txt
+      elements: Zn
+      pipelines:
+        - type: Pad
+          size_divisor: 2
+          mode: edge
+          pad_val: 0
+        - type: Normalize
+          scope: channel
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 4
+      shuffle: true
+  val:
+    dataset:
+      type: SpectralDataset2d
+      data_root: data/spectral/val/reflectivity
+      gt_path: data/spectral/val/labelZn_scale.txt
+      elements: Zn
+      pipelines:
+        - type: Pad
+          size_divisor: 2
+          mode: edge
+          pad_val: 0
+        - type: Normalize
+          scope: channel
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 4
+      shuffle: false
+
+model:
+  type: Parallel
+  preprocessor:
+    type: SimpleConv
+    in_channel: 330
+    out_channel: 256
+    depth: 2
+    stride: 1
+    copies: 2
+  parallels:
+    - type: Stack
+      stacks:
+        - basemodule:
+            type: BasicCAM
+            in_channel: 256
+            out_channel: 256
+            stride: 1
+            downsample:
+              type: DownsampleConv
+              in_channel: 256
+              out_channel: 256
+              kernel_size: 1
+              stride: 1
+              padding: 0
+        - head:
+            type: FCHead
+            embed_dim: 256
+            pred_num: 1
+            mode: image
+    - type: Stack
+      stacks:
+        - basemodule:
+            type: BasicSAM
+            in_channel: 256
+            out_channel: 256
+            stride: 1
+            downsample:
+              type: DownsampleConv
+              in_channel: 256
+              out_channel: 256
+              kernel_size: 1
+              stride: 1
+              padding: 0
+        - head:
+            type: FCHead
+            embed_dim: 256
+            pred_num: 1
+            mode: image
+  postprocessor:
+    type: WeightedSum
+    weights: 2
+
+loss:
+  type: L1Loss
+
+optimizer:
+  type: AdamW
+  lr: 1.0e-5
+  weight_decay: 0.01
+
+scheduler:
+  type: StepLR
+  step_size: 50
+  gamma: 0.5
+#  type: CosineAnnealingLR
+#  T_max: 100
+#  eta_min: 1.0e-7
+
+train:
+  epoch: 100
+
+val:
+  val_freq: 1
+  metric: R2
+
+checkpoint:
+  save_freq: 100
+  resume_from: null
+  auto_resume: false

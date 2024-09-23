@@ -115,7 +115,7 @@ class Block(nn.Module):
 
 @BASEMODULE.register_module()
 class BasicTransformer(nn.Module):
-    """
+    """ Basic Transformer
 
     Args:
         dim (int): input dimension

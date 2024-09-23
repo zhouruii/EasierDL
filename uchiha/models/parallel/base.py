@@ -26,13 +26,13 @@ class Parallel(nn.Module):
                  postprocessor=None):
 
         super().__init__()
-        self.preprocessor = build_preprocessor(preprocessor)
+        self.preprocessor: nn.Module = build_preprocessor(preprocessor)
 
         self.workflows = nn.ModuleList()
         for workflow in parallels:
             self.workflows.append(build_model(workflow))
 
-        self.postprocessor = build_postprocessor(postprocessor)
+        self.postprocessor: nn.Module = build_postprocessor(postprocessor)
 
     def forward(self, x):
         if self.preprocessor:

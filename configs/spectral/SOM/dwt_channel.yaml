@@ -1,18 +1,18 @@
-work_dir: experiment/parallel/Zn_ws
+work_dir: experiment/parallel/SOM_ws
 data:
   train:
     dataset:
       type: SpectralDataset2d
       data_root: data/spectral/train/reflectivity
-      gt_path: data/spectral/train/labelZn.txt
-      elements: Zn
+      gt_path: data/spectral/train/labelSOM.txt
+      elements: SOM
       pipelines:
         - type: Pad
           size_divisor: 2
-#          mode: edge
+          mode: edge
           pad_val: 0
         - type: Normalize
-          scope: spatial
+          scope: channel
         - type: EasyToTensor
           mode: CHW
     dataloader:
@@ -22,15 +22,15 @@ data:
     dataset:
       type: SpectralDataset2d
       data_root: data/spectral/val/reflectivity
-      gt_path: data/spectral/val/labelZn.txt
-      elements: Zn
+      gt_path: data/spectral/val/labelSOM.txt
+      elements: SOM
       pipelines:
         - type: Pad
           size_divisor: 2
-#          mode: edge
+          mode: edge
           pad_val: 0
         - type: Normalize
-          scope: spatial
+          scope: channel
         - type: EasyToTensor
           mode: CHW
     dataloader:
@@ -58,13 +58,13 @@ model:
         dim: 256
         input_resolution: 2
         depth: 2
-        num_head: 16
+        num_heads: 16
         mlp_ratio: 2.0
         qkv_bias: true
         qk_scale: null
         drop: 0.2 # drop_rate
         attn_drop: 0.0
-        drop_path_rate: 0.1
+        drop_path: 0.1
       head:
         type: FCHead
         embed_dim: 256
@@ -82,13 +82,13 @@ model:
         dim: 256
         input_resolution: 2
         depth: 1
-        num_head: 16
+        num_heads: 16
         mlp_ratio: 2.0
         qkv_bias: true
         qk_scale: null
         drop: 0.2 # drop_rate
         attn_drop: 0.0
-        drop_path_rate: 0.1
+        drop_path: 0.1
       head:
         type: FCHead
         embed_dim: 256
@@ -109,7 +109,7 @@ loss:
 
 optimizer:
   type: AdamW
-  lr: 3.0e-4
+  lr: 1.0e-4
   weight_decay: 0.01
 #  type: Adam
 #  lr: 0.001
@@ -117,7 +117,7 @@ optimizer:
 scheduler:
   type: StepLR
   step_size: 10
-  gamma: 0.5
+  gamma: 0.2
 #  type: CosineAnnealingLR
 #  T_max: 10
 #  eta_min: 1.0e-6

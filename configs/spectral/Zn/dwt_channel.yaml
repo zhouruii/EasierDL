@@ -1,4 +1,4 @@
-work_dir: experiment/parallel/Zn_ws_scale
+work_dir: experiment/parallel/SOM_ws
 data:
   train:
     dataset:
@@ -38,14 +38,14 @@ data:
       shuffle: false
 
 model:
-  type: Parallel
+  type: ParallelChannelTransformer
   preprocessor:
     type: DWT1d
     scales: 1
     wave: haar
     padding: zero
   parallels:
-    - type: Stack
+    - type: ChannelTransformer
       embedding:
         type: PatchEmbedding
         img_size: 4
@@ -53,23 +53,23 @@ model:
         in_channel: 165
         embed_dim: 256
         norm_layer: nn.LayerNorm
-      stacks:
-        - type: ChannelTransformerLayer
-          dim: 256
-          input_resolution: 2
-          depth: 2
-          num_head: 16
-          mlp_ratio: 2.0
-          qkv_bias: true
-          qk_scale: null
-          drop: 0.2 # drop_rate
-          attn_drop: 0.0
-          drop_path_rate: 0.1
+      basemodule:
+        type: ChannelTransformerLayer
+        dim: 256
+        input_resolution: 2
+        depth: 2
+        num_heads: 16
+        mlp_ratio: 2.0
+        qkv_bias: true
+        qk_scale: null
+        drop: 0.2 # drop_rate
+        attn_drop: 0.0
+        drop_path: 0.1
       head:
         type: FCHead
         embed_dim: 256
         pred_num: 1
-    - type: Stack
+    - type: ChannelTransformer
       embedding:
         type: PatchEmbedding
         img_size: 4
@@ -77,18 +77,18 @@ model:
         in_channel: 165
         embed_dim: 256
         norm_layer: nn.LayerNorm
-      stacks:
-        - type: ChannelTransformerLayer
-          dim: 256
-          input_resolution: 2
-          depth: 1
-          num_head: 16
-          mlp_ratio: 2.0
-          qkv_bias: true
-          qk_scale: null
-          drop: 0.2 # drop_rate
-          attn_drop: 0.0
-          drop_path_rate: 0.1
+      basemodule:
+        type: ChannelTransformerLayer
+        dim: 256
+        input_resolution: 2
+        depth: 1
+        num_heads: 16
+        mlp_ratio: 2.0
+        qkv_bias: true
+        qk_scale: null
+        drop: 0.2 # drop_rate
+        attn_drop: 0.0
+        drop_path: 0.1
       head:
         type: FCHead
         embed_dim: 256
@@ -116,10 +116,10 @@ optimizer:
 
 scheduler:
   type: StepLR
-  step_size: 5
-  gamma: 0.7
+  step_size: 10
+  gamma: 0.2
 #  type: CosineAnnealingLR
-#  T_max: 100
+#  T_max: 10
 #  eta_min: 1.0e-6
 
 train:
@@ -127,7 +127,7 @@ train:
 
 val:
   val_freq: 1
-  metric: R2
+  metric: MAE
 
 checkpoint:
   save_freq: 100
