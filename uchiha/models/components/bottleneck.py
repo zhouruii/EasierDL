@@ -7,7 +7,17 @@ from ..builder import BOTTLENECK
 
 @BOTTLENECK.register_module()
 class ConvBottle(nn.Module):
+    """ bottleneck based on `Conv` between encoder and decoder
+
+    # TODO 暂时使用两层卷积 后面对于激活函数以及卷积核的大小要完善
+
+    Args:
+        in_channel (int): Number of input channels.
+        out_channel (int): Number of output channels.
+    """
+
     def __init__(self, in_channel, out_channel):
+
         super(ConvBottle, self).__init__()
         self.deconv = nn.Sequential(
             nn.Conv2d(in_channel, out_channel, kernel_size=1, stride=1, padding=0),
@@ -29,6 +39,14 @@ class ConvBottle(nn.Module):
 
 @BOTTLENECK.register_module()
 class LinearBottle(nn.Module):
+    """ bottleneck based on `Linear` between encoder and decoder
+
+    # TODO 暂时使用两层全连接 后面对于激活函数要完善
+
+    Args:
+        in_channel (int): Number of input channels.
+        out_channel (int): Number of output channels.
+    """
     def __init__(self, in_channel, out_channel):
         super(LinearBottle, self).__init__()
         self.fc = nn.Sequential(

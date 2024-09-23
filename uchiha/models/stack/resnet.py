@@ -27,6 +27,7 @@ model_urls = {
 
 @MODEL.register_module()
 class ResNet(nn.Module):
+    # TODO 结构优化
 
     def __init__(
             self,

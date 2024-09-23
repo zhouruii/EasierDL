@@ -7,7 +7,17 @@ from ..builder import FUSION
 
 @FUSION.register_module()
 class CatConv(nn.Module):
+    """ Concat followed by Conv
+
+    # TODO 目前就内置了两层卷积，卷积核的大小后面要完善
+
+    Args:
+        in_channel (int): Number of input channels.
+        out_channel (int): Number of output channels.
+    """
+
     def __init__(self, in_channel, out_channel):
+
         super().__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(in_channel, out_channel, kernel_size=1, stride=1, padding=0, bias=False),
@@ -28,6 +38,7 @@ class CatConv(nn.Module):
 
 @FUSION.register_module()
 class CatConvs(nn.Module):
+    # TODO 优化去留
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.fusions = nn.ModuleList()
@@ -40,6 +51,14 @@ class CatConvs(nn.Module):
 
 @FUSION.register_module()
 class CatLinear(nn.Module):
+    """ Concat followed by Linear
+
+    # TODO 目前就内置了两层全连接
+
+    Args:
+        in_channel (int): Number of input channels.
+        out_channel (int): Number of output channels.
+    """
     def __init__(self, in_channel, out_channel):
         super().__init__()
         self.fc = nn.Sequential(
@@ -55,6 +74,7 @@ class CatLinear(nn.Module):
 
 @FUSION.register_module()
 class CatLinears(nn.Module):
+    # TODO 优化去留
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.fusions = nn.ModuleList()

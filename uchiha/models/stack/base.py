@@ -6,6 +6,7 @@ from uchiha.models.builder import (build_basemodule, build_embedding,
 
 @MODEL.register_module()
 class Stack(nn.Module):
+    # TODO 结构优化
     def __init__(self,
                  preprocessor=None,
                  embedding=None,

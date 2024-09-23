@@ -7,10 +7,24 @@ from ...utils.misc import strings_to_list
 
 @MODEL.register_module()
 class Parallel(nn.Module):
+    """ parallel pipeline work
+
+    It is divided into three parts, first preprocessing the data,
+    then sending it to multiple pipelines (each pipeline is a `Stack` operation),
+    and finally using post-processing to integrate the output of multiple pipelines.
+
+    Args:
+        preprocessor (dict): Config information for building the preprocessor
+        parallels (List[dict]): A list of config information for building the parallel,
+            each config information represents a `Stack`
+        postprocessor (dict): Config information for building the postprocessor
+    """
+
     def __init__(self,
                  preprocessor=None,
                  parallels=None,
                  postprocessor=None):
+
         super().__init__()
         self.preprocessor = build_preprocessor(preprocessor)
 

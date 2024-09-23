@@ -8,8 +8,19 @@ from ..builder import DOWNSAMPLE
 
 @DOWNSAMPLE.register_module()
 class PixelUnShuffle(nn.Module):
+    """ `PixelUnShuffle` to image and sequence
+
+    # TODO 目前只对序列做了下采样操作
+    After `PixelUnShuffle`, a Conv/Linear layer id used to map the data to the output dimension.
+
+    Args:
+        factor (int): downsample factor
+        in_channel (int): Number of input channels.
+        out_channel (int): Number of output channels.
+    """
 
     def __init__(self, factor=2, in_channel=512, out_channel=1024):
+
         super().__init__()
         self.downsample = nn.PixelUnshuffle(downscale_factor=factor)
         self.fc = nn.Linear(in_channel * 4, out_channel)
@@ -25,12 +36,23 @@ class PixelUnShuffle(nn.Module):
 
 @DOWNSAMPLE.register_module()
 class DownsampleConv(nn.Module):
+    """ `Conv` with stride > 1 to downsample image
+
+    Args:
+        in_channel (int): Number of input channels. Default: 512
+        out_channel (int): Number of output channels. Default: 1024
+        kernel_size (int): Kernel size for `Conv`. Default: 3
+        stride (int): Stride for `Conv`. Default: 2
+        padding (int): Padding for `Conv`. Default: 1
+    """
+
     def __init__(self,
                  in_channel=512,
                  out_channel=1024,
                  kernel_size=3,
                  stride=2,
                  padding=1):
+
         super().__init__()
         self.downsample = nn.Conv2d(in_channel, out_channel, kernel_size, stride, padding)
         self.activate = nn.GELU()

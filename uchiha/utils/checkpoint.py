@@ -10,6 +10,15 @@ def save_checkpoint(model: torch.nn.Module,
                     optimizer: Optimizer,
                     filepath: str,
                     meta=None) -> None:
+    """ save model parameters
+
+    Args:
+        model (torch.nn.Module): The model that needs to save the parameters
+        optimizer (Optimizer): The optimizer that needs to save the parameters.
+        filepath (str): Save path
+        meta (dict): Other meta information to be saved
+
+    """
     if meta is None:
         meta = {}
 
@@ -37,6 +46,17 @@ def save_checkpoint(model: torch.nn.Module,
 def load_checkpoint(filename: str,
                     model: torch.nn.Module,
                     optimizer: Optimizer, ) -> dict:
+    """
+
+    Args:
+        filename (str): Path of model storage
+        model (torch.nn.Module): The model with random initialization parameters
+        optimizer (Optimizer): The optimizer with random initialization parameters
+
+    Returns:
+        dict: Dict containing model/optimizer parameters and other meta information
+
+    """
     # load
     checkpoint = torch.load(filename, map_location='cpu')
 
@@ -57,6 +77,14 @@ def load_checkpoint(filename: str,
 
 
 def auto_resume_helper(output_dir):
+    """ find the latest saved model
+
+    Args:
+        output_dir (str): Paths for saved models
+
+    Returns:
+        str: The path of the latest saved model
+    """
     checkpoints = os.listdir(output_dir)
     checkpoints = [ckpt for ckpt in checkpoints if ckpt.endswith('pth')]
     if len(checkpoints) > 0:

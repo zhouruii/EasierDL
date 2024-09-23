@@ -7,6 +7,7 @@ from uchiha.utils.misc import get_extension
 
 
 class Config:
+    # TODO 代码完善
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             if isinstance(value, dict):

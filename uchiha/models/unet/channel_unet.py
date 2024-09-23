@@ -10,6 +10,7 @@ from ..builder import build_preprocessor, build_embedding, build_basemodule, bui
 
 @MODEL.register_module()
 class ChannelUNet(nn.Module):
+    # TODO 结构优化
     def __init__(self,
                  preprocessor=None,
                  embedding=None,

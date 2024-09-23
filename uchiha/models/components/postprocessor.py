@@ -1,4 +1,5 @@
 from typing import List
+
 import torch
 from pytorch_wavelets import DWT1DInverse, DWTInverse
 from torch import nn, Tensor
@@ -8,6 +9,12 @@ from ..builder import POSTPROCESSOR
 
 @POSTPROCESSOR.register_module()
 class IDWT2d(nn.Module):
+    """ 2D Inverse Discrete Wavelet Transform
+
+    Args:
+        wave (str): The type of wavelet
+    """
+
     def __init__(self,
                  wave='haar'):
         super().__init__()
@@ -23,6 +30,16 @@ class IDWT2d(nn.Module):
 
 @POSTPROCESSOR.register_module()
 class IDWT1d(nn.Module):
+    """ 1D Inverse Discrete Wavelet Transform
+
+    # TODO 后面级联全连接的代码完善
+
+    Args:
+        wave (str): The type of wavelet
+        in_channel (int): Number of input channels.
+        out_channel (int): Number of output channels.
+    """
+
     def __init__(self,
                  wave='haar',
                  in_channel=1024,
@@ -42,12 +59,22 @@ class IDWT1d(nn.Module):
 
 @POSTPROCESSOR.register_module()
 class WeightedSum(nn.Module):
+    """ assign weights to multiple inputs and accumulate
+
+    If a list is provided, it will be weighted according to the value of the list,
+    if not, the mean weight will be assigned initially and updated with backward propagation.
+
+    Args:
+        weights (): weights of each input
+    """
+
     def __init__(self, weights):
+
         super().__init__()
-        if isinstance(weights,list):
+        if isinstance(weights, list):
             self.weights = weights
         else:
-            self.weights = nn.ParameterList([nn.Parameter(torch.tensor(1/weights)) for _ in range(weights)])
+            self.weights = nn.ParameterList([nn.Parameter(torch.tensor(1 / weights)) for _ in range(weights)])
 
     def forward(self, x: List[Tensor]):
 

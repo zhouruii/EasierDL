@@ -9,6 +9,7 @@ from ...utils.misc import strings_to_list
 
 @MODEL.register_module()
 class SpatialUNet(nn.Module):
+    # TODO 结构优化
     def __init__(self,
                  preprocessor=None,
                  embedding=None,

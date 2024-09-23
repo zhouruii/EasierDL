@@ -5,11 +5,21 @@ from ..builder import HEAD
 
 @HEAD.register_module()
 class FCHead(nn.Module):
+    """ Fully Connected Head
+
+    Args:
+        embed_dim (int): Number of input channels. Default: 512.
+        pred_num (int): Number of prediction
+        mode (str): If set to 'sequence', apply predictions to (B, L, C), else (B, C, H, W)
+        post_process (str): processor after `Linear `
+    """
+
     def __init__(self,
                  embed_dim,
                  pred_num,
                  mode='sequence',
                  post_process=None):
+
         super().__init__()
         if mode == 'sequence':
             self.pooling = nn.AdaptiveAvgPool1d(1)

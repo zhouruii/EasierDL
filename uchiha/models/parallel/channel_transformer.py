@@ -7,6 +7,7 @@ from ...utils.misc import strings_to_list
 
 @MODEL.register_module()
 class ParallelChannelTransformer(nn.Module):
+    # TODO 优化去留
     def __init__(self,
                  preprocessor=None,
                  parallels=None,

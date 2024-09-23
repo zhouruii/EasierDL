@@ -8,6 +8,14 @@ from .metric import mean_absolute_error, r2_score
 
 
 def tensor2np(x):
+    """ tensor --> ndarray
+
+    Args:
+        x (Tensor): Input tensor data
+
+    Returns:
+        ndarray: converted ndarray data
+    """
     if isinstance(x, list):
         for idx, data in enumerate(x):
             x[idx] = tensor2np(data)
@@ -17,8 +25,19 @@ def tensor2np(x):
 
 
 def regression_eval(preds, targets, elements, metric='MAE'):
+    """ evaluation of regression tasks
 
-    results = {element: 0 for element in elements}
+    Args:
+        preds (Tensor): Prediction of the model
+        targets (Tensor): GT data
+        elements (List[str]): Elements that need to be predicted
+        metric (str): Evaluation metric. Default: MAE.
+
+    Returns:
+        dict: evaluation results for each element
+    """
+
+    results = {element: 0.0 for element in elements}
 
 
     preds = np.vstack(tensor2np(preds))
@@ -36,6 +55,16 @@ def regression_eval(preds, targets, elements, metric='MAE'):
 
 
 def compute_metric(pred, target, metric='MAE'):
+    """ given metric, calculation result
+
+    Args:
+        pred (ndarray): Prediction
+        target (ndarray): GT
+        metric (str): Evaluation metric. Default: MAE.
+
+    Returns:
+        float: Calculation results
+    """
     if metric == 'MAE':
         return mean_absolute_error(pred, target)
     elif metric == 'R2':
@@ -46,6 +75,13 @@ def compute_metric(pred, target, metric='MAE'):
 
 
 def print_metrics(result, metric):
+    """ print metrics in the console
+
+    Args:
+        result (dict): Evaluation results for each element .
+        metric (str): Evaluation metric.
+
+    """
     header = ['Element', f'{metric}']
     table_data = [header]
     for key, value in result.items():

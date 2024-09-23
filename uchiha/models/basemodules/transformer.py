@@ -1,18 +1,22 @@
 import torch
-from timm.layers import DropPath, to_2tuple
 from einops import rearrange
 from torch import nn
-import torch.nn.functional as F
 
 from ..builder import BASEMODULE
-from ...utils import build_norm
-
-
-
 
 
 class CrossAttention(nn.Module):
+    """ Cross-Attention between the primary and secondary
+
+    Args:
+        dim (int): Number of input channels.
+        num_heads (int): Number of heads in `Multi-Head Attention`
+        bias (bool): If True, add a learnable bias to query, key, value and projection
+        mode (str): If set to 'channel', Attention calculations will be performed on the channel, else spatial
+    """
+
     def __init__(self, dim, num_heads, bias, mode='channel'):
+
         super(CrossAttention, self).__init__()
         self.num_heads = num_heads
         self.mode = mode
@@ -49,12 +53,20 @@ class CrossAttention(nn.Module):
 
 @BASEMODULE.register_module()
 class CrossTransformer(nn.Module):
+    """ CrossAttention with LayerNorm
+
+    Args:
+        dim (int): Number of input channels.
+        num_heads (int): Number of heads in `Multi-Head Attention`
+        bias (bool): If True, add a learnable bias to query, key, value and projection. Default: False
+    """
+
     def __init__(self, dim, num_heads=4, bias=False):
+
         super(CrossTransformer, self).__init__()
         self.norm1 = nn.LayerNorm(dim)
         self.norm2 = nn.LayerNorm(dim)
         self.attn = CrossAttention(dim, num_heads, bias)
-
 
     def forward(self, x1, x2):
         # x1 -> q

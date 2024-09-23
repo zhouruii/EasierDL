@@ -6,6 +6,19 @@ from ..builder import EMBEDDING
 
 @EMBEDDING.register_module()
 class PatchEmbedding(nn.Module):
+    r""" Image to Patch Embedding
+
+    (B, C, H, W) --> (B, L, _C)
+    L = (H * W) / (patch_size ** 2)
+    _C = embed_dim
+
+    Args:
+        img_size (int): Image size.  Default: 4.
+        patch_size (int): Patch token size. Default: 1.
+        in_channel (int): Number of input image channels. Default: 330.
+        embed_dim (int): Number of Conv projection output channels. Default: 512.
+        norm_layer (nn.Module, optional): Normalization layer. Default: None
+    """
 
     def __init__(self, img_size=4, patch_size=1, in_channel=330, embed_dim=512, norm_layer=None):
         super().__init__()
@@ -45,6 +58,16 @@ class PatchEmbedding(nn.Module):
 
 @EMBEDDING.register_module()
 class TokenEmbedding(nn.Module):
+    r""" Sequence to Patch Embedding
+
+    (B, L, W) --> (B, L, _C)
+    _C = embed_dim
+
+    Args:
+        in_channel (int): Number of input image channels.
+        embed_dim (int): Number of linear projection output channels.
+        norm_layer (nn.Module, optional): Normalization layer.
+    """
     def __init__(self, in_channel, embed_dim, norm_layer):
         super().__init__()
         self.in_channel = in_channel

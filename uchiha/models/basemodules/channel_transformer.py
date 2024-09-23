@@ -209,10 +209,10 @@ class ChannelTransformerLayer(nn.Module):
 @BASEMODULE.register_module()
 class UnetChannelTransformerLayers(nn.Module):
     """ Collection of Channel-Transformer-Layer in the shape of unet
-
+    # TODO 这里是否使用类来包裹以及后续使用的优化需要确定
     Args:
         dims (int): Number of input channels.
-        input_resolutions (int): spatial resolution of input features # TODO 这里的数据类型需要确认
+        input_resolutions (int): spatial resolution of input features
         depths (int): number of stacked channel-transformer-blocks
         num_heads (int): Number of heads in `Multi-Head Attention`
         mlp_ratio (float): ratio of hidden layer to input channel in MLP
@@ -275,6 +275,7 @@ class UnetChannelTransformerLayers(nn.Module):
 
 @BASEMODULE.register_module()
 class ChannelTransformerLayers(nn.Module):
+    # TODO 与上面UNet类似需要确定
     def __init__(self,
                  dims,
                  input_resolutions,

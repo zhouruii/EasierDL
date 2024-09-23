@@ -7,6 +7,7 @@ from ...utils.misc import strings_to_list
 
 @MODEL.register_module()
 class ParallelSpatialChannelTransformer(nn.Module):
+    # TODO 优化结构
     def __init__(self,
                  embedding=None,
                  parallels=None,

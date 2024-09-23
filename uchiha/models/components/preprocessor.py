@@ -8,10 +8,19 @@ from ..builder import PREPROCESSOR
 
 @PREPROCESSOR.register_module()
 class DWT2d(nn.Module):
+    """ 2D Discrete Wavelet Transform
+
+    Args:
+        scales (int): Number of scales (number of transform performed)
+        wave (str): The type of wavelet
+        padding (str): data padding mode before transformation
+    """
+
     def __init__(self,
                  scales=1,
                  wave='haar',
                  padding='zero'):
+
         super().__init__()
         self.wavlet_transform = DWTForward(J=scales, wave=wave, mode=padding)
 
@@ -25,6 +34,14 @@ class DWT2d(nn.Module):
 
 @PREPROCESSOR.register_module()
 class DWT1d(nn.Module):
+    """ 1D Discrete Wavelet Transform
+
+    Args:
+        scales (int): Number of scales (number of transform performed)
+        wave (str): The type of wavelet
+        padding (str): data padding mode before transformation
+        origin (bool): Whether to return original data.
+    """
     def __init__(self,
                  scales=1,
                  wave='haar',
@@ -54,6 +71,7 @@ class DWT1d(nn.Module):
 
 @PREPROCESSOR.register_module()
 class SimpleConv(nn.Module):
+    # TODO 优化去留
     def __init__(self,
                  in_channel=3,
                  out_channel=64,

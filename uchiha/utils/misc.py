@@ -3,6 +3,14 @@ from typing import Union
 
 
 def strings_to_list(x: Union[str, dict]):
+    """ string(s) --> list
+
+    Args:
+        x (str | dict): A single string or a dict containing strings
+
+    Returns:
+        list: Converted list(value of dict) of containing strings
+    """
     if isinstance(x, dict):
         for key, value in x.items():
             if isinstance(value, str):
@@ -19,5 +27,13 @@ def strings_to_list(x: Union[str, dict]):
 
 
 def get_extension(path):
+    """ Get the extension of a file
+
+    Args:
+        path (str): File path
+
+    Returns:
+        str: The extension of the file
+    """
     basename = os.path.basename(path)
     return basename.split('.')[-1]

@@ -7,6 +7,16 @@ from ..builder import UPSAMPLE
 
 @UPSAMPLE.register_module()
 class PixelShuffle(nn.Module):
+    """ `PixelShuffle` to image and sequence
+
+    # TODO 目前只对序列做了下采样操作
+    After `PixelShuffle`, a Conv/Linear layer id used to map the data to the output dimension.
+
+    Args:
+        factor (int): upsample factor
+        in_channel (int): Number of input channels.
+        out_channel (int): Number of output channels.
+    """
 
     def __init__(self, factor=2, in_channel=1024, out_channel=512):
         super().__init__()

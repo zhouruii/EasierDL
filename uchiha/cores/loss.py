@@ -20,8 +20,8 @@ class MultiL1Loss(nn.Module):
 
     Args:
         weights (List[int] | int): weights of each pipeline
-            When a list is provided, the weighted sum is based on the elements in the list,
-            when an integer is provided, the weights are randomly initialized and updated with backpropagation.
+            If a list is provided, it will be weighted according to the value of the list,
+            if not, the mean weight will be assigned initially and updated with backward propagation.
             Default: 2
     """
     def __init__(self,
