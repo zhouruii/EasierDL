@@ -1,3 +1,3 @@
-from .channel_transformer import ParallelChannelTransformer
+
 from .base import Parallel
 from .spatial_channel_transformer import ParallelSpatialChannelTransformer

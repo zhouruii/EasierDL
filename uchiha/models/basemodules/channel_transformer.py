@@ -251,7 +251,7 @@ class UnetChannelTransformerLayers(nn.Module):
         mlp_ratio (float): ratio of hidden layer to input channel in MLP
         qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
         qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set
-        drop (): Dropout ratio of output of Attention. Default: 0.0
+        drop_rate (): Dropout ratio of output of Attention. Default: 0.0
         attn_drop (float, optional): Dropout ratio of attention weight. Default: 0.0
         drop_path_rate (float): Rate required to generate drop path, it will be called by
             `torch.linspace(0, drop_path_rate, depth)`
@@ -329,7 +329,7 @@ class ChannelTransformerLayers(nn.Module):
         mlp_ratio (float): ratio of hidden layer to input channel in MLP
         qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
         qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set
-        drop (): Dropout ratio of output of Attention. Default: 0.0
+        drop_rate (): Dropout ratio of output of Attention. Default: 0.0
         attn_drop (float, optional): Dropout ratio of attention weight. Default: 0.0
         drop_path_rate (float): Rate required to generate drop path, it will be called by
             `torch.linspace(0, drop_path_rate, depth)`

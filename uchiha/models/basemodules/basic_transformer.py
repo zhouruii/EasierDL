@@ -1,3 +1,5 @@
+__all__ = []
+
 import torch
 from torch import nn
 
@@ -114,42 +116,50 @@ class Block(nn.Module):
 
 
 @BASEMODULE.register_module()
-class BasicTransformer(nn.Module):
-    """ Basic Transformer
+class SimpleVisionTransformerLayer(nn.Module):
+    """ Vision Transformer (the simplest implementation)
 
     Args:
         dim (int): input dimension
         depth (int): number of stacked basic-transformer-blocks
         num_heads (int): number of heads in `Multi-Head Attention`
-        num_patches (): The number of patches after the image is divided into patches
+        sequence_length (int): The length of the sequence after changing the shape to (B ,L, C).
         qkv_bias (bool): If True, add a learnable bias to query, key, value. Default: True
-        mlp_dim (int): dimension of hidden layers in FeedForward
+        mlp_ratio (float): ratio of hidden layer to input channel in MLP
+        pos (bool): Position encoding will be used if set to True.
         dropout (float): the rate of `Dropout` layer. Default: 0.0
     """
 
-    def __init__(self, dim, depth, num_heads, num_patches, qkv_bias, mlp_dim, dropout=0.):
+    def __init__(self, dim, depth, num_heads, sequence_length, qkv_bias, mlp_ratio=4., pos=False, dropout=0.):
 
         super().__init__()
         self.cls_token = nn.Parameter(torch.zeros(1, 1, dim))  # 1*dim
-        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, dim))  # 3*dim
+        self.pos = pos
+        if pos:
+            self.pos_embed = nn.Parameter(torch.zeros(1, sequence_length + 1, dim))  # 3*dim
         self.pos_drop = nn.Dropout(dropout)
 
+        mlp_dim = int(dim * mlp_ratio)
         self.blocks = nn.Sequential(*[
             Block(dim, num_heads, qkv_bias, mlp_dim, dropout)
             for _ in range(depth)
         ])
         self.norm = nn.LayerNorm(dim)
 
-        nn.init.trunc_normal_(self.pos_embed, std=0.02)
+        if self.pos:
+            nn.init.trunc_normal_(self.pos_embed, std=0.02)
         nn.init.trunc_normal_(self.cls_token, std=0.02)
         self.apply(_init_vit_weights)
 
     def forward(self, x):
         cls_token = self.cls_token.expand(x.shape[0], -1, -1)  # [B, 1, dim]
         x = torch.cat((cls_token, x), dim=1)  # [B, num_patches + 1, dim]
-        x = self.pos_drop(x + self.pos_embed)
+
+        if self.pos:
+            x = x + self.pos_embed
+        x = self.pos_drop(x)
 
         x = self.blocks(x)
         x = self.norm(x)
 
-        return x[:, 0]
+        return x[:, 0].unsqueeze(1)

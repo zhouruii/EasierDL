@@ -43,7 +43,19 @@ def read(sample_dir, save_dir, to_tensor=True):
             np.save(join(save_dir, f'{sample_idx}.npy'), data)
 
 
+def pt2npy(sample_dir):
+    samples = os.listdir(sample_dir)
+    for sample_idx in samples:
+        sample = join(sample_dir, sample_idx)
+        data = torch.load(sample).unsqueeze(0)
+        data = data.numpy()
+        np.save(os.path.join(sample_dir,sample_idx.replace('pt', 'npy')), data)
+
+
 if __name__ == '__main__':
-    sample_dir = '/home/disk1/ZR/datasets/spectral'
-    save_dir = '/data/spectral_01/train/reflectivity'
-    read(sample_dir, save_dir, to_tensor=False)
+    # sample_dir = '/home/disk1/ZR/datasets/spectral'
+    # save_dir = '/data/spectral_01/train/reflectivity'
+    # read(sample_dir, save_dir, to_tensor=False)
+
+    src = 'data/spectral_2/train/reflectivity'
+    pt2npy(src)

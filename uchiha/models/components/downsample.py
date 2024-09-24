@@ -85,9 +85,6 @@ class PatchMerging(nn.Module):
         self.norm = norm_layer(4 * in_channel)
 
     def forward(self, x):
-        """
-        x: B, H*W, C
-        """
         H, W = self.input_resolution
         B, L, C = x.shape
         assert L == H * W, "input feature has wrong size"

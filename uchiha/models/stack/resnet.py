@@ -25,10 +25,9 @@ model_urls = {
 }
 
 
+# TODO 结构优化
 @MODEL.register_module()
 class ResNet(nn.Module):
-    # TODO 结构优化
-
     def __init__(
             self,
             block: Type[Union[BasicResidualBlock, ResidualBottleneck]],

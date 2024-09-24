@@ -3,14 +3,13 @@ data:
   train:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/train/reflectivity
-      gt_path: data/spectral/train/labelZn_scale.txt
-      elements: Zn
+      data_root: data/spectral_2/train/reflectivity
+      gt_path: data/spectral_2/train/gt_train_organic.txt
+      elements: SOM
       pipelines:
         - type: Pad
           size_divisor: 2
           mode: edge
-          pad_val: 0
         - type: Normalize
           scope: channel
         - type: EasyToTensor
@@ -21,14 +20,13 @@ data:
   val:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/val/reflectivity
-      gt_path: data/spectral/val/labelZn_scale.txt
-      elements: Zn
+      data_root: data/spectral_2/val/reflectivity
+      gt_path: data/spectral_2/val/gt_val_organic.txt
+      elements: SOM
       pipelines:
         - type: Pad
           size_divisor: 2
           mode: edge
-          pad_val: 0
         - type: Normalize
           scope: channel
         - type: EasyToTensor
@@ -38,73 +36,30 @@ data:
       shuffle: false
 
 model:
-  type: Parallel
-  preprocessor:
-    type: DWT1d
-    scales: 1
-    wave: haar
-    padding: zero
-  parallels:
-    - type: ChannelTransformer
-      embedding:
-        type: PatchEmbedding
-        img_size: 4
-        patch_size: 2
-        in_channel: 165
-        embed_dim: 256
-        norm_layer: nn.LayerNorm
-      basemodule:
-        type: ChannelTransformerLayer
-        dim: 256
-        input_resolution: 2
-        depth: 2
-        num_heads: 16
-        mlp_ratio: 2.0
-        qkv_bias: true
-        qk_scale: null
-        drop_rate: 0.2 # drop_rate
-        attn_drop: 0.0
-        drop_path: 0.1
-      head:
-        type: FCHead
-        embed_dim: 256
-        pred_num: 1
-    - type: ChannelTransformer
-      embedding:
-        type: PatchEmbedding
-        img_size: 4
-        patch_size: 2
-        in_channel: 165
-        embed_dim: 256
-        norm_layer: nn.LayerNorm
-      basemodule:
-        type: ChannelTransformerLayer
-        dim: 256
-        input_resolution: 2
-        depth: 1
-        num_heads: 16
-        mlp_ratio: 2.0
-        qkv_bias: true
-        qk_scale: null
-        drop_rate: 0.2 # drop_rate
-        attn_drop: 0.0
-        drop_path: 0.1
-      head:
-        type: FCHead
-        embed_dim: 256
-        pred_num: 1
-  postprocessor:
-    type: WeightedSum
-    weights:
-      - 0.8
-      - 0.2
+  type: SimpleViT
+  embedding:
+    type: PatchEmbedding
+    img_size: 2
+    patch_size: 1
+    in_channel: 147
+    embed_dim: 256
+    norm_layer: nn.LayerNorm
+  basemodule:
+    type: SimpleVisionTransformerLayer
+    dim: 256
+    depth: 2
+    num_heads: 16
+    sequence_length: 4
+    mlp_ratio: 4.0
+    qkv_bias: true
+    pos: false
+    dropout: 0.2
+  head:
+    type: FCHead
+    embed_dim: 256
+    pred_num: 1
 
 loss:
-#  type: MSELoss
-#  type: MultiL1Loss
-#  weights:
-#    - 0.8
-#    - 0.2
   type: L1Loss
 
 optimizer:
@@ -116,7 +71,7 @@ optimizer:
 
 scheduler:
   type: StepLR
-  step_size: 5
+  step_size: 10
   gamma: 0.7
 #  type: CosineAnnealingLR
 #  T_max: 100

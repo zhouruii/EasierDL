@@ -5,9 +5,10 @@ from ..builder import (build_preprocessor, build_embedding, build_basemodule,
 from ...utils.misc import strings_to_list
 
 
+# TODO 优化结构
 @MODEL.register_module()
 class ParallelSpatialChannelTransformer(nn.Module):
-    # TODO 优化结构
+
     def __init__(self,
                  embedding=None,
                  parallels=None,

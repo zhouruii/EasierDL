@@ -1,39 +1,32 @@
 from torch import nn
 
+from .base import Stack
 from uchiha.models.builder import build_basemodule, build_embedding, build_preprocessor, build_head, MODEL
 
 
 @MODEL.register_module()
-class ViT1d(nn.Module):
-    # TODO 结构优化
+class SimpleViT(Stack):
     def __init__(self,
-                 preprocessor=None,
                  embedding=None,
                  basemodule=None,
                  head=None):
-        super().__init__()
-        self.preprocessor = build_preprocessor(preprocessor)
-
-        self.embedding = build_embedding(embedding)
-
-        self.transformer = build_basemodule(basemodule)
-
-        self.mlp_head = build_head(head)
+        super().__init__(stacks=[{'embedding': embedding},
+                                 {'basemodule': basemodule},
+                                 {'head': head}])
+        self.embedding: nn.Module = self.stacks[0]
+        self.basemodule: nn.Module = self.stacks[1]
+        self.head: nn.Module = self.stacks[2]
 
     def forward_features(self, x):
-        # preprocess
-        if self.preprocessor:
-            x = self.preprocessor(x)
-
         # embedding
-        x = self.embedding(x)
+        out = self.embedding(x)
 
         # Transformer
-        x = self.transformer(x)
+        out = self.basemodule(out)
 
-        return x
+        return out
 
     def forward(self, x):
-        x = self.forward_features(x)
-        out = self.mlp_head(x)
+        out = self.forward_features(x)
+        out = self.head(out)
         return out
