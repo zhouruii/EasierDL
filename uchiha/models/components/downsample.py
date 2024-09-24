@@ -1,6 +1,7 @@
 import math
 
 import torch
+from timm.layers import to_2tuple
 from torch import nn
 
 from ..builder import DOWNSAMPLE
@@ -10,7 +11,6 @@ from ..builder import DOWNSAMPLE
 class PixelUnShuffle(nn.Module):
     """ `PixelUnShuffle` to image and sequence
 
-    # TODO 目前只对序列做了下采样操作
     After `PixelUnShuffle`, a Conv/Linear layer id used to map the data to the output dimension.
 
     Args:
@@ -20,7 +20,6 @@ class PixelUnShuffle(nn.Module):
     """
 
     def __init__(self, factor=2, in_channel=512, out_channel=1024):
-
         super().__init__()
         self.downsample = nn.PixelUnshuffle(downscale_factor=factor)
         self.fc = nn.Linear(in_channel * 4, out_channel)
@@ -74,16 +73,16 @@ class PatchMerging(nn.Module):
 
     Args:
         input_resolution (tuple[int]): Resolution of input feature.
-        dim (int): Number of input channels.
+        in_channel (int): Number of input channels.
         norm_layer (nn.Module, optional): Normalization layer.  Default: nn.LayerNorm
     """
 
-    def __init__(self, input_resolution, dim, norm_layer=nn.LayerNorm):
+    def __init__(self, input_resolution, in_channel, norm_layer=nn.LayerNorm):
         super().__init__()
-        self.input_resolution = input_resolution
-        self.dim = dim
-        self.reduction = nn.Linear(4 * dim, 2 * dim, bias=False)
-        self.norm = norm_layer(4 * dim)
+        self.input_resolution = to_2tuple(input_resolution)
+        self.dim = in_channel
+        self.reduction = nn.Linear(4 * in_channel, 2 * in_channel, bias=False)
+        self.norm = norm_layer(4 * in_channel)
 
     def forward(self, x):
         """
@@ -107,3 +106,14 @@ class PatchMerging(nn.Module):
         x = self.reduction(x)
 
         return x
+
+    def extra_repr(self) -> str:
+        return f"dim={self.dim}, input_resolution={self.input_resolution}, depth={self.depth}"
+
+    def flops(self):
+        flops = 0
+        for blk in self.blocks:
+            flops += blk.flops()
+        if self.downsample is not None:
+            flops += self.downsample.flops()
+        return flops

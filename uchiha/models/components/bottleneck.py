@@ -9,20 +9,20 @@ from ..builder import BOTTLENECK
 class ConvBottle(nn.Module):
     """ bottleneck based on `Conv` between encoder and decoder
 
-    # TODO 暂时使用两层卷积 后面对于激活函数以及卷积核的大小要完善
-
     Args:
         in_channel (int): Number of input channels.
         out_channel (int): Number of output channels.
+        kernel_size (int): Kernel size of `Conv`
+        stride (int): Stride of `Conv`
+        padding (int): Padding size of `Conv`
     """
 
-    def __init__(self, in_channel, out_channel):
-
+    def __init__(self, in_channel, out_channel, kernel_size=3, stride=1, padding=1):
         super(ConvBottle, self).__init__()
-        self.deconv = nn.Sequential(
-            nn.Conv2d(in_channel, out_channel, kernel_size=1, stride=1, padding=0),
+        self.conv = nn.Sequential(
+            nn.Conv2d(in_channel, out_channel, kernel_size=kernel_size, stride=stride, padding=padding),
             nn.GELU(),
-            nn.Conv2d(out_channel, out_channel, kernel_size=1, stride=1, padding=0),
+            nn.Conv2d(out_channel, out_channel, kernel_size=kernel_size, stride=stride, padding=padding),
             nn.GELU(),
         )
         self.in_channel = in_channel
@@ -33,7 +33,7 @@ class ConvBottle(nn.Module):
         H = int(math.sqrt(L))
         W = int(math.sqrt(L))
         x = x.transpose(1, 2).contiguous().view(B, C, H, W)
-        out = self.deconv(x).flatten(2).transpose(1, 2).contiguous()  # B H*W C
+        out = self.conv(x).flatten(2).transpose(1, 2).contiguous()  # B H*W C
         return out
 
 
@@ -41,12 +41,11 @@ class ConvBottle(nn.Module):
 class LinearBottle(nn.Module):
     """ bottleneck based on `Linear` between encoder and decoder
 
-    # TODO 暂时使用两层全连接 后面对于激活函数要完善
-
     Args:
         in_channel (int): Number of input channels.
         out_channel (int): Number of output channels.
     """
+
     def __init__(self, in_channel, out_channel):
         super(LinearBottle, self).__init__()
         self.fc = nn.Sequential(

@@ -184,7 +184,7 @@ class ChannelTransformerLayer(nn.Module):
         mlp_ratio (float): ratio of hidden layer to input channel in MLP
         qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
         qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set
-        drop (): Dropout ratio of output of Attention. Default: 0.0
+        drop_rate (): Dropout ratio of output of Attention. Default: 0.0
         attn_drop (float, optional): Dropout ratio of attention weight. Default: 0.0
         drop_path (List | float): The probability of DropPath of each `ChannelTransformer Block`.
         act_layer (nn.Module | str): activation function in MLP.
@@ -198,7 +198,7 @@ class ChannelTransformerLayer(nn.Module):
                  mlp_ratio=4.,
                  qkv_bias=True,
                  qk_scale=None,
-                 drop=0.,
+                 drop_rate=0.,
                  attn_drop=0.,
                  drop_path=0.,
                  act_layer=nn.GELU,
@@ -224,7 +224,7 @@ class ChannelTransformerLayer(nn.Module):
                                     num_heads=num_heads,
                                     mlp_ratio=mlp_ratio,
                                     qkv_bias=qkv_bias, qk_scale=qk_scale,
-                                    drop=drop, attn_drop=attn_drop,
+                                    drop=drop_rate, attn_drop=attn_drop,
                                     drop_path=drop_path[i] if isinstance(drop_path, list) else drop_path,
                                     act_layer=act_layer,
                                     norm_layer=norm_layer)
@@ -241,7 +241,6 @@ class ChannelTransformerLayer(nn.Module):
 
 @BASEMODULE.register_module()
 class UnetChannelTransformerLayers(nn.Module):
-    #TODO 完善下采样
     """ Collection of Channel-Transformer-Layers in the shape of unet
 
     Args:
@@ -269,17 +268,22 @@ class UnetChannelTransformerLayers(nn.Module):
                  mlp_ratio=4.,
                  qkv_bias=True,
                  qk_scale=None,
-                 drop=0.,
+                 drop_rate=0.,
                  attn_drop=0.,
                  drop_path_rate=0.1,
                  act_layer=nn.GELU,
-                 norm_layer=nn.LayerNorm):
+                 norm_layer=nn.LayerNorm,
+                 downsamples=None):
         super().__init__()
         self.dims = dims
         self.input_resolutions = input_resolutions
         self.depths = depths
         self.num_heads = num_heads
         self.num_layers = len(dims) // 2
+
+        self.downsamples = cfg_decomposition(downsamples)
+        if len(self.downsamples) < self.num_layers * 2:
+            self.downsamples.extend([None] * (self.num_layers * 2 - len(self.downsamples)))
 
         # stochastic depth
         self.dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths[:len(depths) // 2]))]
@@ -293,6 +297,8 @@ class UnetChannelTransformerLayers(nn.Module):
             input_resolution = self.input_resolutions[i]
             depth = self.depths[i]
             num_heads = self.num_heads[i]
+            downsample = self.downsamples[i]
+
             drop_path = self.dpr[sum(depths[:i]):sum(depths[:i + 1])]
             if i >= self.num_layers:
                 drop_path = self.dec_dpr[sum(depths[self.num_layers:i]):sum(depths[self.num_layers:i + 1])]
@@ -302,10 +308,11 @@ class UnetChannelTransformerLayers(nn.Module):
                                             depth=depth, num_heads=num_heads,
                                             mlp_ratio=mlp_ratio,
                                             qkv_bias=qkv_bias, qk_scale=qk_scale,
-                                            drop=drop, attn_drop=attn_drop,
+                                            drop_rate=drop_rate, attn_drop=attn_drop,
                                             drop_path=drop_path,
                                             act_layer=act_layer,
-                                            norm_layer=norm_layer)
+                                            norm_layer=norm_layer,
+                                            downsample=downsample)
 
             self.layers.append(layer)
 
@@ -339,7 +346,7 @@ class ChannelTransformerLayers(nn.Module):
                  mlp_ratio=4.,
                  qkv_bias=True,
                  qk_scale=None,
-                 drop=0.,
+                 drop_rate=0.,
                  attn_drop=0.,
                  drop_path_rate=0.1,
                  act_layer=nn.GELU,
@@ -376,7 +383,7 @@ class ChannelTransformerLayers(nn.Module):
                                             depth=depth, num_heads=num_heads,
                                             mlp_ratio=mlp_ratio,
                                             qkv_bias=qkv_bias, qk_scale=qk_scale,
-                                            drop=drop, attn_drop=attn_drop,
+                                            drop_rate=drop_rate, attn_drop=attn_drop,
                                             drop_path=drop_path,
                                             act_layer=act_layer,
                                             norm_layer=norm_layer,

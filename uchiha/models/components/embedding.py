@@ -2,6 +2,7 @@ from timm.layers import to_2tuple
 from torch import nn
 
 from ..builder import EMBEDDING
+from ...utils import build_norm
 
 
 @EMBEDDING.register_module()
@@ -25,25 +26,21 @@ class PatchEmbedding(nn.Module):
         assert img_size % patch_size == 0, \
             f'img_size:{img_size} cannot be divided by patch_size:{patch_size}'
 
-        img_size = to_2tuple(img_size)
-        patch_size = to_2tuple(patch_size)
-        patches_resolution = [img_size[0] // patch_size[0], img_size[1] // patch_size[1]]
-        self.img_size = img_size
-        self.patch_size = patch_size
+        self.img_size: tuple = to_2tuple(img_size)
+        self.patch_size: tuple = to_2tuple(patch_size)
+        patches_resolution = [self.img_size[0] // self.patch_size[0], self.img_size[1] // self.patch_size[1]]
         self.patches_resolution = patches_resolution
         self.num_patches = patches_resolution[0] * patches_resolution[1]
 
         self.in_channel = in_channel
         self.embed_dim = embed_dim
 
-        self.proj = nn.Sequential(nn.Conv2d(in_channel, embed_dim, kernel_size=patch_size, stride=patch_size, bias=False))
-        if norm_layer is not None:
-            if norm_layer == 'nn.LayerNorm':
-                self.norm = nn.LayerNorm(embed_dim)
-            else:
-                self.norm = norm_layer(embed_dim)
-        else:
-            self.norm = None
+        self.proj = nn.Sequential(
+            nn.Conv2d(in_channel, embed_dim, kernel_size=patch_size, stride=patch_size, bias=False)
+        )
+
+        norm_layer = build_norm(norm_layer)
+        self.norm = norm_layer(embed_dim)
 
     def forward(self, x):
         B, C, H, W = x.shape
@@ -54,6 +51,13 @@ class PatchEmbedding(nn.Module):
         if self.norm is not None:
             x = self.norm(x)
         return x
+
+    def flops(self):
+        Ho, Wo = self.patches_resolution
+        flops = Ho * Wo * self.embed_dim * self.in_chans * (self.patch_size[0] * self.patch_size[1])
+        if self.norm is not None:
+            flops += Ho * Wo * self.embed_dim
+        return flops
 
 
 @EMBEDDING.register_module()

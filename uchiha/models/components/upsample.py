@@ -9,7 +9,6 @@ from ..builder import UPSAMPLE
 class PixelShuffle(nn.Module):
     """ `PixelShuffle` to image and sequence
 
-    # TODO 目前只对序列做了下采样操作
     After `PixelShuffle`, a Conv/Linear layer id used to map the data to the output dimension.
 
     Args:

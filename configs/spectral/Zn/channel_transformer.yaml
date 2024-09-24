@@ -55,7 +55,7 @@ model:
     mlp_ratio: 4.0
     qkv_bias: true
     qk_scale: null
-    drop: 0.2 # drop_rate
+    drop_rate: 0.2 # drop_rate
     attn_drop: 0.0
     drop_path_rate: 0.2
     norm_layer: nn.LayerNorm

@@ -11,7 +11,7 @@ def build_optimizer(params, cfg):
     """ build optimizer based on configuration
 
     Args:
-        params (): parameters of the model  # TODO 补充参数的类型
+        params (generator): parameters of the model
         cfg (dict): Configuration information, where the first key is type
 
     Returns:

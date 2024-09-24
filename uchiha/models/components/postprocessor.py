@@ -32,8 +32,6 @@ class IDWT2d(nn.Module):
 class IDWT1d(nn.Module):
     """ 1D Inverse Discrete Wavelet Transform
 
-    # TODO 后面级联全连接的代码完善
-
     Args:
         wave (str): The type of wavelet
         in_channel (int): Number of input channels.

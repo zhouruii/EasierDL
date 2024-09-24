@@ -16,7 +16,7 @@ from uchiha.utils import count_parameters, load_config, get_root_logger, print_l
 def parse_args():
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument('--seed', type=int, default=49)
-    args_parser.add_argument('--config', '-c', type=str, default='configs/exp.yaml')
+    args_parser.add_argument('--config', '-c', type=str, default='configs/spectral/exp.yaml')
     args_parser.add_argument('--no_validate', '-n', action='store_true')
 
     return args_parser.parse_args()
@@ -78,7 +78,8 @@ def main():
         logger.info(f'no checkpoint was loaded! start_epoch: {start_epoch + 1}')
 
     # train & val
-    print_freq = cfg.val.val_freq
+    print_freq = cfg.train.print_freq
+    val_freq = cfg.val.val_freq
     metric = cfg.val.metric
     save_freq = cfg.checkpoint.save_freq
     total_epoch = cfg.train.epoch
@@ -87,10 +88,10 @@ def main():
     for epoch in range(start_epoch, total_epoch):
         # train
         writer, model, optimizer, scheduler = (
-            train_by_epoch(epoch, trainloader, model, optimizer, scheduler, criterion, writer))
+            train_by_epoch(epoch, print_freq, trainloader, model, optimizer, scheduler, criterion, writer))
 
         # val
-        if (epoch + 1) % print_freq == 0:
+        if (epoch + 1) % val_freq == 0:
             print_log(f'epoch:{epoch + 1}/{total_epoch}, validate...', logger)
             _ = validate(epoch, valloader, model, writer, metric)
 

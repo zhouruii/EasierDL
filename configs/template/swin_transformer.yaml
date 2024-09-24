@@ -1,0 +1,33 @@
+model:
+  type: SwinTransformer
+  embedding:
+    type: PatchEmbedding
+    img_size: 4
+    patch_size: 2
+    in_channel: 330
+    embed_dim: 512
+    norm_layer: nn.LayerNorm
+  ape: false
+  basemodule:
+    type: SwinTransformerLayers
+    dims: 512, 1024
+    input_resolutions: 2, 1
+    depths: 1, 1
+    num_heads: 8, 16
+    window_sizes: 1,1
+    mlp_ratio: 4.0
+    qkv_bias: true
+    qk_scale: null
+    drop_rate: 0.2
+    attn_drop: 0.0
+    drop_path_rate: 0.2
+    norm_layer: nn.LayerNorm
+    downsamples:
+      type: PatchMerging
+      input_resolution: 2
+      in_channel: 512
+
+  head:
+    type: FCHead
+    embed_dim: 1024
+    pred_num: 1

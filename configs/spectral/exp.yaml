@@ -1,0 +1,136 @@
+work_dir: experiment/parallel/Zn_ws_scale
+data:
+  train:
+    dataset:
+      type: SpectralDataset2d
+      data_root: data/spectral/train/reflectivity
+      gt_path: data/spectral/train/labelZn_scale.txt
+      elements: Zn
+      pipelines:
+        - type: Pad
+          size_divisor: 2
+          mode: edge
+          pad_val: 0
+        - type: Normalize
+          scope: channel
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 4
+      shuffle: true
+  val:
+    dataset:
+      type: SpectralDataset2d
+      data_root: data/spectral/val/reflectivity
+      gt_path: data/spectral/val/labelZn_scale.txt
+      elements: Zn
+      pipelines:
+        - type: Pad
+          size_divisor: 2
+          mode: edge
+          pad_val: 0
+        - type: Normalize
+          scope: channel
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 4
+      shuffle: false
+
+model:
+  type: Parallel
+  preprocessor:
+    type: DWT1d
+    scales: 1
+    wave: haar
+    padding: zero
+  parallels:
+    - type: ChannelTransformer
+      embedding:
+        type: PatchEmbedding
+        img_size: 4
+        patch_size: 2
+        in_channel: 165
+        embed_dim: 256
+        norm_layer: nn.LayerNorm
+      basemodule:
+        type: ChannelTransformerLayer
+        dim: 256
+        input_resolution: 2
+        depth: 2
+        num_heads: 16
+        mlp_ratio: 2.0
+        qkv_bias: true
+        qk_scale: null
+        drop_rate: 0.2 # drop_rate
+        attn_drop: 0.0
+        drop_path: 0.1
+      head:
+        type: FCHead
+        embed_dim: 256
+        pred_num: 1
+    - type: ChannelTransformer
+      embedding:
+        type: PatchEmbedding
+        img_size: 4
+        patch_size: 2
+        in_channel: 165
+        embed_dim: 256
+        norm_layer: nn.LayerNorm
+      basemodule:
+        type: ChannelTransformerLayer
+        dim: 256
+        input_resolution: 2
+        depth: 1
+        num_heads: 16
+        mlp_ratio: 2.0
+        qkv_bias: true
+        qk_scale: null
+        drop_rate: 0.2 # drop_rate
+        attn_drop: 0.0
+        drop_path: 0.1
+      head:
+        type: FCHead
+        embed_dim: 256
+        pred_num: 1
+  postprocessor:
+    type: WeightedSum
+    weights:
+      - 0.8
+      - 0.2
+
+loss:
+#  type: MSELoss
+#  type: MultiL1Loss
+#  weights:
+#    - 0.8
+#    - 0.2
+  type: L1Loss
+
+optimizer:
+  type: AdamW
+  lr: 1.0e-4
+  weight_decay: 0.01
+#  type: Adam
+#  lr: 0.001
+
+scheduler:
+  type: StepLR
+  step_size: 5
+  gamma: 0.7
+#  type: CosineAnnealingLR
+#  T_max: 100
+#  eta_min: 1.0e-6
+
+train:
+  epoch: 100
+  print_freq: 5
+
+val:
+  val_freq: 1
+  metric: R2
+
+checkpoint:
+  save_freq: 100
+  resume_from: null
+  auto_resume: false

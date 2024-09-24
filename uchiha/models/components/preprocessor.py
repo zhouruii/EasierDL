@@ -70,8 +70,7 @@ class DWT1d(nn.Module):
 
 
 @PREPROCESSOR.register_module()
-class SimpleConv(nn.Module):
-    # TODO 优化去留
+class PreSimpleConv(nn.Module):
     def __init__(self,
                  in_channel=3,
                  out_channel=64,

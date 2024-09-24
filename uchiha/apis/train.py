@@ -6,13 +6,14 @@ import torch
 from ..utils import print_log, get_root_logger
 
 
-def train_by_epoch(epoch, dataloader, model, optimizer, scheduler, criterion, writer):
+def train_by_epoch(epoch, print_freq, dataloader, model, optimizer, scheduler, criterion, writer):
     """ train for one epoch
 
     Prints logs based on the configured frequency (based on the number of iterations)
 
     Args:
         epoch (int): the number of epoch trained
+        print_freq (int): Frequency of printing logs
         dataloader (torch.utils.data.Dataloader): training set's dataloader
         model (torch.nn.Module): model built from configuration file
         optimizer (class): optimizer built from configuration file
@@ -40,8 +41,7 @@ def train_by_epoch(epoch, dataloader, model, optimizer, scheduler, criterion, wr
         optimizer.step()
 
         # log
-        # TODO 这里打印日志的频次需要根据配置的值动态调整
-        if (idx + 1) % 5 == 0:
+        if (idx + 1) % print_freq == 0:
             current_lr = optimizer.param_groups[0]['lr']
             print_log(f'epoch:[{epoch + 1}], iter:[{idx + 1}/{len(dataloader)}], loss: {loss}, lr:{current_lr}',
                       get_root_logger())

@@ -1,0 +1,31 @@
+model:
+  type: ChannelTransformer
+  embedding:
+    type: PatchEmbedding
+    img_size: 4
+    patch_size: 2
+    in_channel: 330
+    embed_dim: 512
+    norm_layer: nn.LayerNorm
+  basemodule:
+    type: ChannelTransformerLayers
+    dims: 512, 1024
+    input_resolutions: 2, 1
+    depths: 1, 1
+    num_heads: 8, 16, 16, 8
+    mlp_ratio: 4.0
+    qkv_bias: true
+    qk_scale: null
+    drop_rate: 0.2 # drop_rate
+    attn_drop: 0.0
+    drop_path_rate: 0.2
+    norm_layer: nn.LayerNorm
+    downsamples:
+      type: PixelUnShuffle
+      factor: 2
+      in_channel: 512
+      out_channel: 1024
+  head:
+    type: FCHead
+    embed_dim: 1024
+    pred_num: 1
