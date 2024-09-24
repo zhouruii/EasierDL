@@ -5,7 +5,7 @@ from ..builder import (build_preprocessor, build_embedding, build_basemodule,
 from ...utils.misc import strings_to_list
 
 
-# TODO 优化结构
+# TODO 待完善
 @MODEL.register_module()
 class ParallelSpatialChannelTransformer(nn.Module):
 
