@@ -1,4 +1,5 @@
 from torch import nn
+from torch.nn import ModuleList
 
 from uchiha.models.builder import (build_basemodule, build_embedding, build_preprocessor, build_head, MODEL,
                                    build_downsample, build_upsample, build_postprocessor)

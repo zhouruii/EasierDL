@@ -240,6 +240,160 @@ class ChannelTransformerLayer(nn.Module):
 
 
 @BASEMODULE.register_module()
+class ChannelTransformerLayers(nn.Module):
+    """ Collection of Channel-Transformer-Layers
+
+    Args:
+        dims (List[int]): Number of input channels.
+        input_resolutions (List[int | Tuple(int)]): spatial resolution of input features
+        depths (List[int]): number of stacked channel-transformer-blocks
+        num_heads (List[int]): Number of heads in `Multi-Head Attention`
+        mlp_ratio (float): ratio of hidden layer to input channel in MLP
+        qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
+        qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set
+        drop_rate (): Dropout ratio of output of Attention. Default: 0.0
+        attn_drop (float, optional): Dropout ratio of attention weight. Default: 0.0
+        drop_path_rate (float): Rate required to generate drop path, it will be called by
+            `torch.linspace(0, drop_path_rate, depth)`
+            designed to increase the probability of DropPath as the depth increases
+        act_layer (nn.Module | str): activation function in MLP.
+        norm_layer (nn.Module | str): normalization layer before Attention and MLP. Default: None
+    """
+
+    def __init__(self,
+                 dims,
+                 input_resolutions,
+                 depths,
+                 num_heads,
+                 mlp_ratio=4.,
+                 qkv_bias=True,
+                 qk_scale=None,
+                 drop_rate=0.,
+                 attn_drop=0.,
+                 drop_path_rate=0.1,
+                 act_layer=nn.GELU,
+                 norm_layer=nn.LayerNorm,
+                 downsamples=None):
+        super().__init__()
+        self.dims = dims
+        self.input_resolutions = input_resolutions
+        self.depths = depths
+        self.num_heads = num_heads
+        self.num_layers = len(dims)
+
+        self.downsamples = cfg_decomposition(downsamples)
+        if len(self.downsamples) < self.num_layers:
+            self.downsamples.extend([None] * (self.num_layers - len(self.downsamples)))
+
+        # stochastic depth
+        self.dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]
+
+        # build layers
+        self.layers = nn.ModuleList()
+
+        for i in range(self.num_layers):
+            dim = self.dims[i]
+            input_resolution = self.input_resolutions[i]
+            num_heads = self.num_heads[i]
+            depth = self.depths[i]
+            downsample = self.downsamples[i]
+
+            drop_path = self.dpr[sum(depths[:i]):sum(depths[:i + 1])]
+
+            # build layer
+            layer = ChannelTransformerLayer(dim=dim, input_resolution=input_resolution,
+                                            depth=depth, num_heads=num_heads,
+                                            mlp_ratio=mlp_ratio,
+                                            qkv_bias=qkv_bias, qk_scale=qk_scale,
+                                            drop_rate=drop_rate, attn_drop=attn_drop,
+                                            drop_path=drop_path,
+                                            act_layer=act_layer,
+                                            norm_layer=norm_layer,
+                                            downsample=downsample)
+
+            self.layers.append(layer)
+
+
+@BASEMODULE.register_module()
+class ChannelTransformerLayerList(nn.ModuleList):
+    """ Collection of Channel-Transformer-Layers
+
+    Args:
+        dims (List[int]): Number of input channels.
+        input_resolutions (List[int | Tuple(int)]): spatial resolution of input features
+        depths (List[int]): number of stacked channel-transformer-blocks
+        num_heads (List[int]): Number of heads in `Multi-Head Attention`
+        mlp_ratio (float): ratio of hidden layer to input channel in MLP
+        qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
+        qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set
+        drop_rate (): Dropout ratio of output of Attention. Default: 0.0
+        attn_drop (float, optional): Dropout ratio of attention weight. Default: 0.0
+        drop_path_rate (float): Rate required to generate drop path, it will be called by
+            `torch.linspace(0, drop_path_rate, depth)`
+            designed to increase the probability of DropPath as the depth increases
+        act_layer (nn.Module | str): activation function in MLP.
+        norm_layer (nn.Module | str): normalization layer before Attention and MLP. Default: None
+    """
+
+    def __init__(self,
+                 dims,
+                 input_resolutions,
+                 depths,
+                 num_heads,
+                 mlp_ratio=4.,
+                 qkv_bias=True,
+                 qk_scale=None,
+                 drop_rate=0.,
+                 attn_drop=0.,
+                 drop_path_rate=0.1,
+                 act_layer=nn.GELU,
+                 norm_layer=nn.LayerNorm,
+                 downsamples=None):
+        super().__init__()
+        self.dims = dims
+        self.input_resolutions = input_resolutions
+        self.depths = depths
+        self.num_heads = num_heads
+        self.num_layers = len(dims)
+
+        self.downsamples = cfg_decomposition(downsamples)
+        if not self.downsamples:
+            self.downsamples = [None] * self.num_layers
+        if len(self.downsamples) < self.num_layers:
+            self.downsamples.extend([None] * (self.num_layers - len(self.downsamples)))
+
+        # stochastic depth
+        self.dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]
+
+        # build layers
+        layers = []
+
+        for i in range(self.num_layers):
+            dim = self.dims[i]
+            input_resolution = self.input_resolutions[i]
+            num_heads = self.num_heads[i]
+            depth = self.depths[i]
+            downsample = self.downsamples[i]
+
+            drop_path = self.dpr[sum(depths[:i]):sum(depths[:i + 1])]
+
+            # build layer
+            layer = ChannelTransformerLayer(dim=dim, input_resolution=input_resolution,
+                                            depth=depth, num_heads=num_heads,
+                                            mlp_ratio=mlp_ratio,
+                                            qkv_bias=qkv_bias, qk_scale=qk_scale,
+                                            drop_rate=drop_rate, attn_drop=attn_drop,
+                                            drop_path=drop_path,
+                                            act_layer=act_layer,
+                                            norm_layer=norm_layer,
+                                            downsample=downsample)
+
+            layers.append(layer)
+
+        self.extend(layers)
+
+
+@BASEMODULE.register_module()
 class UnetChannelTransformerLayers(nn.Module):
     """ Collection of Channel-Transformer-Layers in the shape of unet
 
@@ -318,12 +472,12 @@ class UnetChannelTransformerLayers(nn.Module):
 
 
 @BASEMODULE.register_module()
-class ChannelTransformerLayers(nn.Module):
-    """ Collection of Channel-Transformer-Layers
+class UnetChannelTransformerLayerList(nn.Module):
+    """ Collection of Channel-Transformer-Layers in the shape of unet
 
     Args:
         dims (List[int]): Number of input channels.
-        input_resolutions (List[int | Tuple(int)]): spatial resolution of input features
+        input_resolutions (List[int]): spatial resolution of input features
         depths (List[int]): number of stacked channel-transformer-blocks
         num_heads (List[int]): Number of heads in `Multi-Head Attention`
         mlp_ratio (float): ratio of hidden layer to input channel in MLP
@@ -357,26 +511,31 @@ class ChannelTransformerLayers(nn.Module):
         self.input_resolutions = input_resolutions
         self.depths = depths
         self.num_heads = num_heads
-        self.num_layers = len(dims)
+        self.num_layers = len(dims) // 2
 
         self.downsamples = cfg_decomposition(downsamples)
-        if len(self.downsamples) < self.num_layers:
-            self.downsamples.extend([None] * (self.num_layers - len(self.downsamples)))
+        if not self.downsamples:
+            self.downsamples = [None] * self.num_layers * 2
+        if len(self.downsamples) < self.num_layers * 2:
+            self.downsamples.extend([None] * (self.num_layers * 2 - len(self.downsamples)))
 
         # stochastic depth
-        self.dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]
+        self.dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths[:len(depths) // 2]))]
+        self.dec_dpr = self.dpr[::-1]
 
         # build layers
-        self.layers = nn.ModuleList()
+        layers = []
 
-        for i in range(self.num_layers):
+        for i in range(self.num_layers * 2):
             dim = self.dims[i]
             input_resolution = self.input_resolutions[i]
-            num_heads = self.num_heads[i]
             depth = self.depths[i]
+            num_heads = self.num_heads[i]
             downsample = self.downsamples[i]
 
             drop_path = self.dpr[sum(depths[:i]):sum(depths[:i + 1])]
+            if i >= self.num_layers:
+                drop_path = self.dec_dpr[sum(depths[self.num_layers:i]):sum(depths[self.num_layers:i + 1])]
 
             # build layer
             layer = ChannelTransformerLayer(dim=dim, input_resolution=input_resolution,
@@ -389,4 +548,6 @@ class ChannelTransformerLayers(nn.Module):
                                             norm_layer=norm_layer,
                                             downsample=downsample)
 
-            self.layers.append(layer)
+            layers.append(layer)
+
+        self.extend(layers)

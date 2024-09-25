@@ -48,6 +48,9 @@ def cfg_decomposition(cfg):
     if isinstance(cfg, list):
         return cfg
 
+    if cfg is None:
+        return
+
     def helper(_cfg):
         new_cfg = {}
         for key, value in _cfg.items():

@@ -1,7 +1,7 @@
 from torch.utils.data import Dataset
 
 from .builder import SPECTRAL_DATASET
-from .piplines import Compose
+from .pipelines import Compose
 from ..utils import read_npy, read_txt, read_pts
 from ..utils.evaluate import regression_eval
 from ..utils.misc import strings_to_list

@@ -1,10 +1,10 @@
-work_dir: experiment/parallel/Zn_ws_scale
+work_dir: experiment/Zn/dwt_channel
 data:
   train:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/train/reflectivity
-      gt_path: data/spectral/train/labelZn_scale.txt
+      data_root: data/spectral/trainval/reflectivity
+      gt_path: data/spectral/trainval/labelZn_scale.txt
       elements: Zn
       pipelines:
         - type: Pad
@@ -54,17 +54,17 @@ model:
         embed_dim: 256
         norm_layer: nn.LayerNorm
       basemodule:
-        type: ChannelTransformerLayer
-        dim: 256
-        input_resolution: 2
-        depth: 2
-        num_heads: 16
+        type: ChannelTransformerLayerList
+        dims: 256,256
+        input_resolutions: 2,2
+        depths: 1,1
+        num_heads: 16,16
         mlp_ratio: 2.0
         qkv_bias: true
         qk_scale: null
         drop_rate: 0.2 # drop_rate
         attn_drop: 0.0
-        drop_path: 0.1
+        drop_path_rate: 0.1
       head:
         type: FCHead
         embed_dim: 256
@@ -116,8 +116,8 @@ optimizer:
 
 scheduler:
   type: StepLR
-  step_size: 5
-  gamma: 0.7
+  step_size: 20
+  gamma: 0.5
 #  type: CosineAnnealingLR
 #  T_max: 100
 #  eta_min: 1.0e-6

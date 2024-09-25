@@ -123,18 +123,25 @@ class SimpleVisionTransformerLayer(nn.Module):
         num_heads (int): number of heads in `Multi-Head Attention`
         sequence_length (int): The length of the sequence after changing the shape to (B ,L, C).
         qkv_bias (bool): If True, add a learnable bias to query, key, value. Default: True
-        mlp_ratio (float): ratio of hidden layer to input channel in MLP
+        mlp_ratio (float): ratio of hidden layer to input channel in MLP. Default: 4.0.
+        cls (bool): Class token will be used if set to True.
         pos (bool): Position encoding will be used if set to True.
         dropout (float): the rate of `Dropout` layer. Default: 0.0
     """
 
-    def __init__(self, dim, depth, num_heads, sequence_length, qkv_bias, mlp_ratio=4., pos=False, dropout=0.):
+    def __init__(self, dim, depth, num_heads, sequence_length, qkv_bias,
+                 mlp_ratio=4., cls=False, pos=False, dropout=0.):
 
         super().__init__()
-        self.cls_token = nn.Parameter(torch.zeros(1, 1, dim))  # 1*dim
+        self.sequence_length = sequence_length
         self.pos = pos
+        self.cls = cls
+
+        if cls:
+            self.cls_token = nn.Parameter(torch.zeros(1, 1, dim))
+            self.sequence_length += 1
         if pos:
-            self.pos_embed = nn.Parameter(torch.zeros(1, sequence_length + 1, dim))  # 3*dim
+            self.pos_embed = nn.Parameter(torch.zeros(1, self.sequence_length, dim))
         self.pos_drop = nn.Dropout(dropout)
 
         mlp_dim = int(dim * mlp_ratio)
@@ -146,12 +153,14 @@ class SimpleVisionTransformerLayer(nn.Module):
 
         if self.pos:
             nn.init.trunc_normal_(self.pos_embed, std=0.02)
-        nn.init.trunc_normal_(self.cls_token, std=0.02)
+        if self.cls:
+            nn.init.trunc_normal_(self.cls_token, std=0.02)
         self.apply(_init_vit_weights)
 
     def forward(self, x):
-        cls_token = self.cls_token.expand(x.shape[0], -1, -1)  # [B, 1, dim]
-        x = torch.cat((cls_token, x), dim=1)  # [B, num_patches + 1, dim]
+        if self.cls:
+            cls_token = self.cls_token.expand(x.shape[0], -1, -1)
+            x = torch.cat((cls_token, x), dim=1)
 
         if self.pos:
             x = x + self.pos_embed
@@ -160,4 +169,4 @@ class SimpleVisionTransformerLayer(nn.Module):
         x = self.blocks(x)
         x = self.norm(x)
 
-        return x[:, 0].unsqueeze(1)
+        return x[:, 0].unsqueeze(1) if self.cls else x

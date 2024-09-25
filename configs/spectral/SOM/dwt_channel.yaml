@@ -3,8 +3,8 @@ data:
   train:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/train/reflectivity
-      gt_path: data/spectral/train/labelSOM.txt
+      data_root: data/spectral/trainval/reflectivity
+      gt_path: data/spectral/trainval/labelSOM_scale.txt
       elements: SOM
       pipelines:
         - type: Pad
@@ -22,7 +22,7 @@ data:
     dataset:
       type: SpectralDataset2d
       data_root: data/spectral/val/reflectivity
-      gt_path: data/spectral/val/labelSOM.txt
+      gt_path: data/spectral/val/labelSOM_scale.txt
       elements: SOM
       pipelines:
         - type: Pad
@@ -38,7 +38,7 @@ data:
       shuffle: false
 
 model:
-  type: ParallelChannelTransformer
+  type: Parallel
   preprocessor:
     type: DWT1d
     scales: 1
@@ -62,7 +62,7 @@ model:
         mlp_ratio: 2.0
         qkv_bias: true
         qk_scale: null
-        drop: 0.2 # drop_rate
+        drop_rate: 0.2 # drop_rate
         attn_drop: 0.0
         drop_path: 0.1
       head:
@@ -86,7 +86,7 @@ model:
         mlp_ratio: 2.0
         qkv_bias: true
         qk_scale: null
-        drop: 0.2 # drop_rate
+        drop_rate: 0.2 # drop_rate
         attn_drop: 0.0
         drop_path: 0.1
       head:
@@ -116,18 +116,19 @@ optimizer:
 
 scheduler:
   type: StepLR
-  step_size: 10
-  gamma: 0.2
+  step_size: 20
+  gamma: 0.5
 #  type: CosineAnnealingLR
 #  T_max: 10
 #  eta_min: 1.0e-6
 
 train:
   epoch: 100
+  print_freq: 5
 
 val:
   val_freq: 1
-  metric: MAE
+  metric: R2
 
 checkpoint:
   save_freq: 100

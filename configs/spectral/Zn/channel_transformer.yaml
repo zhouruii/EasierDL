@@ -44,14 +44,14 @@ model:
     img_size: 4
     patch_size: 2
     in_channel: 330
-    embed_dim: 512
+    embed_dim: 256
     norm_layer: nn.LayerNorm
   basemodule:
-    type: ChannelTransformerLayers
-    dims: 512, 1024
+    type: ChannelTransformerLayerList
+    dims: 256, 512
     input_resolutions: 2, 1
     depths: 1, 1
-    num_heads: 8, 16, 16, 8
+    num_heads: 8, 16
     mlp_ratio: 4.0
     qkv_bias: true
     qk_scale: null
@@ -62,11 +62,11 @@ model:
     downsamples:
       type: PixelUnShuffle
       factor: 2
-      in_channel: 512
-      out_channel: 1024
+      in_channel: 256
+      out_channel: 512
   head:
     type: FCHead
-    embed_dim: 1024
+    embed_dim: 512
     pred_num: 1
 
 loss:
@@ -75,7 +75,7 @@ loss:
 
 optimizer:
   type: AdamW
-  lr: 7.0e-3
+  lr: 1.0e-3
   weight_decay: 0.01
 #  type: Adam
 #  lr: 0.001
@@ -90,6 +90,7 @@ scheduler:
 
 train:
   epoch: 100
+  print_freq: 5
 
 val:
   val_freq: 1

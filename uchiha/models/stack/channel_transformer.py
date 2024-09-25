@@ -1,3 +1,5 @@
+from typing import Union
+
 from torch import nn
 
 from ..builder import MODEL
@@ -25,15 +27,11 @@ class ChannelTransformer(Stack):
                                  {'basemodule': basemodule},
                                  {'head': head}])
         self.embedding: nn.Module = self.stacks[0]
-        self.basemodule: nn.Module = self.stacks[1]
+        self.layers: Union[nn.ModuleList, nn.Module] = self.stacks[1]
         self.head: nn.Module = self.stacks[2]
 
-        if hasattr(self.basemodule, 'layers'):
-            self.layers = self.basemodule.layers
-            self.num_layers = len(self.layers)
-        else:
-            self.layers = nn.ModuleList([self.basemodule])
-            self.num_layers = 1
+        if not isinstance(self.layers, nn.ModuleList):
+            self.layers = nn.ModuleList([self.layers])
 
     def forward_features(self, x):
         # embedding

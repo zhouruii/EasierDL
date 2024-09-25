@@ -1,10 +1,10 @@
-work_dir: experiment/exp
+work_dir: experiment/Zn/cbam
 data:
   train:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/train/reflectivity
-      gt_path: data/spectral/train/labelZn_scale.txt
+      data_root: data/spectral/trainval/reflectivity
+      gt_path: data/spectral/trainval/labelZn_scale.txt
       elements: Zn
       pipelines:
         - type: Pad
@@ -40,7 +40,7 @@ data:
 model:
   type: Parallel
   preprocessor:
-    type: SimpleConv
+    type: PreSimpleConv
     in_channel: 330
     out_channel: 256
     depth: 2
@@ -94,12 +94,12 @@ loss:
 
 optimizer:
   type: AdamW
-  lr: 1.0e-5
+  lr: 1.0e-4
   weight_decay: 0.01
 
 scheduler:
   type: StepLR
-  step_size: 50
+  step_size: 20
   gamma: 0.5
 #  type: CosineAnnealingLR
 #  T_max: 100
@@ -107,6 +107,7 @@ scheduler:
 
 train:
   epoch: 100
+  print_freq: 5
 
 val:
   val_freq: 1
