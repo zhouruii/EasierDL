@@ -7,7 +7,7 @@ from uchiha.utils import build_from_cfg
 
 @PIPELINES.register_module()
 class Compose:
-    """Compose multiple transforms sequentially.
+    """ Compose multiple transforms sequentially.
 
     Args:
         transforms (Sequence[dict | callable]): Sequence of transform object or

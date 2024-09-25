@@ -1,15 +1,24 @@
 from torch import nn
 
 from .base import Stack
-from uchiha.models.builder import build_basemodule, build_embedding, build_preprocessor, build_head, MODEL
+from uchiha.models.builder import MODEL
 
 
 @MODEL.register_module()
 class SimpleViT(Stack):
+    """ The simplest Vision Transformer
+
+    Args:
+        embedding (dict): Config information for building the embedding. Default: None.
+        basemodule (dict): Config information for building the basemodule. Default: None.
+        head (dict): Config information for building the head. Default: None.
+    """
+
     def __init__(self,
                  embedding=None,
                  basemodule=None,
                  head=None):
+
         super().__init__(stacks=[{'embedding': embedding},
                                  {'basemodule': basemodule},
                                  {'head': head}])

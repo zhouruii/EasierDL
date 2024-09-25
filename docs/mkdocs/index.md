@@ -1,4 +1,4 @@
-# Welcome to MkDocs
+# Welcome to BasicDL !
 
 For full documentation visit [mkdocs.org](https://www.mkdocs.org).
 
@@ -29,5 +29,4 @@ For full documentation visit [mkdocs.org](https://www.mkdocs.org).
             ...
     mkdocs.yml    # The configuration file.
 
-## Content
-::: models
+

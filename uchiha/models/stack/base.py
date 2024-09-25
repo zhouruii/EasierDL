@@ -15,7 +15,7 @@ build = {
 }
 
 
-def build_stacks(cfgs):
+def _build_stacks(cfgs):
     """ Build modules that are stacked continuously
 
     Args:
@@ -52,7 +52,7 @@ class Stack(nn.Module):
         super().__init__()
         self.preprocessor: nn.Module = build_preprocessor(preprocessor)
 
-        self.stacks: nn.ModuleList = build_stacks(stacks)
+        self.stacks: nn.ModuleList = _build_stacks(stacks)
 
         self.postprocessor: nn.Module = build_postprocessor(postprocessor)
 

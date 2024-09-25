@@ -17,13 +17,14 @@ model_urls = {
 
 
 class CAM(nn.Module):
-    def __init__(self, in_planes, ratio=16):
-        """ Channel Attention Module based on Conv
+    """ Channel Attention Module based on Conv
 
-        Args:
-            in_planes (int): number of input channels
-            ratio (int): The ratio of the hidden layer to the input dimension when extracting the channel mask
-        """
+    Args:
+        in_planes (int): number of input channels
+        ratio (int): The ratio of the hidden layer to the input dimension when extracting the channel mask
+    """
+
+    def __init__(self, in_planes, ratio=16):
         super(CAM, self).__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.max_pool = nn.AdaptiveMaxPool2d(1)
@@ -205,7 +206,7 @@ class BasicCBAM(nn.Module):
         return out
 
 
-class Bottleneck(nn.Module):
+class CBAMBottleneck(nn.Module):
     """ Conv*3 ==> CAM ==> SAM ==>
 
     the actual number of output channels is expanded by expansion
@@ -220,7 +221,7 @@ class Bottleneck(nn.Module):
     expansion = 4
 
     def __init__(self, inplanes, planes, stride=1, downsample=None):
-        super(Bottleneck, self).__init__()
+        super(CBAMBottleneck, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
@@ -358,7 +359,7 @@ def resnet50_cbam(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
+    model = ResNet(CBAMBottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
         pretrained_state_dict = model_zoo.load_url(model_urls['resnet50'])
         now_state_dict = model.state_dict()
@@ -373,7 +374,7 @@ def resnet101_cbam(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
+    model = ResNet(CBAMBottleneck, [3, 4, 23, 3], **kwargs)
     if pretrained:
         pretrained_state_dict = model_zoo.load_url(model_urls['resnet101'])
         now_state_dict = model.state_dict()
@@ -388,7 +389,7 @@ def resnet152_cbam(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(Bottleneck, [3, 8, 36, 3], **kwargs)
+    model = ResNet(CBAMBottleneck, [3, 8, 36, 3], **kwargs)
     if pretrained:
         pretrained_state_dict = model_zoo.load_url(model_urls['resnet152'])
         now_state_dict = model.state_dict()

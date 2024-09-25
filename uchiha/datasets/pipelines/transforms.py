@@ -9,7 +9,7 @@ from ...utils import impad, impad_to_multiple, img_normalize
 
 @PIPELINES.register_module()
 class Pad:
-    """Pad the image.
+    """ Pad the image.
 
     There are two padding modes:
     (1) pad to a fixed size

@@ -1,11 +1,28 @@
-site_name: My Docs
+site_name: BasicDL
+site_description: Documentation for BasicDL
+site_author: Zhou Rui
+site_url: http://localhost:8000
+repo_url: https://github.com/zhouruii/uchiha
 
 theme:
-  name: "material"
+  name: readthedocs
+
+nav:
+  - Home: mkdocs/index.md
+  - Introduction: mkdocs/introduction.md
+  - Module: mkdocs/module.md
+  - Model: mkdocs/model.md
+  - Dataset: mkdocs/dataset.md
+  - API: mkdocs/api.md
 
 plugins:
+- search
 - mkdocstrings:
     handlers:
       python:
         paths: [uchiha]
+        options:
+          show_root_toc_entry: false
+          show_symbol_type_heading: false
+          show_symbol_type_toc: false
 

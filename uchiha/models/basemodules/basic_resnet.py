@@ -1,41 +1,11 @@
+__all__ = ['BasicResidualBlock', 'ResidualBottleneck']
+
 from typing import Optional, Callable
 
 from torch import nn, Tensor
 
 from ..builder import BASEMODULE
-
-
-def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:
-    """ 3x3 Convolution Layer
-
-    Args:
-        in_planes (int): number of input channels
-        out_planes (int): number of output channels
-        stride (int): the stride for the convolution operation. Default: 1
-        groups (int): the groups for the convolution operation. Default: 1
-        dilation (int): the dilation for the convolution operation. Default: 1
-
-    Returns:
-        nn.Conv2d: Convolution Layer
-    """
-
-    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
-                     padding=dilation, groups=groups, bias=False, dilation=dilation)
-
-
-def conv1x1(in_planes: int, out_planes: int, stride: int = 1) -> nn.Conv2d:
-    """ 1x1 Convolution Layer
-
-    Args:
-        in_planes (int): number of input channels
-        out_planes (int): number of output channels
-        stride (int): the stride for the convolution operation. Default: 1
-
-    Returns:
-        nn.Conv2d: Convolution Layer
-    """
-
-    return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
+from ...utils.model import conv3x3, conv1x1
 
 
 # TODO 待整合
