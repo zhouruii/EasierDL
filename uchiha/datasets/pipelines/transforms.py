@@ -29,7 +29,7 @@ class Pad:
         size (tuple, optional): Fixed padding size -> mode(1).
         size_divisor (int, optional): The divisor of padded size -> mode(2).
         pad_val (dict, optional): A dict for padding value, Default: `0`.
-        mode: (str): the way to handle edges
+        mode (str): the way to handle edges
     """
 
     def __init__(self,
@@ -71,7 +71,7 @@ class Pad:
             results (dict): Result dict from loading pipeline.
 
         Returns:
-            dict: Updated result dict,'pad_cfg' key is added into result dict.
+            results (dict): Updated result dict,'pad_cfg' key is added into result dict.
         """
         self._pad_img(results)
         return results
@@ -121,7 +121,7 @@ class Normalize:
             results (dict): Result dict from pipeline.
 
         Returns:
-            dict: Normalized results, 'img_norm_cfg' key is added into result dict.
+            results (dict): Normalized results, 'img_norm_cfg' key is added into result dict.
         """
         results['sample'] = img_normalize(results['sample'], self.mean, self.std,
                                      self.to_rgb, self.scope, self.mode)
@@ -159,7 +159,7 @@ class EasyToTensor:
             results (dict): Result dict from pipeline.
 
         Returns:
-            dict: converted results
+            results (dict): converted results
         """
         assert 'sample' in results and 'target' in results, 'sample and target should be loaded to results'
 

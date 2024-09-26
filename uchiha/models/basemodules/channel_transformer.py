@@ -77,7 +77,7 @@ class ChannelAttention(nn.Module):
     def forward(self, x):
         """
         Args:
-            x: input features with shape of (num_windows*B, N, C)
+            x (Tensor):: input features with shape of (num_windows*B, N, C)
         """
         B_, N, C = x.shape
 

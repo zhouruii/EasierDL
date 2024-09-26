@@ -18,11 +18,11 @@ def window_partition(x, window_size):
     """ images --> window patches
 
     Args:
-        x: (B, H, W, C)
+        x (Tensor): (B, H, W, C)
         window_size (int): window size
 
     Returns:
-        windows: (num_windows*B, window_size, window_size, C)
+        windows (Tensor): (num_windows*B, window_size, window_size, C)
     """
     B, H, W, C = x.shape
     x = x.view(B, H // window_size, window_size, W // window_size, window_size, C)
@@ -34,13 +34,13 @@ def window_reverse(windows, window_size, H, W):
     """ window patches --> images
 
     Args:
-        windows: (num_windows*B, window_size, window_size, C)
+        windows (Tensor):: (num_windows*B, window_size, window_size, C)
         window_size (int): Window size
         H (int): Height of image
         W (int): Width of image
 
     Returns:
-        x: (B, H, W, C)
+        x (Tensor):: (B, H, W, C)
     """
     B = int(windows.shape[0] / (H * W / window_size / window_size))
     x = windows.view(B, H // window_size, W // window_size, window_size, window_size, -1)
@@ -99,8 +99,8 @@ class WindowAttention(nn.Module):
     def forward(self, x, mask=None):
         """
         Args:
-            x: input features with shape of (num_windows*B, N, C)
-            mask: (0/-inf) mask with shape of (num_windows, Wh*Ww, Wh*Ww) or None
+            x (Tensor):: input features with shape of (num_windows*B, N, C)
+            mask (Tensor):: (0/-inf) mask with shape of (num_windows, Wh*Ww, Wh*Ww) or None
         """
         B_, N, C = x.shape
         qkv = self.qkv(x).reshape(B_, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)

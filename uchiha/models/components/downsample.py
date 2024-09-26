@@ -11,7 +11,7 @@ from ..builder import DOWNSAMPLE
 class PixelUnShuffle(nn.Module):
     """ `PixelUnShuffle` to image and sequence
 
-    After `PixelUnShuffle`, a Conv/Linear layer id used to map the data to the output dimension.
+    After `PixelUnShuffle`, a `Conv`/`Linear` layer is used to map the data to the output dimension.
 
     Args:
         factor (int): downsample factor

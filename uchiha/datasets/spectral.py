@@ -51,7 +51,7 @@ class SpectralDataset2d(Dataset):
             elements (str): Elements to be predicted
 
         Returns:
-            list:  the list containing elements that need to be predicted
+            element_names (list):  the list containing elements that need to be predicted
 
         """
         if elements is None:
@@ -76,7 +76,7 @@ class SpectralDataset2d(Dataset):
             metric (str): evaluation metric. Default: 'MAE'
 
         Returns:
-            dict: evaluation results for each element
+            results (dict): evaluation results for each element
 
         """
         elements = self.ELEMENTS
@@ -130,7 +130,7 @@ class SpectralDataset1d(Dataset):
             elements (str): Elements to be predicted
 
         Returns:
-            list:  the list containing elements that need to be predicted
+            element_names (list):  the list containing elements that need to be predicted
 
         """
         if elements is None:
@@ -155,7 +155,7 @@ class SpectralDataset1d(Dataset):
             metric (str): evaluation metric. Default: 'MAE'
 
         Returns:
-            dict: evaluation results for each element
+            results (dict): evaluation results for each element
 
         """
         elements = self.ELEMENTS
