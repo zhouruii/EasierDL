@@ -1,4 +1,4 @@
-work_dir: experiment/parallel/SOM_ws
+work_dir: experiment/SOM/dwt_channel
 data:
   train:
     dataset:
