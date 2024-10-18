@@ -1,7 +1,9 @@
 # Models
 
 ## Stack
-![stack](assets/jpg/stack_base.jpg)
+Stack = pre-process + **stack-modules** + post-process
+![stack](assets/jpg/stack.jpg)
 
 ## Parallel
-![parallel](assets/jpg/parallel_base.jpg)
+Parallel = pre-process + **Stacks** + post-process
+![parallel](assets/jpg/parallel.jpg)
