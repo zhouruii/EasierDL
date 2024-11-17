@@ -57,5 +57,6 @@ if __name__ == '__main__':
     # save_dir = '/data/spectral_01/train/reflectivity'
     # read(sample_dir, save_dir, to_tensor=False)
 
-    src = 'data/spectral_2/train/reflectivity'
-    pt2npy(src)
+    src = 'data/dataset'
+    des = 'data/npy/train/reflectivity'
+    read(src,des, to_tensor=False)

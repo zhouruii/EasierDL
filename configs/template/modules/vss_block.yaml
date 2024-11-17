@@ -1,0 +1,12 @@
+type: VSSBlock
+hidden_dim: 96
+drop_path: 0.3
+channel_first: true
+ssm_d_state: 1
+ssm_ratio: 2
+ssm_dt_rank: auto
+ssm_conv: 3
+ssm_conv_bias: false
+ssm_init: v0
+forward_type: v05_noz
+mlp_ratio: 4.0

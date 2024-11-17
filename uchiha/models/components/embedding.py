@@ -1,3 +1,5 @@
+import math
+
 from timm.layers import to_2tuple
 from torch import nn
 
@@ -19,9 +21,11 @@ class PatchEmbedding(nn.Module):
         in_channel (int): Number of input image channels. Default: 330.
         embed_dim (int): Number of Conv projection output channels. Default: 512.
         norm_layer (nn.Module, optional): Normalization layer. Default: None
+        sequence (boolean): if True, output shape: (B, L, C) else (B, C, H, W)
     """
 
-    def __init__(self, img_size=4, patch_size=1, in_channel=330, embed_dim=512, norm_layer=None):
+    def __init__(self, img_size=4, patch_size=1, in_channel=330, embed_dim=512, norm_layer=None,
+                 sequence=True):
         super().__init__()
         assert img_size % patch_size == 0, \
             f'img_size:{img_size} cannot be divided by patch_size:{patch_size}'
@@ -31,6 +35,7 @@ class PatchEmbedding(nn.Module):
         patches_resolution = [self.img_size[0] // self.patch_size[0], self.img_size[1] // self.patch_size[1]]
         self.patches_resolution = patches_resolution
         self.num_patches = patches_resolution[0] * patches_resolution[1]
+        self.sequence = sequence
 
         self.in_channel = in_channel
         self.embed_dim = embed_dim
@@ -50,6 +55,10 @@ class PatchEmbedding(nn.Module):
         x = x.flatten(2).transpose(1, 2)  # B Ph*Pw C
         if self.norm is not None:
             x = self.norm(x)
+
+        if not self.sequence:
+            x = x.transpose(1, 2).view(B, self.embed_dim, *self.patches_resolution)
+
         return x
 
     def flops(self):

@@ -118,4 +118,4 @@ def get_root_logger(log_file=None, log_level=logging.INFO):
         log_dir = dirname(log_file)
         if not exists(log_dir):
             mkdir(log_dir)
-    return get_logger(name='metal-inversion', log_file=log_file, log_level=log_level)
+    return get_logger(name='uchiha', log_file=log_file, log_level=log_level)

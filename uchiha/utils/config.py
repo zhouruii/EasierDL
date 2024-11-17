@@ -7,7 +7,7 @@ from uchiha.utils.misc import get_extension
 
 
 class Config:
-    # TODO 代码完善
+    # TODO 配置继承
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             if isinstance(value, dict):
@@ -18,7 +18,7 @@ class Config:
         return self._repr_recursive(self, 0)
 
     def _repr_recursive(self, d, indent_level):
-        """递归地格式化字典为字符串"""
+        """print"""
         indent = ' ' * (indent_level * 2)
         repr_str = ''
         for key, value in d.__dict__.items():

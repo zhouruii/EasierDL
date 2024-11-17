@@ -71,7 +71,7 @@ def img_normalize_(img, mean, std, to_rgb=True, scope='spatial', mode='standard'
         cv2.multiply(img, stdinv, img)  # inplace
     elif mode == 'minmax':
         cv2.subtract(img, _min, img)  # inplace
-        cv2.multiply(img, 1/(_max-_min), img)  # inplace
+        cv2.multiply(img, 1 / (_max - _min), img)  # inplace
     else:
         raise NotImplementedError(f"normalize mode:{mode} is not supported yet")
 
@@ -148,14 +148,26 @@ def impad(img: np.ndarray,
         'reflect': cv2.BORDER_REFLECT_101,
         'symmetric': cv2.BORDER_REFLECT
     }
-    img = cv2.copyMakeBorder(
-        img,
-        padding[0],
-        padding[1],
-        padding[2],
-        padding[3],
-        border_type[padding_mode],
-        value=pad_val)
+
+    # check dim <= 512
+    if img.shape[-1] > 512:
+        img_patch1 = cv2.copyMakeBorder(img[:, :, :512], padding[0], padding[1], padding[2], padding[3],
+                                        border_type[padding_mode],
+                                        value=pad_val)
+        img_patch2 = cv2.copyMakeBorder(img[:, :, 512:], padding[0], padding[1], padding[2], padding[3],
+                                        border_type[padding_mode],
+                                        value=pad_val)
+        img = np.concatenate((img_patch1,img_patch2), axis=-1)
+    else:
+
+        img = cv2.copyMakeBorder(
+            img,
+            padding[0],
+            padding[1],
+            padding[2],
+            padding[3],
+            border_type[padding_mode],
+            value=pad_val)
 
     return img
 
