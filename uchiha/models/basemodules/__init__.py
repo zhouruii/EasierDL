@@ -6,4 +6,4 @@ from .swin_transformer import SwinTransformerLayer, SwinTransformerLayers
 from .cbam import BasicCAM, BasicSAM
 from .mamba import Mamba2, Mamba
 from .vmamba import VSSBlock
-
+from .visual_mamba import VisualMambaBlock

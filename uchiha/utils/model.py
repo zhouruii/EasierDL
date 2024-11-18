@@ -1,6 +1,7 @@
 import math
 import warnings
 
+import torch
 from torch import nn
 
 
@@ -144,3 +145,14 @@ def conv1x1(in_planes: int, out_planes: int, stride: int = 1) -> nn.Conv2d:
     """
 
     return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
+
+
+def check_postfix(tag, value):
+    ret = value[-len(tag):] == tag
+    if ret:
+        value = value[:-len(tag)]
+    return ret, value
+
+
+def to_fp32(*args):
+    return (_a.to(torch.float32) for _a in args)

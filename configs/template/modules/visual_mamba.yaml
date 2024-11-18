@@ -1,0 +1,23 @@
+type: VisualMambaBlock
+# --------------- overall --------------- #
+input_dim: 96
+drop_path: 0.
+norm_layer: LayerNorm2d
+channel_first: false
+post_norm: false
+# --------------- SS2D --------------- #
+hidden_state: 16
+expand_ratio: 2  # E in Mamba
+dt_rank: 'auto'
+dw_conv_kernel_size: 3
+dw_conv_bias: true
+act_layer: nn.SiLU
+drop_rate: 0.
+forward_config: None
+arch_config: None
+out_norm_config: None
+# --------------- FFN --------------- #
+gmlp: false
+mlp_ratio: 4
+mlp_act_layer: nn.GELU
+mlp_drop_rate: 0.

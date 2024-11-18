@@ -3,41 +3,9 @@ import torch.nn.functional as F
 from timm.layers import DropPath, to_2tuple
 from torch import nn
 
+from .common import MLP
 from ..builder import BASEMODULE, build_downsample
 from ...utils.model import build_norm, build_act, cfg_decomposition
-
-
-class Mlp(nn.Module):
-    """ MLP in Channel Transformer
-
-    Args:
-        in_features (int): number of input channels
-        hidden_features (int): number of hidden layer channels
-        out_features (int): number of output channels
-        act_layer (nn.Module): activation function
-        drop (float): the rate of `Dropout` layer. Default: 0.0
-    """
-
-    def __init__(self, in_features,
-                 hidden_features=None,
-                 out_features=None,
-                 act_layer=nn.GELU,
-                 drop: float = 0.):
-        super().__init__()
-        out_features = out_features or in_features
-        hidden_features = hidden_features or in_features
-        self.fc1 = nn.Linear(in_features, hidden_features)
-        self.act = act_layer()
-        self.fc2 = nn.Linear(hidden_features, out_features)
-        self.dropout = nn.Dropout(drop)
-
-    def forward(self, x):
-        x = self.fc1(x)
-        x = self.act(x)
-        x = self.dropout(x)
-        x = self.fc2(x)
-        x = self.dropout(x)
-        return x
 
 
 class ChannelAttention(nn.Module):
@@ -79,6 +47,7 @@ class ChannelAttention(nn.Module):
         Args:
             x (Tensor):: input features with shape of (num_windows*B, N, C)
         """
+        # TODO v2版本 qk使用空间域的全连接映射
         B_, N, C = x.shape
 
         qkv = self.qkv(x)
@@ -102,6 +71,72 @@ class ChannelAttention(nn.Module):
         attn = self.attn_drop(attn)
 
         x = (attn @ v).transpose(1, 2).reshape(B_, N, C)
+        x = self.proj(x)
+        x = self.proj_drop(x)
+        return x
+
+
+class ChannelAttentionV2(nn.Module):
+    r""" Channel Attention V2: Linear in spatial
+
+    Args:
+        sequence (int): length of input sequences.
+        num_heads (int): Number of heads in `Multi-Head Attention`
+        factor (float): Control the spatial `Linear`
+        qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
+        qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set
+        attn_drop (float, optional): Dropout ratio of attention weight. Default: 0.0
+        proj_drop (float, optional): Dropout ratio of output. Default: 0.0
+    """
+
+    def __init__(self,
+                 sequence,
+                 num_heads,
+                 factor,
+                 qkv_bias=True,
+                 qk_scale=None,
+                 attn_drop=0.,
+                 proj_drop=0.):
+        super().__init__()
+        self.sequence = sequence
+        self.num_heads = num_heads
+        self.factor = factor
+        head_dim = sequence // num_heads
+        self.scale = qk_scale or head_dim ** -0.5
+
+        self.qk = nn.Linear(sequence, int(sequence * factor * 2), bias=qkv_bias)
+        self.v = nn.Linear(sequence, sequence, bias=qkv_bias)
+        self.attn_drop = nn.Dropout(attn_drop)
+        self.proj = nn.Linear(sequence, sequence)
+        self.proj_drop = nn.Dropout(proj_drop)
+
+        self.softmax = nn.Softmax(dim=-1)
+
+    def forward(self, x):
+        """
+        Args:
+            x (Tensor):: input features with shape of (num_windows*B, N, C)
+        """
+        B_, C, N = x.shape
+        N_ = int(N * self.factor)
+
+        qk = self.qk(x)
+
+        qk = qk.reshape(B_, C, 2, N_).permute(2, 0, 1, 3)
+        q = qk[0].reshape(B_, C, self.num_heads, N_ // self.num_heads).permute(0, 2, 1, 3)
+        k = qk[1].reshape(B_, C, self.num_heads, N_ // self.num_heads).permute(0, 2, 1, 3)
+        v = self.v(x)
+        v = v.reshape(B_, C, self.num_heads, N // self.num_heads).permute(0, 2, 1, 3)
+
+        q = F.normalize(q, dim=-1, p=2)
+        k = F.normalize(k, dim=-1, p=2)
+        attn = (k @ q.transpose(-2, -1))
+        attn = attn * self.scale
+        attn = attn.softmax(dim=-1)
+
+        attn = self.attn_drop(attn)
+
+        x = (attn @ v).transpose(1, 2).reshape(B_, C, N)
         x = self.proj(x)
         x = self.proj_drop(x)
         return x
@@ -152,7 +187,7 @@ class ChannelTransformerBlock(nn.Module):
         self.drop_path: nn.Module = DropPath(drop_path) if drop_path > 0. else nn.Identity()
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
-        self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
+        self.mlp = MLP(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
 
     def forward(self, x):
         H, W = self.input_resolution
@@ -170,6 +205,75 @@ class ChannelTransformerBlock(nn.Module):
         x = x + self.drop_path(self.mlp(self.norm2(x)))
 
         return x
+
+
+class ChannelTransformerBlockV2(nn.Module):
+    """ The block containing Channel Attention, norm and MLP
+
+    DropPath: Randomly dropout the entire path, usually at the network structure level,
+    dropout a computational path, such as the residual path of the network or some sub-module in the Transformer.
+
+    Args:
+        sequence (int): length of input sequences.
+        input_resolution (Tuple(int)): spatial resolution of input features
+        num_heads (int): Number of heads in `Multi-Head Attention`
+        factor (float): Control the spatial `Linear`
+        mlp_ratio (float): ratio of hidden layer to input channel in MLP
+        qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
+        qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set
+        drop (float): Dropout ratio of output of AttentionBlock. Default: 0.0
+        attn_drop (float, optional): Dropout ratio of attention weight. Default: 0.0
+        drop_path (float): Dropout ratio of entire path
+        act_layer (nn.Module): activation function
+        norm_layer (nn.Module): normalization layer before Attention and MLP. Default: None
+    """
+
+    def __init__(self,
+                 sequence,
+                 input_resolution,
+                 num_heads,
+                 factor,
+                 mlp_ratio=4.,
+                 qkv_bias=True,
+                 qk_scale=None,
+                 drop=0.,
+                 attn_drop=0.,
+                 drop_path=0.,
+                 act_layer=nn.GELU,
+                 norm_layer=nn.LayerNorm):
+        super().__init__()
+        self.sequence = sequence
+        self.input_resolution = input_resolution
+        self.num_heads = num_heads
+        self.mlp_ratio = mlp_ratio
+
+        self.norm1 = norm_layer(sequence)
+
+        self.attn_C = ChannelAttentionV2(
+            sequence, num_heads=num_heads, factor=factor,
+            qkv_bias=qkv_bias, qk_scale=qk_scale, attn_drop=attn_drop, proj_drop=drop)
+        self.drop_path: nn.Module = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+        self.norm2 = norm_layer(sequence)
+        mlp_hidden_dim = int(sequence * mlp_ratio)
+        self.mlp = MLP(in_features=sequence, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
+
+    def forward(self, x):
+        H, W = self.input_resolution
+        B, L, C = x.shape
+        assert L == H * W, "input feature has wrong size"
+
+        x = x.permute(0, 2, 1)
+        shortcut = x
+        x = self.norm1(x)
+
+        # W-MSA/SW-MSA
+        x = self.attn_C(x)
+
+        # FFN
+        x = shortcut + self.drop_path(x)
+        x = x + self.drop_path(self.mlp(self.norm2(x)))
+
+        return x.permute(0, 2, 1)
 
 
 @BASEMODULE.register_module()
@@ -228,6 +332,77 @@ class ChannelTransformerLayer(nn.Module):
                                     drop_path=drop_path[i] if isinstance(drop_path, list) else drop_path,
                                     act_layer=act_layer,
                                     norm_layer=norm_layer)
+            for i in range(depth)])
+
+    def forward(self, x):
+        for blk in self.blocks:
+            x = blk(x)
+
+        out = self.downsample(x) if self.downsample else x
+
+        return out
+
+
+@BASEMODULE.register_module()
+class ChannelTransformerLayerV2(nn.Module):
+    """ Stacked Channel-Transformer-Block
+
+    Args:
+        sequence (int): length of input sequences.
+        input_resolution (Tuple(int) | int): spatial resolution of input features
+        depth (int): number of stacked channel-transformer-blocks
+        num_heads (int): Number of heads in `Multi-Head Attention`
+        factor (float): Control the spatial `Linear`
+        mlp_ratio (float): ratio of hidden layer to input channel in MLP
+        qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
+        qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set
+        drop_rate (): Dropout ratio of output of Attention. Default: 0.0
+        attn_drop (float, optional): Dropout ratio of attention weight. Default: 0.0
+        drop_path (List | float): The probability of DropPath of each `ChannelTransformer Block`.
+        act_layer (nn.Module | str): activation function in MLP.
+        norm_layer (nn.Module | str): normalization layer before Attention and MLP. Default: None
+    """
+
+    def __init__(self,
+                 sequence,
+                 input_resolution,
+                 depth,
+                 num_heads,
+                 factor,
+                 mlp_ratio=4.,
+                 qkv_bias=True,
+                 qk_scale=None,
+                 drop_rate=0.,
+                 attn_drop=0.,
+                 drop_path=0.,
+                 act_layer=nn.GELU,
+                 norm_layer=nn.LayerNorm,
+                 downsample=None):
+
+        super().__init__()
+        self.sequence = sequence
+        self.input_resolution = to_2tuple(input_resolution) if isinstance(input_resolution, int) else input_resolution
+        self.depth = depth
+
+        self.downsample = build_downsample(downsample)
+
+        if isinstance(norm_layer, str):
+            norm_layer = build_norm(norm_layer)
+
+        if isinstance(act_layer, str):
+            act_layer = build_act(act_layer)
+
+        # build blocks
+        self.blocks = nn.ModuleList([
+            ChannelTransformerBlockV2(sequence=sequence, input_resolution=self.input_resolution,
+                                      num_heads=num_heads,
+                                      factor=factor,
+                                      mlp_ratio=mlp_ratio,
+                                      qkv_bias=qkv_bias, qk_scale=qk_scale,
+                                      drop=drop_rate, attn_drop=attn_drop,
+                                      drop_path=drop_path[i] if isinstance(drop_path, list) else drop_path,
+                                      act_layer=act_layer,
+                                      norm_layer=norm_layer)
             for i in range(depth)])
 
     def forward(self, x):

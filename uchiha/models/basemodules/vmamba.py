@@ -28,7 +28,7 @@ try:
     from uchiha.models.ops.csms6s import selective_scan_fn, selective_scan_flop_jit
     from uchiha.models.ops.triton import cross_scan_fn, cross_merge_fn
     # FLOPs counter not prepared for mamba2
-    from uchiha.models.basemodules.mamba2.ssd_minimal import selective_scan_chunk_fn
+    from uchiha.models.ops.triton.ssd_minimal import selective_scan_chunk_fn
 except:
     pass
 
@@ -1189,7 +1189,7 @@ class VSSBlock(nn.Module):
         channel_first (): 是否是 B C H W或B C L 即是否通道维度在空间维度前面
         ssm_d_state (): SSM的状态数
         ssm_ratio (): 维度扩展因子 mamba中的E
-        ssm_dt_rank (): TODO dt的维度范围？
+        ssm_dt_rank ():
         ssm_act_layer (): SSM中的激活函数 默认为SiLU
         ssm_conv (): SS2D中使用的卷积其卷积核大小
         ssm_conv_bias (): SS2D中使用的卷积其偏置
