@@ -108,7 +108,7 @@ class SpectralDataset1d(Dataset):
         self.gt = read_txt(gt_path)
         self.ELEMENTS = self.get_elements(elements)
 
-        self.pipelines = Compose(pipelines)
+        self.pipelines = Compose(pipelines) if pipelines else None
 
     def __getitem__(self, index):
         results = dict(
@@ -116,7 +116,7 @@ class SpectralDataset1d(Dataset):
             target=self.gt[index],
             index=index
         )
-        return self.pipelines(results)
+        return self.pipelines(results) if self.pipelines else results
 
     def __len__(self):
         return len(self.spectral_data)

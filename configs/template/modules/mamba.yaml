@@ -8,6 +8,74 @@ Mamba2:
 Mamba:
   type: MambaBlock
   d_model: 256
-  d_state: 128
-  d_conv: 4
+  d_state: 1
+  d_conv: 3
   expand: 2
+
+VSSBlock:
+  type: VSSBlock
+  hidden_dim: 96
+  drop_path: 0.3
+  channel_first: true
+  ssm_d_state: 1
+  ssm_ratio: 2
+  ssm_dt_rank: auto
+  ssm_conv: 3
+  ssm_conv_bias: false
+  ssm_init: v0
+  forward_type: v05_noz
+  mlp_ratio: 4.0
+
+ClassicMambaBlock:
+  type: ClassicMambaBlock
+  input_dim: 256
+  hidden_state: 1
+  expand_ratio: 2
+  dw_conv_kernel_size: 3
+
+VisualMambaBlock:
+  type: VisualMambaBlock
+  # --------------- overall --------------- #
+  input_dim: 96
+  drop_path: 0.
+  norm_layer: LayerNorm2d
+  channel_first: false
+  post_norm: false
+  # --------------- SS2D --------------- #
+  hidden_state: 16
+  expand_ratio: 2  # E in Mamba
+  dt_rank: auto
+  dw_conv_kernel_size: 3
+  dw_conv_bias: true
+  act_layer: nn.SiLU
+  drop_rate: 0.
+  arch_config:
+    disable_force32: false
+    out_act: false
+    disable_z: true
+    disable_z_act: false
+  forward_config:
+    force_input_fp32: false
+    force_output_fp32: true
+    no_einsum: true
+    selective_scan_backend: oflex
+    scan_mode: 0
+    scan_force_torch: false
+  out_norm_config:
+    out_norm_none: false
+    out_norm_cnorm: false
+    out_norm_dw_conv3: false
+    out_norm_softmax: false
+    out_norm_sigmoid: false
+  # --------------- FFN --------------- #
+  gmlp: false
+  mlp_ratio: 4
+  mlp_act_layer: nn.GELU
+  mlp_drop_rate: 0.
+
+ChannelMambaBlock:
+  type: ChannelMambaBlock
+  seq_len: 9
+  hidden_state: 16
+  expand_ratio: 2
+  dw_conv_kernel_size: 3

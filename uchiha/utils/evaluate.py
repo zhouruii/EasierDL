@@ -39,12 +39,11 @@ def regression_eval(preds, targets, elements, metric='MAE'):
 
     results = {element: 0.0 for element in elements}
 
-
     preds = np.vstack(tensor2np(preds))
     targets = np.vstack(tensor2np(targets))
     metrics = compute_metric(preds, targets, metric)
     if len(results) == 1:
-        results[elements[0]] = metrics
+        results[elements[0]] = metrics[0]
     else:
         for idx, element in enumerate(elements):
             results[element] = metrics[idx]
@@ -63,12 +62,12 @@ def compute_metric(pred, target, metric='MAE'):
         metric (str): Evaluation metric. Default: MAE.
 
     Returns:
-        float: Calculation results
+        ndarray: Calculation results
     """
     if metric == 'MAE':
         return mean_absolute_error(pred, target)
     elif metric == 'R2':
-        return 1 - (np.sum((target - pred) ** 2) / np.sum((target - np.mean(target)) ** 2))
+        return 1 - (np.sum((target - pred) ** 2, axis=0) / np.sum((target - np.mean(target)) ** 2, axis=0))
         # return (np.sum((pred - np.mean(target)) ** 2) / np.sum((target - np.mean(target)) ** 2))
     else:
         raise NotImplementedError(f'metric:{metric} is not supported yet')

@@ -154,7 +154,7 @@ class SelectiveScan2D(nn.Module):
         # initialize params: A, D, delta
         # A_log.shape: (K*D,hidden_state), Ds.shape: (K*D,), C_in = dt_rank, C_out = D
         # dts_proj_weight.shape: (K, C_out, C_in), dts_proj_bias.shape: (K, C_out)
-        self.A_logs, self.Ds, self.dts_proj_weight, self.dts_proj_bias = InitMambaParams.init_dt_A_D(
+        self.A_logs, self.Ds, self.dts_proj_weight, self.dts_proj_bias = InitMambaParams.init_dt_a_d(
             d_state=hidden_state,
             dt_rank=self.dt_rank,
             d_inner=self.inner_dim,

@@ -50,35 +50,39 @@ model:
         - embedding:
             type: PatchEmbedding
             img_size: 4
-            patch_size: 2
+            patch_size: 1
             in_channel: 165
-            embed_dim: 256
+            embed_dim: 512
             norm_layer: nn.LayerNorm
         - basemodule:
-            type: ClassicMambaBlock
-            input_dim: 256
-            hidden_state: 16
-            expand_ratio: 2
-            dw_conv_kernel_size: 3
+            type: ParallelMambaBlock
+            d_model: 512
+            d_state: 128
+            d_conv: 4
+            expand: 2
+            headdim: 64
+#            use_mem_eff_path: false
         - head:
             type: FCHead
-            embed_dim: 256
+            embed_dim: 512
             pred_num: 1
     - type: Stack
       stacks:
         - embedding:
             type: PatchEmbedding
             img_size: 4
-            patch_size: 2
+            patch_size: 1
             in_channel: 165
             embed_dim: 256
             norm_layer: nn.LayerNorm
         - basemodule:
-            type: ClassicMambaBlock
-            input_dim: 256
-            hidden_state: 16
-            expand_ratio: 2
-            dw_conv_kernel_size: 3
+            type: ParallelMambaBlock
+            d_model: 256
+            d_state: 128
+            d_conv: 4
+            expand: 2
+            headdim: 64
+#            use_mem_eff_path: false
         - head:
             type: FCHead
             embed_dim: 256
@@ -110,7 +114,7 @@ scheduler:
 #  gamma: 0.5
   type: CosineAnnealingLR
   T_max: 100
-  eta_min: 1.0e-6
+  eta_min: 1.0e-5
 
 train:
   epoch: 100
