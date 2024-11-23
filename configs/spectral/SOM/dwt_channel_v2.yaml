@@ -1,11 +1,11 @@
-work_dir: experiment/Zn/dwt_channel
+work_dir: experiment/SOM/dwt_channel_v2
 data:
   train:
     dataset:
       type: SpectralDataset2d
       data_root: data/spectral/train/reflectivity
-      gt_path: data/spectral/train/labelZn_scale.txt
-      elements: Zn
+      gt_path: data/spectral/train/labelSOM_scale.txt
+      elements: SOM
       pipelines:
         - type: Normalize
           scope: channel
@@ -18,8 +18,8 @@ data:
     dataset:
       type: SpectralDataset2d
       data_root: data/spectral/val/reflectivity
-      gt_path: data/spectral/val/labelZn_scale.txt
-      elements: Zn
+      gt_path: data/spectral/val/labelSOM_scale.txt
+      elements: SOM
       pipelines:
         - type: Normalize
           scope: channel

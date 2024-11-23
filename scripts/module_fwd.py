@@ -10,13 +10,18 @@ from causal_conv1d import causal_conv1d_fn
 import causal_conv1d_cuda
 
 from uchiha import ClassicMambaBlock
+from uchiha.models.basemodules.cross_transformer import SpatialUniCrossAttention, ChannelUniCrossAttention
 from uchiha.models.basemodules.mamba import ChannelMambaBlock
 from uchiha.models.basemodules.visual_mamba import SelectiveScan2D, VisualMambaBlock
 
 
 def bench():
-    # x = torch.randn(1, 96, 56, 56).cuda()
-    x = torch.randn(2, 9, 256).cuda()
+    # x = torch.randn(2, 256, 56, 56).cuda()
+    # x2 = torch.randn(2, 256, 56, 56).cuda()
+    # x = torch.randn(2, 9, 256).cuda()
+    # x2 = torch.randn(2, 9, 256).cuda()
+    x = torch.randn(2, 256, 9).cuda()
+    x2 = torch.randn(2, 256, 9).cuda()
     SS2D = SelectiveScan2D(
         input_dim=96,
         hidden_state=16,
@@ -51,10 +56,20 @@ def bench():
         expand_ratio=2,
     ).cuda()
 
+    SCA = SpatialUniCrossAttention(
+        input_dim=256,
+        num_heads=8
+    ).cuda()
+
+    CCA = ChannelUniCrossAttention(
+        seq_len=9,
+        factor=4.0,
+    ).cuda()
+
     print(x.shape)
 
     tim = time.time()
-    y = ChannelMamba(x)
+    y = CCA(x, x2)
     print(time.time() - tim)
 
     print(y.shape)

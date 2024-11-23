@@ -81,7 +81,6 @@ class ChannelAttentionV2(nn.Module):
 
     Args:
         sequence (int): length of input sequences.
-        num_heads (int): Number of heads in `Multi-Head Attention`
         factor (float): Control the spatial `Linear`
         qkv_bias (bool, optional): If True, add a learnable bias to query, key, value. Default: True
         qk_scale (float | None, optional): Override default qk scale of head_dim ** -0.5 if set
@@ -91,7 +90,6 @@ class ChannelAttentionV2(nn.Module):
 
     def __init__(self,
                  sequence,
-                 num_heads,
                  factor,
                  qkv_bias=True,
                  qk_scale=None,
@@ -99,12 +97,13 @@ class ChannelAttentionV2(nn.Module):
                  proj_drop=0.):
         super().__init__()
         self.sequence = sequence
-        self.num_heads = num_heads
         self.factor = factor
-        head_dim = sequence // num_heads
-        self.scale = qk_scale or head_dim ** -0.5
 
-        self.qk = nn.Linear(sequence, int(sequence * factor * 2), bias=qkv_bias)
+        self.scale = qk_scale or sequence ** -0.5
+
+        self.inner_len = int(self.sequence * self.factor)
+
+        self.qk = nn.Linear(sequence, self.inner_len * 2, bias=qkv_bias)
         self.v = nn.Linear(sequence, sequence, bias=qkv_bias)
         self.attn_drop = nn.Dropout(attn_drop)
         self.proj = nn.Linear(sequence, sequence)
@@ -115,7 +114,7 @@ class ChannelAttentionV2(nn.Module):
     def forward(self, x):
         """
         Args:
-            x (Tensor):: input features with shape of (num_windows*B, N, C)
+            x (Tensor):: input features with shape of (B, N, C)
         """
         B_, C, N = x.shape
         N_ = int(N * self.factor)
@@ -123,10 +122,9 @@ class ChannelAttentionV2(nn.Module):
         qk = self.qk(x)
 
         qk = qk.reshape(B_, C, 2, N_).permute(2, 0, 1, 3)
-        q = qk[0].reshape(B_, C, self.num_heads, N_ // self.num_heads).permute(0, 2, 1, 3)
-        k = qk[1].reshape(B_, C, self.num_heads, N_ // self.num_heads).permute(0, 2, 1, 3)
+        q = qk[0]
+        k = qk[1]
         v = self.v(x)
-        v = v.reshape(B_, C, self.num_heads, N // self.num_heads).permute(0, 2, 1, 3)
 
         q = F.normalize(q, dim=-1, p=2)
         k = F.normalize(k, dim=-1, p=2)
@@ -231,7 +229,6 @@ class ChannelTransformerBlockV2(nn.Module):
     def __init__(self,
                  sequence,
                  input_resolution,
-                 num_heads,
                  factor,
                  mlp_ratio=4.,
                  qkv_bias=True,
@@ -244,13 +241,13 @@ class ChannelTransformerBlockV2(nn.Module):
         super().__init__()
         self.sequence = sequence
         self.input_resolution = input_resolution
-        self.num_heads = num_heads
+
         self.mlp_ratio = mlp_ratio
 
         self.norm1 = norm_layer(sequence)
 
         self.attn_C = ChannelAttentionV2(
-            sequence, num_heads=num_heads, factor=factor,
+            sequence, factor=factor,
             qkv_bias=qkv_bias, qk_scale=qk_scale, attn_drop=attn_drop, proj_drop=drop)
         self.drop_path: nn.Module = DropPath(drop_path) if drop_path > 0. else nn.Identity()
         self.norm2 = norm_layer(sequence)
@@ -367,7 +364,6 @@ class ChannelTransformerLayerV2(nn.Module):
                  sequence,
                  input_resolution,
                  depth,
-                 num_heads,
                  factor,
                  mlp_ratio=4.,
                  qkv_bias=True,
@@ -395,7 +391,6 @@ class ChannelTransformerLayerV2(nn.Module):
         # build blocks
         self.blocks = nn.ModuleList([
             ChannelTransformerBlockV2(sequence=sequence, input_resolution=self.input_resolution,
-                                      num_heads=num_heads,
                                       factor=factor,
                                       mlp_ratio=mlp_ratio,
                                       qkv_bias=qkv_bias, qk_scale=qk_scale,
