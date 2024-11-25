@@ -2,7 +2,9 @@ import argparse
 from datetime import datetime
 from os.path import join
 
+import torch
 from tensorboardX import SummaryWriter
+from torch import nn
 
 from uchiha.apis import train_by_epoch, validate, set_random_seed
 from uchiha.datasets.builder import build_dataset, build_dataloader
@@ -17,6 +19,8 @@ def parse_args():
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument('--seed', type=int, default=49)
     args_parser.add_argument('--config', '-c', type=str, default='configs/spectral/exp.yaml')
+    args_parser.add_argument('--gpu_ids', nargs='+', default=['0'])
+    args_parser.add_argument('--multi-process', '-mp', action='store_true')
     args_parser.add_argument('--no_validate', '-n', action='store_true')
 
     return args_parser.parse_args()
@@ -47,7 +51,13 @@ def main():
     valloader = build_dataloader(valset, cfg.data.val.dataloader.to_dict())
 
     # model
-    model = build_model(cfg.model.to_dict()).cuda()
+    model = build_model(cfg.model.to_dict())
+    if len(args.gpu_ids) > 1:
+        device_ids = [int(i) for i in args.gpu_ids]
+        model = nn.DataParallel(model, device_ids=device_ids).cuda()
+        logger.info(f'Use GPUs: {device_ids}')
+    else:
+        model = model.cuda()
     total_params = count_parameters(model)
     logger.info(f'total_params: {total_params}')
 
