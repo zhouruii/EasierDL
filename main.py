@@ -2,7 +2,6 @@ import argparse
 from datetime import datetime
 from os.path import join
 
-import torch
 from tensorboardX import SummaryWriter
 from torch import nn
 
