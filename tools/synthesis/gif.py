@@ -1,11 +1,12 @@
-import numpy as np
 import cv2
-from scipy.ndimage import uniform_filter
+import matplotlib.pyplot as plt
+import numpy as np
 
-from util import resize_image
+from tools.synthesis.gen_perlin import generate_perlin_noise
+from util import read_img, to_visualize
 
 
-def guided_filter_cv2(guide_image, input_image, radius, epsilon):
+def guided_filter_single_channel(guide_image, input_image, radius, epsilon):
     """ `Guided image filter` implementation using OpenCV.
     
     Args:
@@ -45,28 +46,49 @@ def guided_filter_cv2(guide_image, input_image, radius, epsilon):
     return output_image
 
 
-def guided_filter(impl='cv2', guide_image=None, input_image=None, radius=None, epsilon=None):
-    g_h, g_w = guide_image.shape
-    input_image = resize_image(image=input_image, new_width=g_w, new_height=g_h)
-    if impl == 'cv2':
-        return guided_filter_cv2(guide_image, input_image, radius, epsilon)
+def guided_filter(guide_image=None, input_image=None, radius=None, epsilon=None):
+
+    out = np.zeros(guide_image.shape)
+    if len(guide_image.shape) == 3:
+        g_h, g_w, g_c = guide_image.shape
     else:
-        raise NotImplementedError(f'{impl} is not supported yet!')
+        g_h, g_w = guide_image.shape
+        g_c = 0
+
+    if len(input_image.shape) != len(guide_image.shape):
+        input_image = np.expand_dims(input_image, axis=-1)  # [H, W, 1]
+        input_image = np.tile(input_image, (1, 1, g_c))
+
+    if g_c != 0:
+        for c in range(g_c):
+            out[:, :, c] = guided_filter_single_channel(guide_image[:, :, c], input_image[:, :, c], radius, epsilon)
+    else:
+        out = guided_filter_single_channel(guide_image, input_image, radius, epsilon)
+
+    return out
 
 
 if __name__ == '__main__':
     # 读取图像
-    guide_image = cv2.imread('./demo/BSD300/22013.jpg', cv2.IMREAD_GRAYSCALE)  # 引导图像
-    input_image = cv2.imread('./demo/Streaks_Garg06/1-5.png', cv2.IMREAD_GRAYSCALE)  # 需要滤波的目标图像
+    # guide_img = read_img('demo/5.jpg', scale=False)  # 引导图像
+    guide_img = cv2.imread('demo/5.jpg', cv2.IMREAD_GRAYSCALE)  # 引导图像
+    height, width = guide_img.shape[0], guide_img.shape[1]
+    input_img = generate_perlin_noise(height=height, width=width, scales=[300])  # 需要滤波的目标图像
 
     # 调用引导滤波器函数
-    r = 6  # 滤波窗口的半径
+    r = 8  # 滤波窗口的半径
     epsilon = 0.1  # 正则化项
     output = guided_filter(
-        impl='cv2',
-        guide_image=guide_image,
-        input_image=input_image,
+        guide_image=guide_img,
+        input_image=input_img,
         radius=r,
         epsilon=epsilon)
 
-    cv2.imwrite('./demo/filter.jpg', output)
+    fig, axes = plt.subplots(1, 3, figsize=(10, 5))
+
+    axes[0].imshow(to_visualize(guide_img), cmap='gray')
+    axes[1].imshow(to_visualize(input_img), cmap='gray')
+    axes[2].imshow(to_visualize(output), cmap='gray')
+
+    plt.tight_layout()
+    plt.show()
