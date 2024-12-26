@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from matplotlib import pyplot as plt
 from skimage.metrics import peak_signal_noise_ratio as psnr
 from skimage.metrics import structural_similarity as ssim
 
@@ -59,8 +60,10 @@ def read_img(path, to_rgb=True, scale=True, dtype='float32'):
 
 
 def to_visualize(img):
-    if np.max(img) <= 1.0:
-        img = 255 * img
+    # if np.max(img) <= 1.0:
+    #     img = 255 * img
+
+    img = normalize(img, 0, 255)
 
     if img.dtype == np.float64 or img.dtype == np.float32:
         img = img.astype(np.uint8)
@@ -98,3 +101,28 @@ def calculate_psnr_ssim(img1: np.ndarray, img2: np.ndarray) -> tuple:
 
 def normalize(img, _min, _max):
     return cv2.normalize(img, None, _min, _max, cv2.NORM_MINMAX)
+
+
+def check_dtype(data):
+    if data.dtype == np.uint8:
+        data = data / 255
+        return data.astype(np.float32)
+
+
+def visualize_tool(fig_size=None,
+                   rows_cols=None,
+                   data_dict=None):
+    fig, axes = plt.subplots(*rows_cols, figsize=fig_size)
+
+    for row in range(rows_cols[0]):
+        for col in range(rows_cols[1]):
+            label, data = data_dict.popitem(last=False)
+            if len(data.shape) == 2:
+                axes[row, col].imshow(to_visualize(data), cmap='gray')
+            else:
+                axes[row, col].imshow(to_visualize(data))
+            axes[row, col].set_title(label)
+            axes[row, col].axis('off')
+
+    plt.tight_layout()
+    plt.show()

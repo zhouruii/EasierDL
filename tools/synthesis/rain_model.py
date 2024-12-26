@@ -1,13 +1,13 @@
 import random
+from collections import OrderedDict
 
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
 
 from tools.synthesis.gen_perlin import generate_perlin_noise
-from tools.synthesis.gen_streak import generate_rain_streak
+from tools.synthesis.gen_streak import generate_bird_view_streak
 from tools.synthesis.gif import guided_filter
-from tools.synthesis.util import read_img, to_visualize, calculate_psnr_ssim
+from tools.synthesis.util import read_img, calculate_psnr_ssim, check_dtype, visualize_tool, normalize
 
 DV = {
     1: random.uniform(10, 20),  # 小雨
@@ -24,14 +24,14 @@ RAIN = {
 }
 
 RAIN_STREAK = {
-    1: dict(num_drops=random.randint(1000, 1200), drop_length=random.randint(10, 12),
-            angle=random.randint(5, 10), intensity=0.5),  # 小雨
-    2: dict(num_drops=random.randint(1200, 1500), drop_length=random.randint(12, 15),
-            angle=random.randint(10, 15), intensity=0.6),  # 中雨
-    3: dict(num_drops=random.randint(1500, 2000), drop_length=random.randint(15, 18),
-            angle=random.randint(15, 20), intensity=0.7),  # 大雨
-    4: dict(num_drops=random.randint(2000, 2500), drop_length=random.randint(18, 20),
-            angle=random.randint(20, 30), intensity=0.8),  # 暴雨
+    1: dict(num_drops=random.randint(3000, 3200), streak_length=random.randint(40, 42),
+            wind_angle=random.randint(5, 10), wind_strength=5),  # 小雨
+    2: dict(num_drops=random.randint(1200, 1500), streak_length=random.randint(12, 15),
+            wind_angle=random.randint(10, 15), wind_strength=10),  # 中雨
+    3: dict(num_drops=random.randint(1500, 2000), streak_length=random.randint(15, 18),
+            wind_angle=random.randint(15, 20), wind_strength=15),  # 大雨
+    4: dict(num_drops=random.randint(2000, 2500), streak_length=random.randint(18, 20),
+            wind_angle=random.randint(20, 30), wind_strength=20),  # 暴雨
 }
 
 
@@ -43,8 +43,10 @@ class RainModel:
                  level=None,
                  d=1.0,
                  a=1.0,
-                 scale=45,
+                 scales=None,
                  gif=False,
+                 depth=None,
+                 use_perlin=True,
                  ):
         self.img = read_img(img_path)
         self.lambdas = np.array([700, 540, 438]) if not lambdas else lambdas  # RGB
@@ -52,40 +54,51 @@ class RainModel:
         self.level = random.uniform(1, 4) if not level else level
         self.d = np.full(self.img.shape, d)
         self.a = np.full(self.img.shape, a)
-        self.scales = scale
+        self.scales = scales
         self.gif = gif
+        self.use_perlin = use_perlin
 
         self.height, self.width, self.channel = self.img.shape
+        self.depth = depth if depth is not None else (self.height + self.width) // 2
         self.dv = DV.get(self.level)
         self.rain_speed = RAIN.get(self.level)
-        self.tau_rain, self.tau_fog = self.cal_trans()
-        self.rain_streak = self.gen_rain_streak()
 
-        self._init_params()
+        self.perlin_noise, self.rain_streak, self.tau_rain, self.tau_fog = self._init_params()
 
-        self.deg = None
+        self.deg_streak = None
+        self.deg_rain_img, self.deg_fog_img, self.deg_rain_fog_img = None, None, None
+        self.deg_img = None
 
     def _init_params(self):
-        perlin_noise = generate_perlin_noise(impl='noise', height=self.height, width=self.width, scales=self.scales)
-        if self.gif:
-            perlin_noise = guided_filter(guide_image=cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY),
-                                         input_image=perlin_noise,
-                                         radius=None,
-                                         epsilon=None)
-        pass
+        # ------------------------------------------- Perlin Noise ------------------------------------------- #
+        if self.use_perlin:
+            perlin_noise = generate_perlin_noise(impl='noise',
+                                                 height=self.height,
+                                                 width=self.width,
+                                                 scales=self.scales)
+            if self.gif:
+                perlin_noise = guided_filter(guide_image=cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY),
+                                             input_image=perlin_noise,
+                                             radius=None,
+                                             epsilon=None)
+        else:
+            perlin_noise = np.ones((self.height, self.width), dtype=np.uint8) * 255
+        perlin_noise = check_dtype(perlin_noise)
 
-    def gen_rain_streak(self):
-        rain_streak = generate_rain_streak(
-            self.height, self.width, **RAIN_STREAK.get(self.level))
+        # ------------------------------------------- Rain Streak ------------------------------------------- #
+        rain_streak = generate_bird_view_streak(height=self.height,
+                                                width=self.width,
+                                                depth=self.depth,
+                                                noise=perlin_noise,
+                                                **RAIN_STREAK.get(self.level))
+        rain_streak = check_dtype(rain_streak)
 
         if len(rain_streak.shape) < 3:
             rain_streak = np.expand_dims(rain_streak, axis=-1)
             rain_streak = np.tile(rain_streak, (1, 1, self.channel))
 
-        return rain_streak
-
-    def cal_trans(self):
-        gamma_rain = self.r0 * self.rain_speed
+        # ------------------------------------------- Transmission ------------------------------------------- #
+        gamma_rain = self.r0 * self.rain_speed ** 0.66
         if isinstance(gamma_rain, float):
             gamma_rain = np.ones(self.img.shape) * gamma_rain
 
@@ -93,82 +106,54 @@ class RainModel:
         if len(gamma_fog.shape) == 1:
             gamma_fog = np.tile(gamma_fog, (self.height, self.width, 1))
 
+        gamma_fog = gamma_fog * perlin_noise[..., None]
+
         tau_rain = np.exp(-gamma_rain * self.d)
         tau_fog = np.exp(-gamma_fog * self.d)
 
-        return tau_rain, tau_fog
-
-    def cal_deg(self):
-        deg_rain_streak = self.rain_streak * self.tau_fog
-
-        tau = self.tau_fog * self.tau_rain
-        rain_fog = self.img * tau + self.a * (1 - tau)
-
-        self.deg = rain_fog + deg_rain_streak
+        return perlin_noise, rain_streak, tau_rain, tau_fog
 
     def synthesize(self):
-        self.cal_deg()
+        self.deg_streak = self.rain_streak * self.tau_fog
+
+        self.deg_rain_img = self.img * self.tau_rain + self.a * (1 - self.tau_rain)
+        self.deg_fog_img = self.img * self.tau_fog + self.a * (1 - self.tau_fog)
+
+        tau = self.tau_fog * self.tau_rain
+        self.deg_rain_fog_img = self.img * tau + self.a * (1 - tau)
+
+        self.deg_img = self.deg_rain_fog_img + self.deg_streak
         self.cal_metric()
 
     def cal_metric(self):
-
-        psnr_value, ssim_value = calculate_psnr_ssim(self.img, self.deg)
+        psnr_value, ssim_value = calculate_psnr_ssim(self.img, self.deg_img)
         print(f"PSNR: {psnr_value:.2f}, SSIM: {ssim_value:.4f}")
 
     def visualize(self):
-        fig, axes = plt.subplots(3, 2, figsize=(20, 10))
+        data_dict = OrderedDict()
+        data_dict['Origin image'] = self.img
+        data_dict['Perlin noise'] = self.perlin_noise
+        data_dict['Rain streak'] = self.rain_streak
+        data_dict['Rain streak With Scattering'] = self.deg_streak
+        data_dict['Image affected by rain scattering'] = self.deg_rain_img
+        data_dict['Image affected by fog scattering'] = self.deg_fog_img
+        data_dict['Image affected by (rain, fog) scattering'] = self.deg_rain_fog_img
+        data_dict['Degraded image'] = self.deg_img
 
-        # original background
-        axes[0, 0].imshow(to_visualize(self.img))
-        axes[0, 0].set_title('Background Signal')
-        axes[0, 0].axis('off')
-
-        # degenerate rain streak
-        deg_rain_streak = self.rain_streak * self.tau_fog
-        axes[0, 1].imshow(to_visualize(deg_rain_streak))
-        axes[0, 1].set_title('Rain Streak')
-        axes[0, 1].axis('off')
-
-        # add rain streak
-        rain_streak = self.img + deg_rain_streak
-        rain_streak = np.clip(rain_streak, 0, 1)
-        axes[1, 0].imshow(to_visualize(rain_streak))
-        axes[1, 0].set_title('With Rain Streak')
-        axes[1, 0].axis('off')
-
-        # Fog
-        fog = self.img * self.tau_fog + self.a * (1 - self.tau_fog)
-        fog = np.clip(fog, 0, 1)
-        axes[1, 1].imshow(to_visualize(fog))
-        axes[1, 1].set_title('With Fog')
-        axes[1, 1].axis('off')
-
-        # Rain & Fog
-        tau = self.tau_fog * self.tau_rain
-        rain_fog = self.img * tau + self.a * (1 - tau)
-        rain_fog = np.clip(rain_fog, 0, 1)
-        axes[2, 0].imshow(to_visualize(rain_fog))
-        axes[2, 0].set_title('With Fog and Rain')
-        axes[2, 0].axis('off')
-
-        # Final simulated image
-        I = rain_fog + deg_rain_streak
-        I = np.clip(I, 0, 1)
-        axes[2, 1].imshow(to_visualize(I))
-        axes[2, 1].set_title('Final Simulated Image ($I(x, y)$)')
-        axes[2, 1].axis('off')
-
-        plt.tight_layout()
-        plt.show()
+        visualize_tool(fig_size=(20, 10),
+                       rows_cols=(2, 4),
+                       data_dict=data_dict)
 
 
 if __name__ == '__main__':
     model = RainModel(
-        img_path='demo/BSD300/2092.jpg',
+        img_path='demo/5.jpg',
         r0=0.248,
         level=1,
-        a=0.8
+        a=1,
+        d=1,
+        scales=[300]
     )
 
-    model.visualize()
     model.synthesize()
+    model.visualize()

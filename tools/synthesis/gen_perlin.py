@@ -46,7 +46,7 @@ def generate_perlin_noise(impl='noise', height=512, width=512, scales=None, alph
     else:
         raise NotImplementedError(f'impl: {impl} not supported')
 
-    # Normalize to [0, 1]
+    # Normalize to [0, 255]
     noise = normalize(noise, 0, 255).astype(np.uint8)
 
     return noise
