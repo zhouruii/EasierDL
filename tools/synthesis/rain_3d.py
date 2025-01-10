@@ -3,7 +3,7 @@ import open3d as o3d
 import plotly.graph_objects as go
 
 
-def generate_3d_rain(height, width, depth, num_drops=10000, streak_length=20, wind_angle=135, wind_strength=10):
+def generate_3d_rain(height, width, depth, num_drops=10000, streak_length=20, wind_angle=135, wind_strength=0.5):
     """
     生成3维降雨模型，包括雨条纹的方向和连续性。
     Args:
@@ -29,8 +29,8 @@ def generate_3d_rain(height, width, depth, num_drops=10000, streak_length=20, wi
         start_z = np.random.randint(0, depth)
 
         for i in range(streak_length):
-            xi = int(start_x + i * wind_dx * wind_strength / depth)  #
-            yi = int(start_y + i * wind_dy * wind_strength / depth)  #
+            xi = int(start_x + i * wind_dx * wind_strength)  #
+            yi = int(start_y + i * wind_dy * wind_strength)  #
             zi = int(start_z - i)  # 雨条纹沿z轴向下移动
 
             if 0 <= xi < width and 0 <= yi < height and 0 <= zi < depth:
@@ -91,11 +91,11 @@ def save_ply(x, y, z, filename='output.ply'):
 
 if __name__ == '__main__':
     # 生成3D雨模型
-    height, width, depth = 512, 512, 100
+    height, width, depth = 512, 512, 512
     num_drops = 5000
-    streak_length = 30
-    wind_angle = 0
-    wind_strength = 0
+    streak_length = 40
+    wind_angle = 60
+    wind_strength = 0.2
 
     x, y, z = generate_3d_rain(height, width, depth, num_drops, streak_length, wind_angle, wind_strength)
 

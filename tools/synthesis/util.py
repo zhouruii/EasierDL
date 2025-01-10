@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
-from skimage.metrics import peak_signal_noise_ratio as psnr
-from skimage.metrics import structural_similarity as ssim
+from skimage.metrics import peak_signal_noise_ratio as psnr_val
+from skimage.metrics import structural_similarity as ssim_val
 
 
 def resize_image(image=None, scale_factor=None, new_height=None, new_width=None):
@@ -60,10 +60,11 @@ def read_img(path, to_rgb=True, scale=True, dtype='float32'):
 
 
 def to_visualize(img):
-    # if np.max(img) <= 1.0:
-    #     img = 255 * img
+    if img.dtype == np.uint8:
+        return img
 
-    img = normalize(img, 0, 255)
+    # img = normalize(img, 0, 255)
+    img = np.clip(img, 0, 1.0) * 255
 
     if img.dtype == np.float64 or img.dtype == np.float32:
         img = img.astype(np.uint8)
@@ -88,13 +89,13 @@ def calculate_psnr_ssim(img1: np.ndarray, img2: np.ndarray) -> tuple:
     # 逐通道计算 SSIM，然后求平均值
     channels = img1.shape[2]
     ssim_values = [
-        ssim(img1[..., i], img2[..., i], data_range=img1[..., i].max() - img1[..., i].min())
+        ssim_val(img1[..., i], img2[..., i], data_range=img1[..., i].max() - img1[..., i].min())
         for i in range(channels)
     ]
     avg_ssim = np.mean(ssim_values)
 
     # PSNR：直接支持多通道
-    psnr_value = psnr(img1, img2, data_range=img1.max() - img1.min())
+    psnr_value = psnr_val(img1, img2, data_range=img1.max() - img1.min())
 
     return psnr_value, avg_ssim
 
@@ -126,3 +127,19 @@ def visualize_tool(fig_size=None,
 
     plt.tight_layout()
     plt.show()
+
+
+def scale_streak(streak):
+    height, width, _ = streak.shape
+    new_streak = resize_image(streak, scale_factor=1.3)
+    new_height, new_width, _ = new_streak.shape
+    top_left = ((new_height - height) // 2, (new_width - width) // 2)
+    scaled_streak = new_streak[top_left[0]:top_left[0] + height, top_left[1]:top_left[1] + width, :]
+    return scaled_streak
+
+
+if __name__ == '__main__':
+    img1 = read_img(r"E:\datasets\test\clean\5.jpg")
+    img2 = read_img(r"E:\datasets\test\haze\5.jpg")
+    psnr_val, ssim_val = calculate_psnr_ssim(img1, img2)
+    print(f'PSNR:{psnr_val}, SSIM:{ssim_val}')

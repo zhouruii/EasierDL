@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 from matplotlib import pyplot as plt
 from noise import snoise2
@@ -6,7 +8,7 @@ from perlin_noise import PerlinNoise
 from tools.synthesis.util import normalize
 
 
-def generate_perlin_noise(impl='noise', height=512, width=512, scales=None, alpha=None):
+def generate_perlin_noise(impl='noise', height=512, width=512, scales=None, offset=None, alpha=None):
     """
     Generate perlin noise.
     Args:
@@ -28,7 +30,11 @@ def generate_perlin_noise(impl='noise', height=512, width=512, scales=None, alph
         for scale in scales:
             for y in range(height):
                 for x in range(width):
-                    noise_value = snoise2(x / scale, y / scale, octaves=10, repeatx=width, repeaty=height)
+                    if offset is not None:
+                        noise_value = snoise2((x + offset[0]) / scale, (y + offset[0]) / scale, octaves=10,
+                                              repeatx=width, repeaty=height)
+                    else:
+                        noise_value = snoise2(x / scale, y / scale, octaves=10, repeatx=width, repeaty=height)
                     # Normalize to range [0, 1]
                     noise_value = (noise_value + 1) / 2
                     if alpha is None:
@@ -52,6 +58,12 @@ def generate_perlin_noise(impl='noise', height=512, width=512, scales=None, alph
     return noise
 
 
+def generate_perlin_with_seed(height, width, scales, seed):
+    random.seed(seed)
+    offset = (random.randint(0, 10000), random.randint(0, 10000))
+    return generate_perlin_noise(height=height, width=width, scales=scales, offset=offset)
+
+
 def get_perlin_mask(noise_map, threshold=68):
     drop_mask = (noise_map > threshold).astype(np.uint8)  # Adjust threshold for density
     return drop_mask
@@ -65,10 +77,10 @@ def visualize():
     fig, axes = plt.subplots(2, 2, figsize=(10, 5))
 
     noise1 = dict(impl='noise', height=512, width=512, scales=[450])
-    noise2 = dict(impl='noise', height=512, width=512, scales=[500, 600], alpha=0.1)
+    noise2 = dict(height=512, width=512, scales=[500, 600], seed=42)
 
     perlin1 = generate_perlin_noise(**noise1)
-    perlin2 = generate_perlin_noise(**noise2)
+    perlin2 = generate_perlin_with_seed(**noise2)
 
     mask1 = get_perlin_mask(perlin1)
     mask2 = get_perlin_mask(perlin2)

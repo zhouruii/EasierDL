@@ -7,7 +7,7 @@ import numpy as np
 from tools.synthesis.gen_perlin import generate_perlin_noise
 from tools.synthesis.gen_streak import generate_bird_view_streak
 from tools.synthesis.gif import guided_filter
-from tools.synthesis.util import read_img, calculate_psnr_ssim, check_dtype, visualize_tool, normalize
+from tools.synthesis.util import read_img, calculate_psnr_ssim, check_dtype, visualize_tool
 
 DV = {
     1: random.uniform(10, 20),  # 小雨
@@ -24,14 +24,14 @@ RAIN = {
 }
 
 RAIN_STREAK = {
-    1: dict(num_drops=random.randint(3000, 3200), streak_length=random.randint(40, 42),
-            wind_angle=random.randint(5, 10), wind_strength=5),  # 小雨
-    2: dict(num_drops=random.randint(1200, 1500), streak_length=random.randint(12, 15),
-            wind_angle=random.randint(10, 15), wind_strength=10),  # 中雨
-    3: dict(num_drops=random.randint(1500, 2000), streak_length=random.randint(15, 18),
-            wind_angle=random.randint(15, 20), wind_strength=15),  # 大雨
-    4: dict(num_drops=random.randint(2000, 2500), streak_length=random.randint(18, 20),
-            wind_angle=random.randint(20, 30), wind_strength=20),  # 暴雨
+    1: dict(num_drops=random.randint(2000, 2500), streak_length=random.randint(20, 25),
+            wind_angle=random.randint(-180, 180), wind_strength=random.uniform(0, 0.05)),  # 小雨
+    2: dict(num_drops=random.randint(3000, 3500), streak_length=random.randint(30, 35),
+            wind_angle=random.randint(-180, 180), wind_strength=random.uniform(0.25, 0.3)),  # 中雨
+    3: dict(num_drops=random.randint(4000, 4500), streak_length=random.randint(40, 45),
+            wind_angle=random.randint(-180, 180), wind_strength=random.uniform(0, 0.09)),  # 大雨
+    4: dict(num_drops=random.randint(5000, 5500), streak_length=random.randint(50, 55),
+            wind_angle=random.randint(-180, 180), wind_strength=random.uniform(0, 0.12)),  # 暴雨
 }
 
 
@@ -89,7 +89,7 @@ class RainModel:
         rain_streak = generate_bird_view_streak(height=self.height,
                                                 width=self.width,
                                                 depth=self.depth,
-                                                noise=perlin_noise,
+                                                # noise=perlin_noise,
                                                 **RAIN_STREAK.get(self.level))
         rain_streak = check_dtype(rain_streak)
 
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     model = RainModel(
         img_path='demo/5.jpg',
         r0=0.248,
-        level=1,
+        level=2,
         a=1,
         d=1,
         scales=[300]

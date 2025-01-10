@@ -176,12 +176,12 @@ def visualize(params):
     fig, axes = plt.subplots(1, len(params), figsize=(20, 5))
 
     for i, param in enumerate(params):
-        rain_image = generate_rain_streak(
-            **param
-        )
-        # rain_image = generate_bird_view_streak(
+        # rain_image = generate_rain_streak(
         #     **param
         # )
+        rain_image = generate_bird_view_streak(
+            **param
+        )
         axes[i].imshow(rain_image, cmap="gray", vmin=0, vmax=255)
         axes[i].axis("off")
 
@@ -192,27 +192,33 @@ def visualize(params):
 if __name__ == '__main__':
     perlin_noise = generate_perlin_noise(impl='noise', height=512, width=512, scales=[600])
     perlin_mask = (perlin_noise > 68).astype(np.uint8)
+    top_streak = generate_top_streak(512, 512, num_streaks=2000, center_fraction=0.05, max_streak_length=30)
 
-    RAIN = [
-        {"height": 512, "width": 512, "num_drops": 1000, "drop_length": 10, "intensity": 0.3, "angle": 10,
-         "mask": perlin_mask, "noise": perlin_noise},  # Small
-        {"height": 512, "width": 512, "num_drops": 1200, "drop_length": 20, "intensity": 0.5, "angle": 15,
-         "mask": perlin_mask, "noise": perlin_noise},  # Medium
-        {"height": 512, "width": 512, "num_drops": 2000, "drop_length": 30, "intensity": 0.7, "angle": 20,
-         "mask": perlin_mask, "noise": perlin_noise},  # Heavy
-        {"height": 512, "width": 512, "num_drops": 3000, "drop_length": 40, "intensity": 0.9, "angle": 25,
-         "mask": perlin_mask, "noise": perlin_noise},  # Storm
-    ]
-
+    # "mask": perlin_mask, "noise": perlin_noise
     # RAIN = [
-    #     {"height": 512, "width": 512, "depth": 512, "num_drops": 1000, "streak_length": 10, "wind_angle": 0,
-    #      "wind_strength": 0, "noise": perlin_noise},  # Small
-    #     {"height": 512, "width": 512, "depth": 512, "num_drops": 1200, "streak_length": 20, "wind_angle": 10,
-    #      "wind_strength": 5, "noise": perlin_noise},  # Medium
-    #     {"height": 512, "width": 512, "depth": 512, "num_drops": 2000, "streak_length": 30, "wind_angle": 20,
-    #      "wind_strength": 10, "noise": perlin_noise},  # Heavy
-    #     {"height": 512, "width": 512, "depth": 512, "num_drops": 3000, "streak_length": 40, "wind_angle": 30,
-    #      "wind_strength": 15, "noise": perlin_noise},  # Storm
+    #     {"height": 512, "width": 512, "num_drops": 1000, "drop_length": 10, "intensity": 0.3, "angle": 10,
+    #      },  # Small
+    #     {"height": 512, "width": 512, "num_drops": 1200, "drop_length": 20, "intensity": 0.5, "angle": 15,
+    #      },  # Medium
+    #     {"height": 512, "width": 512, "num_drops": 2000, "drop_length": 30, "intensity": 0.7, "angle": 20,
+    #      },  # Heavy
+    #     {"height": 512, "width": 512, "num_drops": 3000, "drop_length": 40, "intensity": 0.9, "angle": 25,
+    #      },  # Storm
     # ]
 
+    RAIN = [
+        {"height": 512, "width": 512, "depth": 512, "num_drops": 2000, "streak_length": 20, "wind_angle": 10,
+         "wind_strength": 0.05},  # Medium
+        {"height": 512, "width": 512, "depth": 512, "num_drops": 3000, "streak_length": 30, "wind_angle": 20,
+         "wind_strength": 0.1},  # Heavy
+        {"height": 512, "width": 512, "depth": 512, "num_drops": 4000, "streak_length": 40, "wind_angle": 60,
+         "wind_strength": 0.2},  # Storm
+    ]
+
     visualize(RAIN)
+
+    # fig, axes = plt.subplots(1, 1, figsize=(6, 6))
+    # axes.imshow(top_streak, cmap='gray')
+    # axes.axis("off")
+    # plt.tight_layout()
+    # plt.show()

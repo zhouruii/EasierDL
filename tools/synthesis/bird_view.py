@@ -60,7 +60,7 @@ def generate_perspective_projection(points, height, width, f=500, k=2.0):
 if __name__ == '__main__':
     # Test with synthetic data
     N = 100000  # Number of points
-    x, y, z = generate_3d_rain(512, 512, 500, num_drops=5000, wind_angle=20, wind_strength=0)
+    x, y, z = generate_3d_rain(512, 512, 512, num_drops=5000, streak_length=30, wind_angle=20, wind_strength=10)
     points = np.vstack((x, y, z)).T  # Generate random points in the range (512, 512, 100)
 
     # Image dimensions
