@@ -10,7 +10,7 @@ if __name__ == '__main__':
         level=2,
         a=1,
         d=1,
-        scales=[300]
+        scale=300
     )
 
     img = model.img

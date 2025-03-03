@@ -130,12 +130,23 @@ def visualize_tool(fig_size=None,
 
 
 def scale_streak(streak):
-    height, width, _ = streak.shape
-    new_streak = resize_image(streak, scale_factor=1.3)
-    new_height, new_width, _ = new_streak.shape
+    height, width = streak.shape[:2]
+    new_streak = resize_image(streak, scale_factor=1.5)
+    new_height, new_width = new_streak.shape[:2]
     top_left = ((new_height - height) // 2, (new_width - width) // 2)
-    scaled_streak = new_streak[top_left[0]:top_left[0] + height, top_left[1]:top_left[1] + width, :]
+    if len(streak.shape) == 3:
+        scaled_streak = new_streak[top_left[0]:top_left[0] + height, top_left[1]:top_left[1] + width, :]
+    else:
+        scaled_streak = new_streak[top_left[0]:top_left[0] + height, top_left[1]:top_left[1] + width]
     return scaled_streak
+
+
+def crop_streak(streak, crop_size):
+    height, width = streak.shape[:2]
+    crop_height, crop_width = crop_size
+    top_left_y = (height - crop_height) // 2
+    top_left_x = (width - crop_width) // 2
+    return streak[top_left_y:top_left_y+crop_height, top_left_x:top_left_x+crop_width]
 
 
 if __name__ == '__main__':

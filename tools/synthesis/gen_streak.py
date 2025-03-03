@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from tools.synthesis.bird_view import generate_perspective_projection
 from tools.synthesis.gen_perlin import generate_perlin_noise
 from tools.synthesis.rain_3d import generate_3d_rain
-from tools.synthesis.util import normalize
+from tools.synthesis.util import normalize, scale_streak, crop_streak
 
 
 def smooth_image(image, method="gaussian", kernel_size=5):
@@ -146,8 +146,17 @@ def generate_top_streak(height, width, num_streaks=2000, center_fraction=0.05, m
     return rain_image.astype(np.uint8)
 
 
-def generate_bird_view_streak(height=None, width=None, depth=None, num_drops=10000, streak_length=20, wind_angle=135,
-                              wind_strength=10, noise=None):
+def generate_bird_view_streak(proj='far',
+                              height=None,
+                              width=None,
+                              depth=None,
+                              num_drops=10000,
+                              streak_length=20,
+                              wind_angle=135,
+                              wind_strength=10,
+                              crop=False,
+                              noise=None,
+                              f=None):
     rain_3d = generate_3d_rain(height=height,
                                width=width,
                                depth=depth,
@@ -156,14 +165,21 @@ def generate_bird_view_streak(height=None, width=None, depth=None, num_drops=100
                                wind_angle=wind_angle,
                                wind_strength=wind_strength)
     points = np.vstack(rain_3d).T
-    bird_view = generate_perspective_projection(points=points,
+    bird_view = generate_perspective_projection(proj=proj,
+                                                points=points,
                                                 height=height,
                                                 width=width,
-                                                f=depth)
+                                                f=f if f is not None else depth)
 
     if noise is not None:
         noise = normalize(noise.astype(np.float32), 0.3, 1)
         bird_view = (bird_view * noise).astype(np.uint8)
+
+    if proj == 'near':
+        bird_view = scale_streak(bird_view)
+
+    if crop:
+        bird_view = crop_streak(bird_view, (512, 512))
 
     return smooth_image(bird_view)
 
@@ -190,9 +206,8 @@ def visualize(params):
 
 
 if __name__ == '__main__':
-    perlin_noise = generate_perlin_noise(impl='noise', height=512, width=512, scales=[600])
+    perlin_noise = generate_perlin_noise(impl='noise', height=512, width=512, scale=600)
     perlin_mask = (perlin_noise > 68).astype(np.uint8)
-    top_streak = generate_top_streak(512, 512, num_streaks=2000, center_fraction=0.05, max_streak_length=30)
 
     # "mask": perlin_mask, "noise": perlin_noise
     # RAIN = [
@@ -207,18 +222,21 @@ if __name__ == '__main__':
     # ]
 
     RAIN = [
-        {"height": 512, "width": 512, "depth": 512, "num_drops": 2000, "streak_length": 20, "wind_angle": 10,
-         "wind_strength": 0.05},  # Medium
-        {"height": 512, "width": 512, "depth": 512, "num_drops": 3000, "streak_length": 30, "wind_angle": 20,
-         "wind_strength": 0.1},  # Heavy
-        {"height": 512, "width": 512, "depth": 512, "num_drops": 4000, "streak_length": 40, "wind_angle": 60,
-         "wind_strength": 0.2},  # Storm
+        {"height": 512, "width": 712, "depth": 512, "num_drops": 4000, "streak_length": 20, "wind_angle": 10,
+         "wind_strength": 0.05, "f": 100},  # Medium
+        {"height": 512, "width": 712, "depth": 512, "num_drops": 4000, "streak_length": 30, "wind_angle": 20,
+         "wind_strength": 0.1, "f": 300},  # Heavy
+        {"height": 512, "width": 712, "depth": 512, "num_drops": 4000, "streak_length": 40, "wind_angle": 60,
+         "wind_strength": 0.2, "f": 500},  # Storm
     ]
 
-    visualize(RAIN)
+    # RAIN = [
+    #     {"proj": 'near', "height": 512, "width": 512, "depth": 512, "num_drops": 2000, "streak_length": 40,
+    #      "wind_angle": 60, "wind_strength": 0.2},  # Medium
+    #     {"proj": 'near', "height": 512, "width": 512, "depth": 512, "num_drops": 4000, "streak_length": 40,
+    #      "wind_angle": 60, "wind_strength": 0.2},  # Heavy
+    #     {"proj": 'near', "height": 712, "width": 712, "depth": 512, "num_drops": 4000, "streak_length": 40,
+    #      "wind_angle": 60, "wind_strength": 0.4, "crop": True},  # Storm
+    # ]
 
-    # fig, axes = plt.subplots(1, 1, figsize=(6, 6))
-    # axes.imshow(top_streak, cmap='gray')
-    # axes.axis("off")
-    # plt.tight_layout()
-    # plt.show()
+    visualize(RAIN)
