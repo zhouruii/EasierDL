@@ -1,0 +1,61 @@
+import os
+
+import cv2
+
+from tools.synthesis.gen_streak import generate_bird_view_streak, smooth_image
+from tools.synthesis.config import RAIN_STREAK_BATCH
+from tools.synthesis.util import normalize
+
+
+def downsample_image(image, scale_factor):
+    """
+    对图像进行下采样。
+
+    参数:
+    image (numpy.ndarray): 输入图像，形状为 (height, width, channels)。
+    scale_factor (float): 下采样比例，小于1的值表示缩小图像。
+
+    返回:
+    numpy.ndarray: 下采样后的图像。
+    """
+    if scale_factor >= 1:
+        raise ValueError("scale_factor必须小于1以进行下采样。")
+
+    new_height = int(image.shape[0] * scale_factor)
+    new_width = int(image.shape[1] * scale_factor)
+
+    downsampled_image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_NEAREST)
+
+    return smooth_image(downsampled_image)
+
+
+def generate_heavy_rain(num_sets, output_dir='streak'):
+    """
+    批量生成雨纹图片。
+
+    参数:
+    num_sets (int): 需要生成的雨纹组数。
+    """
+    # 创建保存图片的文件夹
+    os.makedirs(output_dir, exist_ok=True)
+
+    raw_dir = f"{output_dir}/raw"
+    os.makedirs(raw_dir, exist_ok=True)
+
+    os.makedirs(os.path.join(output_dir, "heavy"), exist_ok=True)
+    os.makedirs(os.path.join(raw_dir, "heavy"), exist_ok=True)
+
+    for i in range(num_sets):
+        # 生成雨纹
+        streak = generate_bird_view_streak(**RAIN_STREAK_BATCH["heavy"])
+        # 下采样
+        down = downsample_image(streak, scale_factor=1 / 4)
+        max_val = down.max()
+        down = normalize(down, 0, max_val * 1.5)
+        # 保存原始和下采样后的图片
+        cv2.imwrite(os.path.join(raw_dir, "heavy", f"{i+1}.jpg"), streak)
+        cv2.imwrite(os.path.join(output_dir, "heavy", f"{i+1}.jpg"), down)
+
+
+if __name__ == '__main__':
+    generate_heavy_rain(100)

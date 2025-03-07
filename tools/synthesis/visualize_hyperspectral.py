@@ -1,23 +1,26 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import rasterio
 
-# 1. 加载高光谱图像
-file_path = r"E:\datasets\1.tif"  # 替换为你的文件路径
-with rasterio.open(file_path) as src:
-    # 读取所有波段数据
-    hyperspectral_data = src.read()  # 形状为 (波段数, 高度, 宽度)
-    print(f"图像形状 (波段数, 高度, 宽度): {hyperspectral_data.shape}")
+# # 1. 加载高光谱图像
+# file_path = r"E:\datasets\1.tif"  # 替换为你的文件路径
+# with rasterio.open(file_path) as src:
+#     # 读取所有波段数据
+#     hyperspectral_data = src.read()  # 形状为 (波段数, 高度, 宽度)
+#     print(f"图像形状 (波段数, 高度, 宽度): {hyperspectral_data.shape}")
+#
+#     # 查看元数据
+#     print(f"波段数: {src.count}")
+#     print(f"分辨率: {src.res}")
+#     print(f"图像范围: {src.bounds}")
 
-    # 查看元数据
-    print(f"波段数: {src.count}")
-    print(f"分辨率: {src.res}")
-    print(f"图像范围: {src.bounds}")
+hyperspectral_data = np.load("demo.npy")
+hyperspectral_data[hyperspectral_data < 0] = 0
+hyperspectral_data = np.transpose(hyperspectral_data, (2, 0, 1))
 
 # 2. 伪彩色展示
 # 方法1：直接选择RGB波段（假设波段1、2、3为RGB）
 if hyperspectral_data.shape[0] >= 3:
-    rgb_image = hyperspectral_data[[0, 1, 2], :, :]  # 选择前3个波段
+    rgb_image = hyperspectral_data[[40, 25, 10], :, :]  # 选择前3个波段
     rgb_image = np.transpose(rgb_image, (1, 2, 0))  # 转换为 (高度, 宽度, 波段数)
     rgb_image = (rgb_image - np.min(rgb_image)) / (np.max(rgb_image) - np.min(rgb_image))  # 归一化
     plt.figure(figsize=(10, 10))

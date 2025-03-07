@@ -209,34 +209,13 @@ if __name__ == '__main__':
     perlin_noise = generate_perlin_noise(impl='noise', height=512, width=512, scale=600)
     perlin_mask = (perlin_noise > 68).astype(np.uint8)
 
-    # "mask": perlin_mask, "noise": perlin_noise
-    # RAIN = [
-    #     {"height": 512, "width": 512, "num_drops": 1000, "drop_length": 10, "intensity": 0.3, "angle": 10,
-    #      },  # Small
-    #     {"height": 512, "width": 512, "num_drops": 1200, "drop_length": 20, "intensity": 0.5, "angle": 15,
-    #      },  # Medium
-    #     {"height": 512, "width": 512, "num_drops": 2000, "drop_length": 30, "intensity": 0.7, "angle": 20,
-    #      },  # Heavy
-    #     {"height": 512, "width": 512, "num_drops": 3000, "drop_length": 40, "intensity": 0.9, "angle": 25,
-    #      },  # Storm
-    # ]
-
     RAIN = [
-        {"height": 512, "width": 712, "depth": 512, "num_drops": 4000, "streak_length": 20, "wind_angle": 10,
-         "wind_strength": 0.05, "f": 100},  # Medium
-        {"height": 512, "width": 712, "depth": 512, "num_drops": 4000, "streak_length": 30, "wind_angle": 20,
-         "wind_strength": 0.1, "f": 300},  # Heavy
-        {"height": 512, "width": 712, "depth": 512, "num_drops": 4000, "streak_length": 40, "wind_angle": 60,
-         "wind_strength": 0.2, "f": 500},  # Storm
+        {"height": 1024, "width": 1024, "depth": 312, "num_drops": 3000, "streak_length": 25, "wind_angle": 10,
+         "wind_strength": 0.05, "f": 512},
+        {"height": 1024, "width": 1024, "depth": 512, "num_drops": 2000, "streak_length": 40, "wind_angle": 10,
+         "wind_strength": 0.1, "f": 512},
+        {"height": 1024, "width": 1024, "depth": 512, "num_drops": 3000, "streak_length": 50, "wind_angle": 10,
+         "wind_strength": 0.2, "f": 512}
     ]
-
-    # RAIN = [
-    #     {"proj": 'near', "height": 512, "width": 512, "depth": 512, "num_drops": 2000, "streak_length": 40,
-    #      "wind_angle": 60, "wind_strength": 0.2},  # Medium
-    #     {"proj": 'near', "height": 512, "width": 512, "depth": 512, "num_drops": 4000, "streak_length": 40,
-    #      "wind_angle": 60, "wind_strength": 0.2},  # Heavy
-    #     {"proj": 'near', "height": 712, "width": 712, "depth": 512, "num_drops": 4000, "streak_length": 40,
-    #      "wind_angle": 60, "wind_strength": 0.4, "crop": True},  # Storm
-    # ]
 
     visualize(RAIN)
