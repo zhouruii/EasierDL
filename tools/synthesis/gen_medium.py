@@ -51,11 +51,11 @@ def generate_medium_rain(num_sets, output_dir='streak'):
         # 下采样
         down = downsample_image(streak, scale_factor=1 / 4)
         max_val = down.max()
-        down = normalize(down, 0, max_val * 1.3)
+        cv2.normalize(down, down, 0, max_val * 3.7, cv2.NORM_MINMAX)
         # 保存原始和下采样后的图片
-        cv2.imwrite(os.path.join(raw_dir, "medium", f"{i+1}.jpg"), streak)
-        cv2.imwrite(os.path.join(output_dir, "medium", f"{i+1}.jpg"), down)
+        # cv2.imwrite(os.path.join(raw_dir, "medium", f"{i + 1}.jpg"), streak)
+        cv2.imwrite(os.path.join(output_dir, "medium", f"{i + 1}.jpg"), down)
 
 
 if __name__ == '__main__':
-    generate_medium_rain(100)
+    generate_medium_rain(10)

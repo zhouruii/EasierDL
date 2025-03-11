@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 from noise import snoise2
@@ -55,7 +56,9 @@ def generate_perlin_noise(impl='noise',
         raise NotImplementedError(f'impl: {impl} not supported')
 
     # Normalize to [0, 255]
-    noise = normalize(noise, 0, 255).astype(np.uint8)
+    # noise = cv2.normalize(noise, None, 0, 255).astype(np.uint8)
+    noise = normalize(noise) * 255
+    noise = noise.astype(np.uint8)
 
     return noise
 

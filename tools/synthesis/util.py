@@ -1,8 +1,12 @@
+import os
+import random
+
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 from skimage.metrics import peak_signal_noise_ratio as psnr_val
 from skimage.metrics import structural_similarity as ssim_val
+from sklearn.decomposition import PCA
 
 
 def resize_image(image=None, scale_factor=None, new_height=None, new_width=None):
@@ -59,7 +63,51 @@ def read_img(path, to_rgb=True, scale=True, dtype='float32'):
     return img
 
 
-def to_visualize(img):
+def normalize_image(image: np.ndarray) -> np.ndarray:
+    """对图片进行归一化（缩放到 [0, 1] 范围）。
+
+    Args:
+        image (np.ndarray): 输入图片，形状为 (H, W) 或 (C, H, W)。
+
+    Returns:
+        np.ndarray: 归一化后的图片。
+    """
+    if image.ndim == 2:  # 单通道图片
+        return (image - image.min()) / (image.max() - image.min())
+    elif image.ndim == 3:  # 多通道图片
+        normalized_image = np.zeros_like(image, dtype=np.float32)
+        for c in range(image.shape[-1]):  # 对每个通道单独归一化
+            channel = image[:, :, c]
+            normalized_image[:, :, c] = (channel - channel.min()) / (channel.max() - channel.min())
+        return normalized_image
+    else:
+        raise ValueError("输入图片的形状必须是 (H, W) 或 (H, W, C)")
+
+
+def standardize_image(image: np.ndarray) -> np.ndarray:
+    """对图片进行标准化（均值为 0，标准差为 1）。
+
+    Args:
+        image (np.ndarray): 输入图片，形状为 (H, W) 或 (C, H, W)。
+
+    Returns:
+        np.ndarray: 标准化后的图片。
+    """
+    if image.ndim == 2:  # 单通道图片
+        return (image - image.mean()) / image.std()
+    elif image.ndim == 3:  # 多通道图片
+        standardized_image = np.zeros_like(image, dtype=np.float32)
+        for c in range(image.shape[-1]):  # 对每个通道单独标准化
+            channel = image[:, :, c]
+            standardized_image[:, :, c] = (channel - channel.mean()) / channel.std()
+        return standardized_image
+    else:
+        raise ValueError("输入图片的形状必须是 (H, W) 或 (H, W, C)")
+
+
+def to_visualize(img, bands=[136, 67, 18]):
+    if len(img.shape) == 3 and img.shape[2] > 3:
+        return to_visualize_hsi(img, bands)
     if img.dtype == np.uint8:
         return img
 
@@ -100,8 +148,13 @@ def calculate_psnr_ssim(img1: np.ndarray, img2: np.ndarray) -> tuple:
     return psnr_value, avg_ssim
 
 
-def normalize(img, _min, _max):
-    return cv2.normalize(img, None, _min, _max, cv2.NORM_MINMAX)
+def normalize(img, mode='normalize'):
+    if mode == 'normalize':
+        return normalize_image(img)
+    elif mode == 'standard':
+        return standardize_image(img)
+    else:
+        raise ValueError("mode 必须是 'normalize' 或 'standardize'")
 
 
 def check_dtype(data):
@@ -112,7 +165,8 @@ def check_dtype(data):
 
 def visualize_tool(fig_size=None,
                    rows_cols=None,
-                   data_dict=None):
+                   data_dict=None,
+                   save_path=False):
     fig, axes = plt.subplots(*rows_cols, figsize=fig_size)
 
     for row in range(rows_cols[0]):
@@ -124,6 +178,10 @@ def visualize_tool(fig_size=None,
                 axes[row, col].imshow(to_visualize(data))
             axes[row, col].set_title(label)
             axes[row, col].axis('off')
+
+    if save_path is not None:
+        # os.makedirs(save_path, exist_ok=True)
+        plt.savefig(save_path)
 
     plt.tight_layout()
     plt.show()
@@ -146,7 +204,65 @@ def crop_streak(streak, crop_size):
     crop_height, crop_width = crop_size
     top_left_y = (height - crop_height) // 2
     top_left_x = (width - crop_width) // 2
-    return streak[top_left_y:top_left_y+crop_height, top_left_x:top_left_x+crop_width]
+    return streak[top_left_y:top_left_y + crop_height, top_left_x:top_left_x + crop_width]
+
+
+def get_random_image(folder_path: str, mode: str = 'gray') -> np.ndarray:
+    """从文件夹中随机读取一张图片。
+
+    Args:
+        folder_path (str): 图片文件夹的路径。
+        mode(str): 读取模式，灰度或彩色
+
+    Returns:
+        Image.Image: 随机读取的图片对象。
+
+    Raises:
+        FileNotFoundError: 如果文件夹不存在或文件夹中没有图片。
+    """
+    # 检查文件夹是否存在
+    if not os.path.exists(folder_path):
+        raise FileNotFoundError(f"文件夹 {folder_path} 不存在")
+
+    # 获取文件夹中所有图片文件
+    image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff']  # 支持的图片格式
+    image_files = [file for file in os.listdir(folder_path) if os.path.splitext(file)[-1].lower() in image_extensions]
+
+    # 检查文件夹中是否有图片
+    if not image_files:
+        raise FileNotFoundError(f"文件夹 {folder_path} 中没有图片")
+
+    # 随机选择一张图片
+    random_image_file = random.choice(image_files)
+    image_path = os.path.join(folder_path, random_image_file)
+
+    # 打开并返回图片
+    if mode == 'rgb':
+        image = cv2.imread(image_path)
+    else:
+        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    return image
+
+
+def to_visualize_hsi(hsi, bands=[136, 67, 18]):
+    if bands is not None:
+        hsi = hsi[:, :, bands]
+    else:
+        # 将高光谱数据重塑为 (像素数, 波段数)
+        h, w, bands = hsi.shape[0], hsi.shape[1], hsi.shape[2]
+        pixels = hsi.reshape(bands, -1).T  # 形状为 (像素数, 波段数)
+
+        # 使用PCA降维到3个主成分
+        pca = PCA(n_components=3)
+        pca_result = pca.fit_transform(pixels)  # 形状为 (像素数, 3)
+
+        # 将PCA结果重塑为图像
+        hsi = pca_result.reshape(h, w, 3)
+    # hsi = normalize(hsi) * 255
+    # cv2.normalize(hsi, hsi, 0, 1)
+    # hsi *= 255
+    hsi = np.clip(hsi, 0, 1.0) * 255
+    return hsi.astype(np.uint8)
 
 
 if __name__ == '__main__':

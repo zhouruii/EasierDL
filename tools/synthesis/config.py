@@ -1,15 +1,21 @@
 import random
 
+LEVEL = {
+    1: 'small',
+    2: 'medium',
+    3: 'heavy',
+}
+
 DV = {
-    0: 15,
-    1: random.uniform(8, 10),
+    1: 15,
     2: random.uniform(6, 8),
+    3: random.uniform(4, 6),
 }
 
 RAIN = {
-    1: 0.2083,
-    2: 0.729167,
-    3: 1.2,
+    1: 0.408,
+    2: 1.311,
+    3: 1.875,
 }
 
 RAIN_STREAK = {
@@ -22,15 +28,15 @@ RAIN_STREAK = {
 }
 
 RAIN_STREAK_BATCH = {
-    'small': {"height": 1024, "width": 1024, "depth": 312, "num_drops": random.randint(1500, 1800),
-              "streak_length": random.randint(30, 35), "wind_angle": random.randint(-180, 180),
+    'small': {"height": 1024, "width": 1024, "depth": 389, "num_drops": random.randint(2900, 3000),
+              "streak_length": random.randint(35, 40), "wind_angle": random.randint(-180, 180),
               "wind_strength": random.uniform(0, 0.05), "f": 512},
-    'medium': {"height": 1024, "width": 1024, "depth": 512, "num_drops": random.randint(1800, 1900),
-               "streak_length": random.randint(40, 45), "wind_angle": random.randint(-180, 180),
-               "wind_strength": random.uniform(0.05, 0.1), "f": 512},
-    'heavy': {"height": 1024, "width": 1024, "depth": 512, "num_drops": random.randint(2800, 3200),
-              "streak_length": random.randint(47, 53), "wind_angle": random.randint(-180, 180),
-              "wind_strength": random.uniform(0.1, 0.2), "f": 512},
+    'medium': {"height": 1024, "width": 1024, "depth": 512, "num_drops": random.randint(2700, 2800),
+               "streak_length": random.randint(45, 50), "wind_angle": random.randint(-180, 180),
+               "wind_strength": random.uniform(0.1, 0.2), "f": 512},
+    'heavy': {"height": 1024, "width": 1024, "depth": 612, "num_drops": random.randint(3600, 3800),
+              "streak_length": random.randint(55, 60), "wind_angle": random.randint(-180, 180),
+              "wind_strength": random.uniform(0.2, 0.3), "f": 512},
 }
 
 PARAMS = [

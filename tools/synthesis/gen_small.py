@@ -51,11 +51,11 @@ def generate_small_rain(num_sets, output_dir='streak'):
         # 下采样
         down = downsample_image(streak, scale_factor=1 / 4)
         max_val = down.max()
-        down = normalize(down, 0, max_val * 2)
+        cv2.normalize(down, down, 0, max_val * 4, cv2.NORM_MINMAX)
         # 保存原始和下采样后的图片
-        cv2.imwrite(os.path.join(raw_dir, "small", f"{i+1}.jpg"), streak)
+        # cv2.imwrite(os.path.join(raw_dir, "small", f"{i+1}.jpg"), streak)
         cv2.imwrite(os.path.join(output_dir, "small", f"{i+1}.jpg"), down)
 
 
 if __name__ == '__main__':
-    generate_small_rain(100)
+    generate_small_rain(10)
