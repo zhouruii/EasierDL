@@ -29,7 +29,7 @@ def downsample_image(image, scale_factor):
     return smooth_image(downsampled_image)
 
 
-def generate_small_rain(num_sets, output_dir='streak'):
+def generate_heavy_rain(num_sets, output_dir='streak'):
     """
     批量生成雨纹图片。
 
@@ -42,20 +42,20 @@ def generate_small_rain(num_sets, output_dir='streak'):
     raw_dir = f"{output_dir}/raw"
     os.makedirs(raw_dir, exist_ok=True)
 
-    os.makedirs(os.path.join(output_dir, "medium"), exist_ok=True)
-    os.makedirs(os.path.join(raw_dir, "medium"), exist_ok=True)
+    os.makedirs(os.path.join(output_dir, "storm"), exist_ok=True)
+    os.makedirs(os.path.join(raw_dir, "storm"), exist_ok=True)
 
     for i in range(num_sets):
         # 生成雨纹
-        streak = generate_bird_view_streak(**RAIN_STREAK_BATCH["medium"])
+        streak = generate_bird_view_streak(**RAIN_STREAK_BATCH["storm"])
         # 下采样
         down = downsample_image(streak, scale_factor=1 / 4)
         max_val = down.max()
         cv2.normalize(down, down, 0, max_val * 3, cv2.NORM_MINMAX)
         # 保存原始和下采样后的图片
-        # cv2.imwrite(os.path.join(raw_dir, "small", f"{i+1}.jpg"), streak)
-        cv2.imwrite(os.path.join(output_dir, "medium", f"{i+1}.jpg"), down)
+        # cv2.imwrite(os.path.join(raw_dir, "storm", f"{i+1}.jpg"), streak)
+        cv2.imwrite(os.path.join(output_dir, "storm", f"{i+1}.jpg"), down)
 
 
 if __name__ == '__main__':
-    generate_small_rain(10)
+    generate_heavy_rain(10)

@@ -7,6 +7,9 @@ import spectral as sp
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.io import loadmat
+from skimage import io
+
+from util import normalize
 
 
 def save_pickle(save_path, save_data):
@@ -196,19 +199,19 @@ if __name__ == '__main__':
     # }
     # save_pickle("bands.pkl", save_data)
 
-    rgb = [53, 32, 13]
-    # rgb = [63, 42, 10]
-    # file_path = "/home/disk1/ZR/datasets/OurHSI/20231220-21西电栗峪口村高光谱数据/12-21/400-1000nm/raw_12448_rd_rf_or"
-    #
-    # rows = [i for i in range(1000, 3000, 512)]
-    #
-    # for row in rows:
-    #     result = read_hdr(file_path, load_hsi=True, rows=(row, row + 512), cols=(100, 612))['hsi']
-    #     result = result[:, :, rgb]
-    #     result[result < 0] = 0
-    #     result = np.clip(result, 0, 1)
-    #
-    #     io.imsave(f"demo/{row}.jpg", (result * 255).astype(np.uint8))
+    # rgb = [53, 32, 13]
+    rgb = [63, 34, 12]
+    file_path = "/home/disk1/ZR/datasets/AVIRIS/ang20191021t151200_rfl_v2x1/ang20191021t151200_corr_v2x1_img.hdr"
 
-    mat_file_path = 'demo/2_12_1_1.mat'
-    process_mat_to_rgb(mat_file_path, band_indices=tuple(rgb), data_key='hsi_0')
+    rows = [i for i in range(1000, 3000, 512)]
+
+    for row in rows:
+        result = read_hdr(file_path, load_hsi=True, rows=(row, row + 512), cols=(100, 612))['hsi']
+        result = result[:, :, rgb]
+        result[result < 0] = 0
+        result = normalize(np.clip(result, 0, 1))
+
+        io.imsave(f"demo/{row}.jpg", (result * 255).astype(np.uint8))
+
+    # mat_file_path = 'demo/2_12_1_1.mat'
+    # process_mat_to_rgb(mat_file_path, band_indices=tuple(rgb), data_key='hsi_0')

@@ -99,6 +99,7 @@ class RainModel:
         self.deg_rain_fog_img = self.hsi * tau + self.a * (1 - tau)
 
         self.deg_img = self.deg_rain_fog_img + self.deg_streak
+        self.deg_img = np.clip(self.deg_img, 0, 1)
         self.cal_metric()
 
     def cal_metric(self):
@@ -129,6 +130,7 @@ class RainModel:
 
 
 if __name__ == '__main__':
+    # 10 15 20 25
     seed = 42
     random.seed(seed)
 
@@ -136,7 +138,7 @@ if __name__ == '__main__':
         hsi_path='demo/2_12_1_1.mat',
         streak_path='streak',
         r0=0.248,  # 0.248
-        level=1,
+        level=4,
         a=1,
         d=0.3,
         gif=True

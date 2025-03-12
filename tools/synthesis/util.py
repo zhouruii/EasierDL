@@ -3,6 +3,7 @@ import random
 
 import cv2
 import numpy as np
+from PIL import Image
 from matplotlib import pyplot as plt
 from skimage.metrics import peak_signal_noise_ratio as psnr_val
 from skimage.metrics import structural_similarity as ssim_val
@@ -265,8 +266,111 @@ def to_visualize_hsi(hsi, bands=[136, 67, 18]):
     return hsi.astype(np.uint8)
 
 
+def calculate_mse(img1, img2):
+    """计算两张图像的均方误差 (MSE)"""
+    return np.mean((img1 - img2) ** 2)
+
+
+def calculate_psnr(img1, img2, max_pixel=255.0):
+    """根据 MSE 计算 PSNR (单位: dB)"""
+    mse = calculate_mse(img1, img2)
+    if mse == 0:
+        return float("inf")
+    return 20 * np.log10(max_pixel / np.sqrt(mse))
+
+
+def process_images(gt_dir, rain_dir, visualize=False):
+    """Process images and calculate PSNR, with optional visualization"""
+    psnr_list = []
+    filenames = []
+
+    gt_files = sorted([f for f in os.listdir(gt_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp'))])
+
+    for filename in gt_files:
+        gt_path = os.path.join(gt_dir, filename)
+        rain_path = os.path.join(rain_dir, filename)
+
+        if not os.path.exists(rain_path):
+            print(f"Warning: {filename} does not exist in the rain directory, skipping...")
+            continue
+
+        try:
+            gt_img = np.array(Image.open(gt_path).convert("RGB")).astype(np.float64)
+            rain_img = np.array(Image.open(rain_path).convert("RGB")).astype(np.float64)
+
+            if gt_img.shape != rain_img.shape:
+                print(f"Error: {filename} has mismatched dimensions, skipping...")
+                continue
+
+            psnr = calculate_psnr(gt_img, rain_img)
+            psnr_list.append(psnr)
+            filenames.append(filename)
+            print(f"{filename}: PSNR = {psnr:.2f} dB")
+
+        except Exception as e:
+            print(f"Error processing {filename}: {str(e)}")
+
+    # Add visualization
+    if visualize and psnr_list:
+        visualize_psnr(filenames, psnr_list)
+
+
+def visualize_psnr(filenames, psnr_values):
+    """Visualize PSNR distribution with a histogram and line plot"""
+    plt.figure(figsize=(16, 6))
+
+    # Plot 1: Line plot of PSNR values
+    plt.subplot(1, 2, 1)
+    x = np.arange(len(filenames))
+    plt.plot(x, psnr_values, 'o-', color='#2c7fb8', linewidth=2, markersize=8, label='PSNR')
+
+    # Add statistics
+    avg_psnr = np.mean(psnr_values)
+    max_psnr = np.max(psnr_values)
+    min_psnr = np.min(psnr_values)
+
+    plt.axhline(y=avg_psnr, color='r', linestyle='--', label=f'Average PSNR: {avg_psnr:.2f} dB')
+    plt.text(0.5, avg_psnr + 1, f'Avg = {avg_psnr:.2f} dB', fontsize=10, color='r')
+    plt.text(len(filenames) - 1, max_psnr - 2, f'Max = {max_psnr:.2f} dB', ha='right', color='g')
+    plt.text(len(filenames) - 1, min_psnr + 1, f'Min = {min_psnr:.2f} dB', ha='right', color='b')
+
+    # Style the plot
+    plt.title('PSNR Values for Image Pairs', fontsize=14, pad=20)
+    plt.xlabel('Image Name', fontsize=12)
+    plt.ylabel('PSNR (dB)', fontsize=12)
+    plt.xticks(x, filenames, rotation=45, ha='right')
+    plt.ylim(max(0, min(psnr_values) - 5), max(psnr_values) + 5)
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.legend()
+
+    # Plot 2: Histogram of PSNR distribution
+    plt.subplot(1, 2, 2)
+    bins = np.arange(0, 101, 10)  # Define bins for PSNR ranges (0-100 dB)
+    plt.hist(psnr_values, bins=bins, color='#7fcdbb', edgecolor='black', alpha=0.7)
+
+    # Add percentage labels
+    total = len(psnr_values)
+    for i in range(len(bins) - 1):
+        count = np.sum((psnr_values >= bins[i]) & (psnr_values < bins[i + 1]))
+        percentage = (count / total) * 100
+        plt.text((bins[i] + bins[i + 1]) / 2, count, f'{percentage:.1f}%', ha='center', va='bottom')
+
+    # Style the histogram
+    plt.title('Distribution of PSNR Values', fontsize=14, pad=20)
+    plt.xlabel('PSNR (dB)', fontsize=12)
+    plt.ylabel('Number of Images', fontsize=12)
+    plt.grid(True, linestyle='--', alpha=0.7)
+
+    # Adjust layout and save/display
+    plt.tight_layout()
+    plt.savefig("psnr_visualization2.png", dpi=300, bbox_inches='tight')
+    plt.show()
+
+
 if __name__ == '__main__':
-    img1 = read_img(r"E:\datasets\test\clean\5.jpg")
-    img2 = read_img(r"E:\datasets\test\haze\5.jpg")
-    psnr_val, ssim_val = calculate_psnr_ssim(img1, img2)
-    print(f'PSNR:{psnr_val}, SSIM:{ssim_val}')
+    # 输入目录路径
+    base_dir = "/home/disk1/ZYH/data/Rain1400/train/Rain1400"  # 替换为你的主目录路径
+    gt_dir = os.path.join(base_dir, "norain")
+    rain_dir = os.path.join(base_dir, "rain")
+
+    process_images(gt_dir, rain_dir, visualize=True)

@@ -29,7 +29,7 @@ def downsample_image(image, scale_factor):
     return smooth_image(downsampled_image)
 
 
-def generate_heavy_rain(num_sets, output_dir='streak'):
+def generate_medium_rain(num_sets, output_dir='streak'):
     """
     批量生成雨纹图片。
 
@@ -53,9 +53,9 @@ def generate_heavy_rain(num_sets, output_dir='streak'):
         max_val = down.max()
         cv2.normalize(down, down, 0, max_val * 3, cv2.NORM_MINMAX)
         # 保存原始和下采样后的图片
-        cv2.imwrite(os.path.join(raw_dir, "heavy", f"{i+1}.jpg"), streak)
-        cv2.imwrite(os.path.join(output_dir, "heavy", f"{i+1}.jpg"), down)
+        # cv2.imwrite(os.path.join(raw_dir, "medium", f"{i + 1}.jpg"), streak)
+        cv2.imwrite(os.path.join(output_dir, "heavy", f"{i + 1}.jpg"), down)
 
 
 if __name__ == '__main__':
-    generate_heavy_rain(10)
+    generate_medium_rain(10)
