@@ -1,3 +1,4 @@
+import os.path
 import pickle
 from typing import Optional
 
@@ -26,6 +27,18 @@ def load_pickle(pickle_path):
 
 def load_mat(mat_path):
     return loadmat(mat_path)['hsi_0']
+
+
+def load_hsi(hsi_path):
+    filename = os.path.basename(hsi_path)
+    ext = filename.split('.')[-1]
+    assert ext in ['mat', 'npy'], f'only mat and npy supported, not {ext}'
+    if ext == 'mat':
+        return loadmat(hsi_path)['hsi_0']
+    elif ext == 'npy':
+        return np.load(hsi_path)
+    else:
+        raise NotImplementedError(f'{ext} not supported yet')
 
 
 def find_valid_region(matrix: np.ndarray) -> tuple:
@@ -197,7 +210,7 @@ if __name__ == '__main__':
     #     "bands2(900~2500/nm)": bands2,
     #     "remove_ranges_of_bands2": remove_ranges
     # }
-    # save_pickle("bands.pkl", save_data)
+    # save_pickle("meta.pkl", save_data)
 
     # rgb = [53, 32, 13]
     rgb = [63, 34, 12]

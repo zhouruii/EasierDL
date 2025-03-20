@@ -2,9 +2,9 @@ import os
 
 import cv2
 
-from tools.synthesis.gen_streak import generate_bird_view_streak, smooth_image
-from tools.synthesis.config import RAIN_STREAK_BATCH
-from tools.synthesis.util import normalize
+from gen_streak import generate_bird_view_streak, smooth_image
+from config import RAIN_STREAK_BATCH
+from util import normalize
 
 
 def downsample_image(image, scale_factor):
@@ -29,7 +29,7 @@ def downsample_image(image, scale_factor):
     return smooth_image(downsampled_image)
 
 
-def generate_medium_rain(num_sets, output_dir='streak'):
+def generate_heavy_rain(num_sets, output_dir='streak/OurHSI'):
     """
     批量生成雨纹图片。
 
@@ -39,11 +39,7 @@ def generate_medium_rain(num_sets, output_dir='streak'):
     # 创建保存图片的文件夹
     os.makedirs(output_dir, exist_ok=True)
 
-    raw_dir = f"{output_dir}/raw"
-    os.makedirs(raw_dir, exist_ok=True)
-
     os.makedirs(os.path.join(output_dir, "heavy"), exist_ok=True)
-    os.makedirs(os.path.join(raw_dir, "heavy"), exist_ok=True)
 
     for i in range(num_sets):
         # 生成雨纹
@@ -58,4 +54,4 @@ def generate_medium_rain(num_sets, output_dir='streak'):
 
 
 if __name__ == '__main__':
-    generate_medium_rain(10)
+    generate_heavy_rain(10000)

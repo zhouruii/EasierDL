@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from tools.synthesis.rain_3d import generate_3d_rain
+from rain_3d import generate_3d_rain
 
 
 def generate_perspective_projection(proj='far', points=None, height=None, width=None, f=500, k=2.0):

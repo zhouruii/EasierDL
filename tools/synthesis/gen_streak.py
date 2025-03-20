@@ -2,10 +2,10 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
-from tools.synthesis.bird_view import generate_perspective_projection
-from tools.synthesis.gen_perlin import generate_perlin_noise
-from tools.synthesis.rain_3d import generate_3d_rain
-from tools.synthesis.util import normalize, scale_streak, crop_streak
+from bird_view import generate_perspective_projection
+from gen_perlin import generate_perlin_noise
+from rain_3d import generate_3d_rain
+from util import normalize, scale_streak, crop_streak
 
 
 def smooth_image(image, method="gaussian", kernel_size=5):

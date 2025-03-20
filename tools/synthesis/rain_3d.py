@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 
 
 def generate_3d_rain(height, width, depth, num_drops=10000, streak_length=20, wind_angle=135, wind_strength=0.5,
-                     streak_width=0.5):
+                     streak_width=0.0):
     """
     生成3维降雨模型，包括雨条纹的方向和连续性。
     Args:

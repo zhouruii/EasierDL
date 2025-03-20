@@ -4,42 +4,48 @@ from collections import OrderedDict
 import cv2
 import numpy as np
 
-from tools.synthesis.gen_perlin import generate_perlin_noise
-from tools.synthesis.gif import guided_filter
-from tools.synthesis.load import load_mat, load_pickle
-from tools.synthesis.util import calculate_psnr_ssim, check_dtype, visualize_tool, normalize, get_random_image
+from gen_perlin import generate_perlin_noise
+from gif import guided_filter
+from load import load_pickle, load_hsi
+from util import calculate_psnr_ssim, check_dtype, visualize_tool, normalize, get_random_image
 
-from tools.synthesis.config import DV, RAIN, LEVEL
+from config import DV, RAIN, LEVEL
 
 BANDS = [136, 67, 18]
+# BANDS = [36, 19, 8]
 
 
 class RainModel:
     def __init__(self,
                  hsi_path=None,
                  streak_path=None,
+                 bands_path=None,
                  r0=None,
                  level=None,
                  d=0.3,
                  a=1.0,
                  gif=False,
                  use_perlin=True,
+                 alpha=1.0
                  ):
-        self.hsi = load_mat(hsi_path)
+        self.hsi = load_hsi(hsi_path)
         self.hsi = normalize(self.hsi)
         self.streak_path = streak_path
+        self.bands_path = bands_path
         self.r0 = random.uniform(0, 0.66) if not r0 else r0
         self.level = random.uniform(1, 3) if not level else level
         self.d = np.full(self.hsi.shape, d)
         self.a = np.full(self.hsi.shape, a)
         self.gif = gif
         self.use_perlin = use_perlin
+        self.alpha = alpha
 
         self.height, self.width, self.channel = self.hsi.shape
         self.dv = DV.get(self.level)
         self.rain_speed = RAIN.get(self.level)
         self.label = LEVEL.get(self.level)
         self.streak_path = f'{self.streak_path}/{self.label}'
+        self.lambdas = load_pickle(self.bands_path)['bands']
 
         self.perlin_noise, self.rain_streak, self.tau_rain, self.tau_fog = self._init_params()
 
@@ -75,8 +81,7 @@ class RainModel:
         if isinstance(gamma_rain, float):
             gamma_rain = np.ones(self.hsi.shape) * gamma_rain
 
-        lambdas = load_pickle("bands.pkl")['bands']
-        gamma_fog = np.exp(1.144 - 0.0128 * self.dv - (0.368 + 0.0214 * self.dv) * np.log(lambdas / 1e3)) / self.dv
+        gamma_fog = np.exp(1.144 - 0.0128 * self.dv - (0.368 + 0.0214 * self.dv) * np.log(self.lambdas / 1e3)) / self.dv
         if len(gamma_fog.shape) == 1:
             gamma_fog = np.tile(gamma_fog, (self.height, self.width, 1))
 
@@ -90,7 +95,7 @@ class RainModel:
         return perlin_noise, rain_streak, tau_rain, tau_fog
 
     def synthesize(self):
-        self.deg_streak = self.rain_streak * self.tau_fog
+        self.deg_streak = self.rain_streak * self.alpha * self.tau_fog
 
         self.deg_rain_img = self.hsi * self.tau_rain + self.a * (1 - self.tau_rain)
         self.deg_fog_img = self.hsi * self.tau_fog + self.a * (1 - self.tau_fog)
@@ -106,7 +111,7 @@ class RainModel:
         psnr_value, ssim_value = calculate_psnr_ssim(self.hsi, self.deg_img)
         print(f"PSNR: {psnr_value:.2f}, SSIM: {ssim_value:.4f}")
 
-    def visualize(self):
+    def visualize(self, RGB=True):
         data_dict = OrderedDict()
         data_dict['Origin image'] = self.hsi
         data_dict['Perlin noise'] = self.perlin_noise
@@ -120,30 +125,27 @@ class RainModel:
         visualize_tool(fig_size=(20, 10),
                        rows_cols=(2, 4),
                        data_dict=data_dict,
-                       save_path=f'result/{self.label}.jpg')
-
-    # def visualize_single(self, data):
-    #     plt.imshow(to_visualize_hsi(data))
-    #     plt.tight_layout()
-    #     plt.axis('off')
-    #     plt.savefig("demo.jpg")
+                       save_path=f'result/OurHSI/{self.label}.jpg',
+                       RGB=RGB)
 
 
 if __name__ == '__main__':
-    # 10 15 20 25
+    # PSNR: 10 15 20 25
+    # alpha: 0.7 0.7 0.95 1.0
     seed = 42
     random.seed(seed)
 
     model = RainModel(
         hsi_path='demo/2_12_1_1.mat',
-        streak_path='streak',
+        streak_path='streak/OurHSI',
+        bands_path='meta.pkl',
         r0=0.248,  # 0.248
         level=4,
         a=1,
         d=0.3,
-        gif=True
+        gif=True,
+        alpha=1.0
     )
 
     model.synthesize()
-    model.visualize()
-    # model.visualize_single(model.deg_img)
+    model.visualize(RGB=True)

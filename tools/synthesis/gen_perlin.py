@@ -5,7 +5,7 @@ from noise import snoise2
 from perlin_noise import PerlinNoise
 from perlin_numpy import generate_fractal_noise_2d
 
-from tools.synthesis.util import normalize
+from util import normalize
 
 
 def generate_perlin_noise(impl='noise',

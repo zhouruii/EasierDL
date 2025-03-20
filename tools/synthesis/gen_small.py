@@ -2,9 +2,9 @@ import os
 
 import cv2
 
-from tools.synthesis.gen_streak import generate_bird_view_streak, smooth_image
-from tools.synthesis.config import RAIN_STREAK_BATCH
-from tools.synthesis.util import normalize
+from gen_streak import generate_bird_view_streak, smooth_image
+from config import RAIN_STREAK_BATCH, RAIN_STREAK_BATCH_V2
+from util import normalize
 
 
 def downsample_image(image, scale_factor):
@@ -18,7 +18,7 @@ def downsample_image(image, scale_factor):
     返回:
     numpy.ndarray: 下采样后的图像。
     """
-    if scale_factor >= 1:
+    if scale_factor > 1:
         raise ValueError("scale_factor必须小于1以进行下采样。")
 
     new_height = int(image.shape[0] * scale_factor)
@@ -29,7 +29,7 @@ def downsample_image(image, scale_factor):
     return smooth_image(downsampled_image)
 
 
-def generate_medium_rain(num_sets, output_dir='streak'):
+def generate_small_rain(num_sets, output_dir='streak/OurHSI'):
     """
     批量生成雨纹图片。
 
@@ -39,11 +39,7 @@ def generate_medium_rain(num_sets, output_dir='streak'):
     # 创建保存图片的文件夹
     os.makedirs(output_dir, exist_ok=True)
 
-    raw_dir = f"{output_dir}/raw"
-    os.makedirs(raw_dir, exist_ok=True)
-
     os.makedirs(os.path.join(output_dir, "small"), exist_ok=True)
-    os.makedirs(os.path.join(raw_dir, "small"), exist_ok=True)
 
     for i in range(num_sets):
         # 生成雨纹
@@ -57,5 +53,29 @@ def generate_medium_rain(num_sets, output_dir='streak'):
         cv2.imwrite(os.path.join(output_dir, "small", f"{i + 1}.jpg"), down)
 
 
+def generate_small_rain_v2(num_sets, output_dir='streak/AVIRIS'):
+    """
+    批量生成雨纹图片。
+
+    参数:
+    num_sets (int): 需要生成的雨纹组数。
+    """
+    # 创建保存图片的文件夹
+    os.makedirs(output_dir, exist_ok=True)
+
+    os.makedirs(os.path.join(output_dir, "small"), exist_ok=True)
+
+    for i in range(num_sets):
+        # 生成雨纹
+        streak = generate_bird_view_streak(**RAIN_STREAK_BATCH_V2["small"])
+        # 下采样
+        down = downsample_image(streak, scale_factor=1 / 1)
+        max_val = down.max()
+        # cv2.normalize(down, down, 0, max_val * 1.5, cv2.NORM_MINMAX)
+        # 保存原始和下采样后的图片
+        # cv2.imwrite(os.path.join(raw_dir, "medium", f"{i + 1}.jpg"), streak)
+        cv2.imwrite(os.path.join(output_dir, "small", f"{i + 1}.jpg"), down)
+
+
 if __name__ == '__main__':
-    generate_medium_rain(10)
+    generate_small_rain_v2(10)

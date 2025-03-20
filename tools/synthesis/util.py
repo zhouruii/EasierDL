@@ -106,9 +106,12 @@ def standardize_image(image: np.ndarray) -> np.ndarray:
         raise ValueError("输入图片的形状必须是 (H, W) 或 (H, W, C)")
 
 
-def to_visualize(img, bands=[136, 67, 18]):
+def to_visualize(img, RGB=True, bands=[136, 67, 18]):  # [136, 67, 18] [36, 19, 8]
     if len(img.shape) == 3 and img.shape[2] > 3:
-        return to_visualize_hsi(img, bands)
+        if RGB:
+            return to_visualize_hsi(img, bands)
+        else:
+            return to_visualize_hsi(img, None)
     if img.dtype == np.uint8:
         return img
 
@@ -167,7 +170,8 @@ def check_dtype(data):
 def visualize_tool(fig_size=None,
                    rows_cols=None,
                    data_dict=None,
-                   save_path=False):
+                   save_path=False,
+                   RGB=True):
     fig, axes = plt.subplots(*rows_cols, figsize=fig_size)
 
     for row in range(rows_cols[0]):
@@ -176,7 +180,7 @@ def visualize_tool(fig_size=None,
             if len(data.shape) == 2:
                 axes[row, col].imshow(to_visualize(data), cmap='gray')
             else:
-                axes[row, col].imshow(to_visualize(data))
+                axes[row, col].imshow(to_visualize(data, RGB))
             axes[row, col].set_title(label)
             axes[row, col].axis('off')
 
@@ -245,20 +249,29 @@ def get_random_image(folder_path: str, mode: str = 'gray') -> np.ndarray:
     return image
 
 
-def to_visualize_hsi(hsi, bands=[136, 67, 18]):
+def to_visualize_hsi(hsi, bands=[36, 19, 8]):
     if bands is not None:
         hsi = hsi[:, :, bands]
     else:
-        # 将高光谱数据重塑为 (像素数, 波段数)
-        h, w, bands = hsi.shape[0], hsi.shape[1], hsi.shape[2]
-        pixels = hsi.reshape(bands, -1).T  # 形状为 (像素数, 波段数)
+        # # 将高光谱数据重塑为 (像素数, 波段数)
+        # h, w, bands = hsi.shape[0], hsi.shape[1], hsi.shape[2]
+        # pixels = hsi.reshape(-1, bands)  # 形状为 (像素数, 波段数)
+        #
+        # # 使用PCA降维到3个主成分
+        # pca = PCA(n_components=3)
+        # pca_result = pca.fit_transform(pixels)  # 形状为 (像素数, 3)
+        #
+        # # 将PCA结果重塑为图像
+        # hsi = pca_result.reshape(h, w, 3)
 
-        # 使用PCA降维到3个主成分
-        pca = PCA(n_components=3)
-        pca_result = pca.fit_transform(pixels)  # 形状为 (像素数, 3)
+        n = hsi.shape[-1]
+        # band1 = random.randint(0, n - 1)
+        # band2 = random.randint(0, n - 1)
+        # band3 = random.randint(0, n - 1)
+        # print(f'bands:{(band1, band2, band3)} --> RGB')
+        # hsi = hsi[:, :, [band1, band2, band3]]
+        hsi = hsi[:, :, [n-1, n//2, 0]]
 
-        # 将PCA结果重塑为图像
-        hsi = pca_result.reshape(h, w, 3)
     # hsi = normalize(hsi) * 255
     # cv2.normalize(hsi, hsi, 0, 1)
     # hsi *= 255

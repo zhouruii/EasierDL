@@ -2,7 +2,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from tools.synthesis.gen_perlin import generate_perlin_noise
+from gen_perlin import generate_perlin_noise
 from util import read_img, to_visualize
 
 
