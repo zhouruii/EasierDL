@@ -36,7 +36,7 @@ def visualize_and_save_npy(file_path, output_dir):
     elif data.ndim == 3:
         # 三维数据：伪彩色图（取前三个波段作为 RGB）
         if data.shape[2] >= 3:
-            rgb_data = data[:, :, [36, 19, 8]]
+            rgb_data = data[:, :, [136, 67, 18]]
             plt.imshow(rgb_data)
             plt.title(f"3D Data (RGB): {os.path.basename(file_path)}")
         else:
@@ -67,6 +67,94 @@ def process_npy_files(directory, output_dir):
             file_path = os.path.join(directory, filename)
             print(f"正在处理文件: {file_path}")
             visualize_and_save_npy(file_path, output_dir)
+
+
+def get_file_pairs(clean_dir, noise_dirs):
+    """
+    获取干净数据和噪声数据的文件对。
+
+    Args:
+        clean_dir (str): 干净数据目录。
+        noise_dirs (list): 噪声数据目录列表。
+
+    Returns:
+        list: 文件对列表，每个元素为 (clean_path, noise_paths)。
+    """
+    file_pairs = []
+
+    # 遍历干净数据目录
+    for clean_filename in os.listdir(clean_dir):
+        if clean_filename.endswith(".npy"):
+            clean_path = os.path.join(clean_dir, clean_filename)
+            key = clean_filename.replace(".npy", "")
+
+            # 查找对应的噪声文件
+            noise_paths = []
+            for noise_dir in noise_dirs:
+                noise_filename = f"{key}_*.npy"
+                noise_files = [f for f in os.listdir(noise_dir) if f.startswith(f'{key}_') and f.endswith(".npy")]
+                if noise_files:
+                    noise_paths.append(os.path.join(noise_dir, noise_files[0]))
+
+            if len(noise_paths) == 4:  # 确保有四个噪声文件
+                file_pairs.append((clean_path, noise_paths))
+
+    return file_pairs
+
+
+def select_rgb_channels(image, channels):
+    """
+    选取指定通道生成 RGB 图像。
+
+    Args:
+        image (np.ndarray): 输入图像，形状为 (H, W, C)。
+        channels (list): 选择的通道索引（如 [0, 1, 2]）。
+
+    Returns:
+        np.ndarray: RGB 图像，形状为 (H, W, 3)。
+    """
+    return image[:, :, channels]
+
+
+def visualize_and_save(clean_path, noise_paths, channels, output_dir):
+    """
+    可视化并保存五张图片（一张干净数据和四张噪声数据）。
+
+    Args:
+        clean_path (str): 干净数据文件路径。
+        noise_paths (list): 噪声数据文件路径列表。
+        channels (list): 选择的通道索引。
+        output_dir (str): 输出图片保存目录。
+    """
+    os.makedirs(output_dir, exist_ok=True)
+
+    # 读取干净数据
+    clean_data = np.load(clean_path)
+    clean_rgb = select_rgb_channels(clean_data, channels)
+
+    # 读取噪声数据
+    noise_rgb_list = []
+    for noise_path in noise_paths:
+        noise_data = np.load(noise_path)
+        noise_rgb = select_rgb_channels(noise_data, channels)
+        noise_rgb_list.append(noise_rgb)
+
+    # 可视化
+    plt.figure(figsize=(15, 5))
+    # titles = ["Clean Data"] + [f"Noise Level {i + 1}" for i in range(4)]
+    titles = ["Clean", "Small", "Medium", "Heavy", "Storm"]
+    for i, (title, img) in enumerate(zip(titles, [clean_rgb] + noise_rgb_list)):
+        plt.subplot(1, 5, i + 1)
+        plt.imshow(img)
+        plt.title(title)
+        plt.axis("off")
+
+    # 保存结果
+    filename = os.path.basename(clean_path).replace(".npy", "_comparison.png")
+    output_path = os.path.join(output_dir, filename)
+    plt.savefig(output_path, bbox_inches="tight", dpi=300)
+    plt.close()
+    print(f"preview result is saved to --> {output_path}")
 
 
 def find_valid_region(matrix: np.ndarray) -> tuple:
@@ -135,6 +223,8 @@ def spatial_cut(matrix: np.ndarray, block_size: int) -> list:
 
 
 def read_data(path):
+    if path.endswith('.npy'):
+        return np.load(path)
     with rasterio.open(path) as src:
         # 读取数据
         data = src.read()  # 数据形状为 (波段数, 行数, 列数)
@@ -143,7 +233,7 @@ def read_data(path):
         bands = [float(item.split()[0]) for item in bands]
         bands = np.array(bands)
 
-    return bands
+    return data
 
 
 def read_hdr(path, load_hsi=False, rows=None, cols=None):
@@ -176,37 +266,34 @@ def read_hdr(path, load_hsi=False, rows=None, cols=None):
 
 
 if __name__ == '__main__':
-    # rgb = [63, 34, 12]
-    file = 'f130411t01p00r11rdn_e'
-    file_path = f"/home/disk1/ZR/datasets/AVIRIS/raw/{file}/{file}_sc01_ort_img.hdr"
-
-    rows = [i for i in range(0, 3000, 512)]
-
-    # for row in rows:
-    #     result = read_hdr(file_path, load_hsi=True, rows=(row, row + 512), cols=(0, 512))['hsi']
-    #     # result = read_hdr(file_path, load_hsi=True)['hsi']
-    #     result[result < 0] = 0
-    #     row_min, row_max, col_min, col_max = find_valid_region(result)
-    #     result = result[:, :, rgb]
-    #
-    #     result = normalize(np.clip(result, 0, 1))
-    #
-    #     io.imsave(f"demo/{row}.jpg", (result * 255).astype(np.uint8))
-
     # rgb = [36, 19, 8]
+    # file = 'f130804t01p00r06rdn_e'
+    # file_path = f"/home/disk1/ZR/datasets/AVIRIS/raw/{file}/{file}_sc01_ort_img.hdr"
     # result = read_hdr(file_path, load_hsi=True)['hsi']
     # result[result < 0] = 0
     # result /= 10000
     # # result = result[:, :, rgb]
-    # result = result[25:, 100:-100, :]
+    # result = result[50:, 300:-200, :]
     # # result = normalize(result)
-    #
     # blocks = spatial_cut(result, block_size=512)
     # for idx, block in enumerate(blocks):
     #     block = normalize(block)
     #     np.save(f'data/{file}_{idx}.npy', block)
 
-    process_npy_files('data', 'preview')
+    # rgb = [136, 67, 18]
+    # file_path = "/home/disk1/ZR/datasets/OurHSI/4/raw_0_rd_rf_or"
+    # rgb = [136+272, 67+272, 18+272]
+    # file_path = "/home/disk2/ZR/datasets/merged_0_0.npy"
+    # result = read_data(file_path)  # (C, H, W)
+    # result[result < 0] = 0
+    # result = np.transpose(result, (1, 2, 0))
+    # result = result[:, :, rgb]
+    #
+    # result = normalize(np.clip(result, 0, 1))
+    #
+    # io.imsave(f"demo2.jpg", (result * 255).astype(np.uint8))
+
+    # process_npy_files('/home/disk2/ZR/datasets/OurHSI/12-20/2', '/home/disk2/ZR/datasets/OurHSI/preview/12-20/2')
 
     # result = read_hdr(file_path, load_hsi=False)['meta']
     # bands = result.get('wavelength')
@@ -215,3 +302,47 @@ if __name__ == '__main__':
     # result['bands'] = bands
     # with open('meta.pkl', "wb") as f:
     #     pickle.dump(result, f)
+
+    # # 输入目录
+    # clean_dir = "/home/disk2/ZR/datasets/AVIRIS/512/gt"  # 替换为干净数据目录
+    # noise_dirs = [
+    #     "/home/disk2/ZR/datasets/AVIRIS/512/rain/small",  # 替换为噪声级别1的目录
+    #     "/home/disk2/ZR/datasets/AVIRIS/512/rain/medium",  # 替换为噪声级别2的目录
+    #     "/home/disk2/ZR/datasets/AVIRIS/512/rain/heavy",  # 替换为噪声级别3的目录
+    #     "/home/disk2/ZR/datasets/AVIRIS/512/rain/storm"  # 替换为噪声级别4的目录
+    # ]
+    #
+    # # 输出目录
+    # output_dir = "/home/disk2/ZR/datasets/AVIRIS/512/preview"
+    #
+    # # 选择通道（例如 [0, 1, 2] 表示前三个通道）
+    # channels = [36, 19, 8]
+    #
+    # # 获取文件对
+    # file_pairs = get_file_pairs(clean_dir, noise_dirs)
+    #
+    # # 依次处理每个文件对
+    # for clean_path, noise_paths in file_pairs:
+    #     visualize_and_save(clean_path, noise_paths, channels, output_dir)
+
+    # 输入目录
+    clean_dir = "/home/disk2/ZR/datasets/OurHSI/gt"  # 替换为干净数据目录
+    noise_dirs = [
+        "/home/disk2/ZR/datasets/OurHSI/rain/small",  # 替换为噪声级别1的目录
+        "/home/disk2/ZR/datasets/OurHSI/rain/medium",  # 替换为噪声级别2的目录
+        "/home/disk2/ZR/datasets/OurHSI/rain/heavy",  # 替换为噪声级别3的目录
+        "/home/disk2/ZR/datasets/OurHSI/rain/storm"  # 替换为噪声级别4的目录
+    ]
+
+    # 输出目录
+    output_dir = "/home/disk2/ZR/datasets/OurHSI/preview"
+
+    # 选择通道（例如 [0, 1, 2] 表示前三个通道）
+    channels = [136, 67, 18]
+
+    # 获取文件对
+    file_pairs = get_file_pairs(clean_dir, noise_dirs)
+
+    # 依次处理每个文件对
+    for clean_path, noise_paths in file_pairs:
+        visualize_and_save(clean_path, noise_paths, channels, output_dir)

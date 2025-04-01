@@ -79,7 +79,8 @@ def normalize_image(image: np.ndarray) -> np.ndarray:
         normalized_image = np.zeros_like(image, dtype=np.float32)
         for c in range(image.shape[-1]):  # 对每个通道单独归一化
             channel = image[:, :, c]
-            normalized_image[:, :, c] = (channel - channel.min()) / (channel.max() - channel.min())
+            if channel.max() - channel.min() != 0:
+                normalized_image[:, :, c] = (channel - channel.min()) / (channel.max() - channel.min())
         return normalized_image
     else:
         raise ValueError("输入图片的形状必须是 (H, W) 或 (H, W, C)")
@@ -106,7 +107,7 @@ def standardize_image(image: np.ndarray) -> np.ndarray:
         raise ValueError("输入图片的形状必须是 (H, W) 或 (H, W, C)")
 
 
-def to_visualize(img, RGB=True, bands=[136, 67, 18]):  # [136, 67, 18] [36, 19, 8]
+def to_visualize(img, RGB=True, bands=[36, 19, 8]):  # [136, 67, 18] [36, 19, 8]
     if len(img.shape) == 3 and img.shape[2] > 3:
         if RGB:
             return to_visualize_hsi(img, bands)
@@ -253,24 +254,24 @@ def to_visualize_hsi(hsi, bands=[36, 19, 8]):
     if bands is not None:
         hsi = hsi[:, :, bands]
     else:
-        # # 将高光谱数据重塑为 (像素数, 波段数)
-        # h, w, bands = hsi.shape[0], hsi.shape[1], hsi.shape[2]
-        # pixels = hsi.reshape(-1, bands)  # 形状为 (像素数, 波段数)
-        #
-        # # 使用PCA降维到3个主成分
-        # pca = PCA(n_components=3)
-        # pca_result = pca.fit_transform(pixels)  # 形状为 (像素数, 3)
-        #
-        # # 将PCA结果重塑为图像
-        # hsi = pca_result.reshape(h, w, 3)
+        # 将高光谱数据重塑为 (像素数, 波段数)
+        h, w, bands = hsi.shape[0], hsi.shape[1], hsi.shape[2]
+        pixels = hsi.reshape(-1, bands)  # 形状为 (像素数, 波段数)
 
-        n = hsi.shape[-1]
-        # band1 = random.randint(0, n - 1)
-        # band2 = random.randint(0, n - 1)
-        # band3 = random.randint(0, n - 1)
-        # print(f'bands:{(band1, band2, band3)} --> RGB')
-        # hsi = hsi[:, :, [band1, band2, band3]]
-        hsi = hsi[:, :, [n-1, n//2, 0]]
+        # 使用PCA降维到3个主成分
+        pca = PCA(n_components=3)
+        pca_result = pca.fit_transform(pixels)  # 形状为 (像素数, 3)
+
+        # 将PCA结果重塑为图像
+        hsi = pca_result.reshape(h, w, 3)
+
+        # n = hsi.shape[-1]
+        # # band1 = random.randint(0, n - 1)
+        # # band2 = random.randint(0, n - 1)
+        # # band3 = random.randint(0, n - 1)
+        # # print(f'bands:{(band1, band2, band3)} --> RGB')
+        # # hsi = hsi[:, :, [band1, band2, band3]]
+        # hsi = hsi[:, :, [n-1, n//2, 0]]
 
     # hsi = normalize(hsi) * 255
     # cv2.normalize(hsi, hsi, 0, 1)
@@ -378,6 +379,46 @@ def visualize_psnr(filenames, psnr_values):
     plt.tight_layout()
     plt.savefig("psnr_visualization2.png", dpi=300, bbox_inches='tight')
     plt.show()
+
+
+def smooth_image(image, method="gaussian", kernel_size=5):
+    """
+    Apply smoothing to an image to reduce artifacts and sharp transitions.
+    Args:
+        image: Input image (grayscale).
+        method: Smoothing method ("gaussian" or "bilateral").
+        kernel_size: Kernel size for smoothing.
+    Returns:
+        Smoothed image.
+    """
+    if method == "gaussian":
+        return cv2.GaussianBlur(image, (kernel_size, kernel_size), 0)
+    elif method == "bilateral":
+        return cv2.bilateralFilter(image, kernel_size, 75, 75)
+    else:
+        raise ValueError("Invalid smoothing method specified!")
+
+
+def downsample_image(image, scale_factor):
+    """
+    对图像进行下采样。
+
+    参数:
+    image (numpy.ndarray): 输入图像，形状为 (height, width, channels)。
+    scale_factor (float): 下采样比例，小于1的值表示缩小图像。
+
+    返回:
+    numpy.ndarray: 下采样后的图像。
+    """
+    if scale_factor > 1:
+        raise ValueError("scale_factor必须小于1以进行下采样。")
+
+    new_height = int(image.shape[0] * scale_factor)
+    new_width = int(image.shape[1] * scale_factor)
+
+    downsampled_image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_NEAREST)
+
+    return smooth_image(downsampled_image)
 
 
 if __name__ == '__main__':

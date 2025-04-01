@@ -1,5 +1,7 @@
+import os
 import random
 from collections import OrderedDict
+from os.path import basename, join
 
 import cv2
 import numpy as np
@@ -10,20 +12,9 @@ from gif import guided_filter
 from load import load_pickle, load_hsi
 from util import calculate_psnr_ssim, check_dtype, visualize_tool, normalize
 
-from config import DV, RAIN, LEVEL
+from config import RAIN, LEVEL
 
 BANDS = [36, 19, 8]
-
-RAIN_STREAK = {
-    1: dict(num_drops=random.randint(2000, 2500), streak_length=random.randint(20, 25),
-            wind_angle=random.randint(-180, 180), wind_strength=random.uniform(0, 0.05)),  # 小雨
-    2: dict(num_drops=random.randint(3000, 3500), streak_length=random.randint(30, 35),
-            wind_angle=random.randint(-180, 180), wind_strength=random.uniform(0.05, 0.1)),  # 中雨
-    3: dict(num_drops=random.randint(3500, 4000), streak_length=random.randint(40, 45),
-            wind_angle=random.randint(-180, 180), wind_strength=random.uniform(0.1, 0.2)),  # 大雨
-    4: dict(num_drops=random.randint(5000, 5500), streak_length=random.randint(50, 55),
-            wind_angle=random.randint(-180, 180), wind_strength=random.uniform(0.2, 0.3)),  # 暴雨
-}
 
 
 class RainModelForAVIRIS:
@@ -36,8 +27,29 @@ class RainModelForAVIRIS:
                  a=1.0,
                  gif=False,
                  use_perlin=True,
-                 alpha=1.0
+                 alpha=1.0,
+                 save_root_path=None
                  ):
+
+        self.RAIN_STREAK = {
+            1: dict(num_drops=random.randint(1500, 1600), streak_length=random.randint(20, 25),
+                    wind_angle=random.randint(-180, 180), wind_strength=random.uniform(0, 0.05)),  # 小雨
+            2: dict(num_drops=random.randint(2500, 2700), streak_length=random.randint(30, 35),
+                    wind_angle=random.randint(-180, 180), wind_strength=random.uniform(0, 0.1)),  # 中雨
+            3: dict(num_drops=random.randint(3600, 3700), streak_length=random.randint(40, 45),
+                    wind_angle=random.randint(-180, 180), wind_strength=random.uniform(0, 0.2)),  # 大雨
+            4: dict(num_drops=random.randint(5000, 5500), streak_length=random.randint(50, 55),
+                    wind_angle=random.randint(-180, 180), wind_strength=random.uniform(0, 0.3)),  # 暴雨
+        }
+
+        self.DV = {
+            1: 20,
+            2: random.uniform(15, 20),
+            3: random.uniform(6, 8),
+            4: random.uniform(2.5, 3.5),
+        }
+
+        self.hsi_path = hsi_path
         self.hsi = load_hsi(hsi_path)
         # self.hsi = normalize(self.hsi)
         self.bands_path = bands_path
@@ -48,10 +60,11 @@ class RainModelForAVIRIS:
         self.gif = gif
         self.use_perlin = use_perlin
         self.alpha = alpha
+        self.save_root_path = save_root_path
 
         self.height, self.width, self.channel = self.hsi.shape
         self.depth = (self.height + self.width) // 2
-        self.dv = DV.get(self.level)
+        self.dv = self.DV.get(self.level)
         self.rain_speed = RAIN.get(self.level)
         self.label = LEVEL.get(self.level)
         self.lambdas = load_pickle(self.bands_path)['bands']
@@ -61,6 +74,8 @@ class RainModelForAVIRIS:
         self.deg_streak = None
         self.deg_rain_img, self.deg_fog_img, self.deg_rain_fog_img = None, None, None
         self.deg_img = None
+        self.psnr_value = None
+        self.ssim_value = None
 
     def _init_params(self):
         # ------------------------------------------- Perlin Noise ------------------------------------------- #
@@ -84,7 +99,7 @@ class RainModelForAVIRIS:
                                                 width=self.width,
                                                 depth=self.depth,
                                                 f=self.depth,
-                                                **RAIN_STREAK.get(self.level))
+                                                **self.RAIN_STREAK.get(self.level))
         rain_streak = check_dtype(rain_streak)
         if len(rain_streak.shape) < 3:
             rain_streak = np.expand_dims(rain_streak, axis=-1)
@@ -122,8 +137,8 @@ class RainModelForAVIRIS:
         self.cal_metric()
 
     def cal_metric(self):
-        psnr_value, ssim_value = calculate_psnr_ssim(self.hsi, self.deg_img)
-        print(f"PSNR: {psnr_value:.2f}, SSIM: {ssim_value:.4f}")
+        self.psnr_value, self.ssim_value = calculate_psnr_ssim(self.hsi, self.deg_img)
+        # print(f"PSNR: {self.psnr_value:.2f}, SSIM: {self.psnr_value:.4f}")
 
     def visualize(self, RGB=True):
         data_dict = OrderedDict()
@@ -142,22 +157,36 @@ class RainModelForAVIRIS:
                        save_path=f'result/AVIRIS/{self.label}.jpg',
                        RGB=RGB)
 
+    def save(self, save_gt=False):
+        filename, ext = basename(self.hsi_path).split('.')
+        rain_file = f'{filename}_{self.label}.{ext}'
+
+        rain_path = join(self.save_root_path, 'rain')
+        rain_path = join(rain_path, self.label)
+        os.makedirs(rain_path, exist_ok=True)
+        np.save(join(rain_path, rain_file), self.deg_img.astype(np.float32))
+
+        if save_gt:
+            gt_path = join(self.save_root_path, 'gt')
+            os.makedirs(gt_path, exist_ok=True)
+            np.save(join(gt_path, filename), self.hsi.astype(np.float32))
+
 
 if __name__ == '__main__':
     # PSNR: 10 15 20 25
-    # alpha: 0.7 0.7 0.8 0.9
-    seed = 42
-    random.seed(seed)
+    # alpha: 0.6 0.7 0.8 0.9
+    # seed = 42
+    # random.seed(seed)
 
     model = RainModelForAVIRIS(
-        hsi_path='/home/disk1/ZR/PythonProjects/uchiha/tools/hyperspectral/data/f130411t01p00r11rdn_e_11.npy',
-        bands_path='/home/disk1/ZR/PythonProjects/uchiha/tools/hyperspectral/meta.pkl',
+        hsi_path='/home/disk2/ZR/datasets/AVIRIS/512/gt/f130412t01p00r11rdn_e_44.npy',
+        bands_path='/home/disk2/ZR/datasets/AVIRIS/512/meta.pkl',
         r0=0.155,  # 0.248
-        level=1,
+        level=4,
         a=1,
         d=0.4,
         gif=True,
-        alpha=0.7
+        alpha=0.9
     )
 
     model.synthesize()
