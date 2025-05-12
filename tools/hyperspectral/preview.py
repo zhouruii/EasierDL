@@ -91,10 +91,9 @@ def get_file_pairs(clean_dir, noise_dirs):
             # 查找对应的噪声文件
             noise_paths = []
             for noise_dir in noise_dirs:
-                noise_filename = f"{key}_*.npy"
-                noise_files = [f for f in os.listdir(noise_dir) if f.startswith(f'{key}_') and f.endswith(".npy")]
-                if noise_files:
-                    noise_paths.append(os.path.join(noise_dir, noise_files[0]))
+                noise_filename = f"{key}.npy"
+                # noise_files = [f for f in os.listdir(noise_dir) if f.startswith(f'{key}_') and f.endswith(".npy")]
+                noise_paths.append(os.path.join(noise_dir, noise_filename))
 
             if len(noise_paths) == 4:  # 确保有四个噪声文件
                 file_pairs.append((clean_path, noise_paths))
@@ -303,17 +302,17 @@ if __name__ == '__main__':
     # with open('meta.pkl', "wb") as f:
     #     pickle.dump(result, f)
 
-    # # 输入目录
-    # clean_dir = "/home/disk2/ZR/datasets/AVIRIS/512/gt"  # 替换为干净数据目录
+    # 输入目录
+    # clean_dir = "/home/disk2/ZR/datasets/AVIRIS/512/val/gt"  # 替换为干净数据目录
     # noise_dirs = [
-    #     "/home/disk2/ZR/datasets/AVIRIS/512/rain/small",  # 替换为噪声级别1的目录
-    #     "/home/disk2/ZR/datasets/AVIRIS/512/rain/medium",  # 替换为噪声级别2的目录
-    #     "/home/disk2/ZR/datasets/AVIRIS/512/rain/heavy",  # 替换为噪声级别3的目录
-    #     "/home/disk2/ZR/datasets/AVIRIS/512/rain/storm"  # 替换为噪声级别4的目录
+    #     "/home/disk2/ZR/datasets/AVIRIS/512/val/rain/small",  # 替换为噪声级别1的目录
+    #     "/home/disk2/ZR/datasets/AVIRIS/512/val/rain/medium",  # 替换为噪声级别2的目录
+    #     "/home/disk2/ZR/datasets/AVIRIS/512/val/rain/heavy",  # 替换为噪声级别3的目录
+    #     "/home/disk2/ZR/datasets/AVIRIS/512/val/rain/storm"  # 替换为噪声级别4的目录
     # ]
     #
     # # 输出目录
-    # output_dir = "/home/disk2/ZR/datasets/AVIRIS/512/preview"
+    # output_dir = "/home/disk2/ZR/datasets/AVIRIS/512/val/preview"
     #
     # # 选择通道（例如 [0, 1, 2] 表示前三个通道）
     # channels = [36, 19, 8]
@@ -326,16 +325,16 @@ if __name__ == '__main__':
     #     visualize_and_save(clean_path, noise_paths, channels, output_dir)
 
     # 输入目录
-    clean_dir = "/home/disk2/ZR/datasets/OurHSI/gt"  # 替换为干净数据目录
+    clean_dir = "/home/disk2/ZR/datasets/OurHSI/extra/train/gt"  # 替换为干净数据目录
     noise_dirs = [
-        "/home/disk2/ZR/datasets/OurHSI/rain/small",  # 替换为噪声级别1的目录
-        "/home/disk2/ZR/datasets/OurHSI/rain/medium",  # 替换为噪声级别2的目录
-        "/home/disk2/ZR/datasets/OurHSI/rain/heavy",  # 替换为噪声级别3的目录
-        "/home/disk2/ZR/datasets/OurHSI/rain/storm"  # 替换为噪声级别4的目录
+        "/home/disk2/ZR/datasets/OurHSI/extra/train/rain/small",  # 替换为噪声级别1的目录
+        "/home/disk2/ZR/datasets/OurHSI/extra/train/rain/medium",  # 替换为噪声级别2的目录
+        "/home/disk2/ZR/datasets/OurHSI/extra/train/rain/heavy",  # 替换为噪声级别3的目录
+        "/home/disk2/ZR/datasets/OurHSI/extra/train/rain/storm"  # 替换为噪声级别4的目录
     ]
 
     # 输出目录
-    output_dir = "/home/disk2/ZR/datasets/OurHSI/preview"
+    output_dir = "/home/disk2/ZR/datasets/OurHSI/extra/train/preview"
 
     # 选择通道（例如 [0, 1, 2] 表示前三个通道）
     channels = [136, 67, 18]

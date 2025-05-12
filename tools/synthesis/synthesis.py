@@ -55,55 +55,25 @@ def setup_logger(log_file='psnr_ssim_log.txt'):
 
 
 if __name__ == '__main__':
-    ALPHA = [0.6, 0.7, 0.8, 0.9]
-    hsi_root_path = '/home/disk2/ZR/datasets/AVIRIS/512/gt'
-    filenames = os.listdir(hsi_root_path)
-    hsi_paths = [join(hsi_root_path, file) for file in filenames]
-
-    logger = setup_logger('/home/disk2/ZR/datasets/AVIRIS/512/synthesis.log')
-
-    for idx, hsi_path in enumerate(hsi_paths):
-        for level in range(1, 5):
-            model = RainModelForAVIRIS(
-                hsi_path=hsi_path,
-                bands_path='/home/disk2/ZR/datasets/AVIRIS/512/meta.pkl',
-                r0=0.155,
-                level=level,
-                a=1,
-                d=0.4,
-                gif=True,
-                alpha=ALPHA[level - 1],
-                save_root_path='/home/disk2/ZR/datasets/AVIRIS/512'
-            )
-            model.synthesize()
-            model.save()
-            log_info = (f'Processed:[{idx + 1} / {len(hsi_paths)}] \t File: {filenames[idx]} \t '
-                        f'Level: {LEVEL.get(level)} \t PSNR: {model.psnr_value:.2f} \t SSIM: {model.ssim_value:.4f}')
-            if np.isnan(model.psnr_value) or np.isnan(model.ssim_value):
-                logger.error(log_info)
-            else:
-                logger.info(log_info)
-
-    # ALPHA = [0.7, 0.75, 0.8, 0.9]
-    # hsi_root_path = '/home/disk2/ZR/datasets/OurHSI/extra/gt'
+    # ALPHA = [0.6, 0.7, 0.8, 0.9]
+    # hsi_root_path = '/home/disk2/ZR/datasets/AVIRIS/512/gt'
     # filenames = os.listdir(hsi_root_path)
     # hsi_paths = [join(hsi_root_path, file) for file in filenames]
     #
-    # logger = setup_logger('/home/disk2/ZR/datasets/OurHSI/extra/synthesis.log')
+    # logger = setup_logger('/home/disk2/ZR/datasets/AVIRIS/512/synthesis.log')
     #
     # for idx, hsi_path in enumerate(hsi_paths):
     #     for level in range(1, 5):
-    #         model = RainModelForOurHSI(
+    #         model = RainModelForAVIRIS(
     #             hsi_path=hsi_path,
-    #             streak_path='/home/disk2/ZR/datasets/OurHSI/streakV2',
-    #             bands_path='/home/disk2/ZR/datasets/OurHSI/meta.pkl',
-    #             r0=0.248,
+    #             bands_path='/home/disk2/ZR/datasets/AVIRIS/512/meta.pkl',
+    #             r0=0.155,
     #             level=level,
     #             a=1,
-    #             d=0.3,
+    #             d=0.4,
     #             gif=True,
     #             alpha=ALPHA[level - 1],
-    #             save_root_path='/home/disk2/ZR/datasets/OurHSI/extra'
+    #             save_root_path='/home/disk2/ZR/datasets/AVIRIS/512'
     #         )
     #         model.synthesize()
     #         model.save()
@@ -113,3 +83,33 @@ if __name__ == '__main__':
     #             logger.error(log_info)
     #         else:
     #             logger.info(log_info)
+
+    ALPHA = [0.7, 0.75, 0.8, 0.9]
+    hsi_root_path = '/home/disk2/ZR/datasets/OurHSI/extra/gt'
+    filenames = os.listdir(hsi_root_path)
+    hsi_paths = [join(hsi_root_path, file) for file in filenames]
+
+    logger = setup_logger('/home/disk2/ZR/datasets/OurHSI/extra/synthesis.log')
+
+    for idx, hsi_path in enumerate(hsi_paths):
+        for level in range(1, 5):
+            model = RainModelForOurHSI(
+                hsi_path=hsi_path,
+                streak_path='/home/disk2/ZR/datasets/OurHSI/streakV2',
+                bands_path='/home/disk2/ZR/datasets/OurHSI/meta.pkl',
+                r0=0.248,
+                level=level,
+                a=1,
+                d=0.3,
+                gif=True,
+                alpha=ALPHA[level - 1],
+                save_root_path='/home/disk2/ZR/datasets/OurHSI/extra'
+            )
+            model.synthesize()
+            model.save()
+            log_info = (f'Processed:[{idx + 1} / {len(hsi_paths)}] \t File: {filenames[idx]} \t '
+                        f'Level: {LEVEL.get(level)} \t PSNR: {model.psnr_value:.2f} \t SSIM: {model.ssim_value:.4f}')
+            if np.isnan(model.psnr_value) or np.isnan(model.ssim_value):
+                logger.error(log_info)
+            else:
+                logger.info(log_info)

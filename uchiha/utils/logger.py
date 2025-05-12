@@ -2,6 +2,8 @@
 import logging
 from os import mkdir
 from os.path import dirname, exists
+import sys
+import platform
 
 import torch.distributed as dist
 
@@ -118,4 +120,71 @@ def get_root_logger(log_file=None, log_level=logging.INFO):
         log_dir = dirname(log_file)
         if not exists(log_dir):
             mkdir(log_dir)
-    return get_logger(name='uchiha', log_file=log_file, log_level=log_level)
+    logger = get_logger(name='Uchiha', log_file=log_file, log_level=log_level)
+    # info = get_env_info()
+    # log_env_info(logger, info)
+    return logger
+
+
+def get_env_info():
+    import torch
+    import torchvision
+
+    os_info = {
+        "Python Version": sys.version.split()[0],
+        "OS Platform": platform.platform()
+    }
+
+    torch_info = {
+        "PyTorch Version": torch.__version__,
+        "Torchvision Version": torchvision.__version__,
+        "CUDA Available": torch.cuda.is_available()
+    }
+
+    gpu_info = {}
+    if torch.cuda.is_available():
+        gpu_info.update({
+            "GPU Model": torch.cuda.get_device_name(0),
+            "GPU Memory": f"{round(torch.cuda.get_device_properties(0).total_memory / 1024 ** 3, 1)} GB",
+            "CUDA Version": torch.version.cuda
+        })
+    else:
+        gpu_info["GPU"] = "No CUDA-capable GPU detected"
+
+    return {
+        "System Info": os_info,
+        "PyTorch Info": torch_info,
+        "GPU Info": gpu_info
+    }
+
+
+def log_env_info(logger, info):
+    logger.info(r"""
+                           _  __    ____    __  __
+                          | |/ /   / __ \  / / / /
+                          |   /   / / / / / / / /
+                         /   |   / /_/ / / /_/ /
+                        /_/|_|  /_____/  \____/
+
+   ______                     __           __                    __      __
+  / ____/  ____   ____   ____/ /          / /   __  __  _____   / /__   / /
+ / / __   / __ \ / __ \ / __  /          / /   / / / / / ___/  / //_/  / /
+/ /_/ /  / /_/ // /_/ // /_/ /          / /___/ /_/ / / /__   / ,<    /_/
+\____/   \____/ \____/ \__,_/          /_____/\__,_/  \___/  /_/|_|  (_)
+
+    """)
+
+    logger.info("ENVIRONMENT INFO".center(40))
+    logger.info("=" * 40)
+
+    for category, data in info.items():
+        logger.info("=" * 10 + f"{category}" + "=" * 10)
+        for k, v in data.items():
+            logger.info(f"  {k + ':':<18} {v}")
+
+    logger.info("" + "=" * 40)
+    logger.info("ENVIRONMENT INFO".center(40))
+
+
+if __name__ == "__main__":
+    get_root_logger()

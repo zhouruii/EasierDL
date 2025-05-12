@@ -12,12 +12,13 @@ from uchiha.cores.builder import build_criterion, build_optimizer, build_schedul
 
 from uchiha.utils import count_parameters, load_config, get_root_logger, print_log, save_checkpoint, \
     load_checkpoint, auto_resume_helper
+from uchiha.utils.logger import log_env_info, get_env_info
 
 
 def parse_args():
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument('--seed', type=int, default=49)
-    args_parser.add_argument('--config', '-c', type=str, default='configs/spectral/exp.yaml')
+    args_parser.add_argument('--config', '-c', type=str, default='configs/RainHSI.yaml')
     args_parser.add_argument('--gpu_ids', nargs='+', default=['0'])
     args_parser.add_argument('--multi-process', '-mp', action='store_true')
     args_parser.add_argument('--no_validate', '-n', action='store_true')
@@ -36,6 +37,7 @@ def main():
     writer = SummaryWriter(log_dir=join(f'{work_dir}/tb_loggers', log_time))
 
     logger = get_root_logger(log_file=join(f'{work_dir}/logs', f'{log_time}.log'))
+    log_env_info(logger, get_env_info())
     logger.info(f'Config:\n{cfg}')
 
     # random seed

@@ -140,12 +140,14 @@ def calculate_psnr_ssim(img1: np.ndarray, img2: np.ndarray) -> tuple:
     assert img1.shape == img2.shape, "两个图像的形状必须相同"
 
     # 逐通道计算 SSIM，然后求平均值
-    channels = img1.shape[2]
-    ssim_values = [
-        ssim_val(img1[..., i], img2[..., i], data_range=img1[..., i].max() - img1[..., i].min())
-        for i in range(channels)
-    ]
-    avg_ssim = np.mean(ssim_values)
+    # channels = img1.shape[2]
+    # ssim_values = [
+    #     ssim_val(img1[..., i], img2[..., i], data_range=img1[..., i].max() - img1[..., i].min())
+    #     for i in range(channels)
+    # ]
+    # avg_ssim = np.mean(ssim_values)
+
+    avg_ssim = ssim_val(img1, img2, data_range=img1.max() - img1.min(), channel_axis=2)
 
     # PSNR：直接支持多通道
     psnr_value = psnr_val(img1, img2, data_range=img1.max() - img1.min())

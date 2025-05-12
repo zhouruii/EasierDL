@@ -147,7 +147,7 @@ class RainModelForOurHSI:
 
     def save(self, save_gt=False):
         filename, ext = basename(self.hsi_path).split('.')
-        rain_file = f'{filename}_{self.label}.{ext}'
+        rain_file = f'{filename}.{ext}'
 
         rain_path = join(self.save_root_path, 'rain')
         rain_path = join(rain_path, self.label)

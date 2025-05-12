@@ -1,6 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import collections
-
 from ..builder import PIPELINES
 from uchiha.utils import build_from_cfg
 

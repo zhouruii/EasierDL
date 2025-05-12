@@ -1,1 +1,1 @@
-from .spectral import SpectralDataset2d, SpectralDataset1d
+from .spectral import SpectralDataset2d, SpectralDataset1d, MultiLevelRainHSIDataset

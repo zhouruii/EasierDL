@@ -1,3 +1,7 @@
+import glob
+import os
+from typing import List, Dict
+
 from torch.utils.data import Dataset
 
 from .builder import SPECTRAL_DATASET
@@ -165,3 +169,76 @@ class SpectralDataset1d(Dataset):
         results = regression_eval(preds, targets, elements, metric)
 
         return results
+
+
+@SPECTRAL_DATASET.register_module()
+class MultiLevelRainHSIDataset(Dataset):
+    RAIN_TYPES = ['small', 'medium', 'heavy', 'storm']  # Four noise types are fixed
+
+    def __init__(self,
+                 data_root: str,
+                 pipelines: Dict = None):
+        """
+        Args:
+            data_root: The root directory of the dataset
+        """
+        self.root = data_root
+        self.pipelines = Compose(pipelines) if pipelines else None
+
+        # Check the directory structure
+        self._validate_directory_structure()
+
+        # Load all sample paths
+        self.gt_paths = sorted(glob.glob(os.path.join(data_root, 'gt', '*.npy')))
+        if not self.gt_paths:
+            raise FileNotFoundError(f"No .npy files found in {os.path.join(data_root, 'gt')}")
+
+        self.paths = self._build_paths_index()
+
+    def _validate_directory_structure(self):
+        """Verify that the directory structure is as expected"""
+        required_dirs = ['gt'] + [os.path.join('rain', t) for t in self.RAIN_TYPES]
+        for d in required_dirs:
+            if not os.path.isdir(os.path.join(self.root, d)):
+                raise RuntimeError(f"Missing required directory: {d}")
+
+    def _build_paths_index(self) -> List[Dict[str, str]]:
+        """Build a list of sample index dictionaries"""
+        paths = []
+        for gt_path in self.gt_paths:
+            sample = {'gt_path': gt_path}
+
+            # Obtain the corresponding noise file path
+            filename, ext = os.path.basename(gt_path).split('.')
+            for rain_type in self.RAIN_TYPES:
+                rain_path = os.path.join(self.root, 'rain', rain_type, f'{filename}_{rain_type}.{ext}')
+                if not os.path.exists(rain_path):
+                    raise FileNotFoundError(f"Missing corresponding rain file: {rain_path}")
+                sample['lq_path'] = rain_path
+                paths.append(sample.copy())
+
+        return paths
+
+    def __len__(self) -> int:
+        return len(self.paths)
+
+    def __getitem__(self, idx: int) -> Dict:
+        sample = self.paths[idx]
+
+        # 加载数据
+        gt_path = sample['gt_path']
+        lq_path = sample['lq_path']
+        gt = read_npy(gt_path)
+        lq = read_npy(lq_path)
+
+        results = {
+            'sample': lq,
+            'target': gt,
+            'index': idx
+        }
+
+        return self.pipelines(results) if self.pipelines else results
+
+    def get_rain_types(self) -> List[str]:
+        """获取支持的噪声类型列表"""
+        return self.RAIN_TYPES.copy()
