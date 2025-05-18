@@ -1,13 +1,11 @@
-import math
-
 from timm.layers import to_2tuple
 from torch import nn
 
-from ..builder import EMBEDDING
-from ...utils import build_norm
+from uchiha.models.builder import MODULE
+from uchiha.models.modules.common import build_norm
 
 
-@EMBEDDING.register_module()
+@MODULE.register_module()
 class PatchEmbedding(nn.Module):
     r""" Image to Patch Embedding
 
@@ -69,7 +67,7 @@ class PatchEmbedding(nn.Module):
         return flops
 
 
-@EMBEDDING.register_module()
+@MODULE.register_module()
 class TokenEmbedding(nn.Module):
     r""" Sequence to Patch Embedding
 
@@ -81,6 +79,7 @@ class TokenEmbedding(nn.Module):
         embed_dim (int): Number of linear projection output channels.
         norm_layer (nn.Module, optional): Normalization layer.
     """
+
     def __init__(self, in_channel, embed_dim, norm_layer):
         super().__init__()
         self.in_channel = in_channel
@@ -106,4 +105,17 @@ class TokenEmbedding(nn.Module):
 
         if self.norm is not None:
             x = self.norm(x)
+        return x
+
+
+@MODULE.register_module()
+class OverlapPatchEmbedding(nn.Module):
+    def __init__(self, in_channels=3, embed_dim=48, bias=False):
+        super(OverlapPatchEmbedding, self).__init__()
+
+        self.proj = nn.Conv2d(in_channels, embed_dim, kernel_size=3, stride=1, padding=1, bias=bias)
+
+    def forward(self, x):
+        x = self.proj(x)
+
         return x

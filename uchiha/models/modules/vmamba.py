@@ -32,7 +32,7 @@ try:
 except:
     pass
 
-from uchiha.models.builder import BASEMODULE
+from uchiha.models.builder import MODULE
 
 
 # =====================================================
@@ -1178,7 +1178,7 @@ class SS2D(nn.Module, SS2Dv0, SS2Dv2, SS2Dv3, SS2Dm0):
             self.__initv2__(**kwargs)
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class VSSBlock(nn.Module):
     """ Visual State Space Block in `VMamba`
 

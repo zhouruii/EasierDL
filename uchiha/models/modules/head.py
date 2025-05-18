@@ -1,9 +1,9 @@
 from torch import nn
 
-from ..builder import HEAD
+from uchiha.models.builder import MODULE
 
 
-@HEAD.register_module()
+@MODULE.register_module()
 class FCHead(nn.Module):
     """ Fully Connected Head
 

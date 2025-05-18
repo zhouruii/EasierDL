@@ -6,13 +6,12 @@ from timm.layers import DropPath
 from torch import nn
 import torch.nn.functional as F
 
-from .common import MLP, GMLP, Linear2d, LayerNorm2d, Permute, SoftmaxSpatial
+from .common import MLP, GMLP, Linear2d, LayerNorm2d, Permute, SoftmaxSpatial, to_fp32
 from .mamba import InitMambaParams
 from ..ops.csms6s import selective_scan_fn
 from ..ops.triton import cross_scan_fn, cross_merge_fn
-from ...utils import to_fp32
 
-from ..builder import BASEMODULE
+from ..builder import MODULE
 
 
 class SelectiveScan2D(nn.Module):
@@ -333,7 +332,7 @@ class SelectiveScan2D(nn.Module):
         return out
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class VisualMambaBlock(nn.Module):
     def __init__(self,
                  # --------------- overall --------------- #

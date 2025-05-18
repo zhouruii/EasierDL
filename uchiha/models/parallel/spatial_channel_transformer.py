@@ -1,8 +1,6 @@
 from torch import nn
 
-from ..builder import (build_preprocessor, build_embedding, build_basemodule,
-                       build_downsample, build_head, MODEL, build_model, build_postprocessor)
-from ...utils.misc import strings_to_list
+from ..builder import (build_module, MODEL, build_model)
 
 
 # TODO 待完善
@@ -14,13 +12,13 @@ class ParallelSpatialChannelTransformer(nn.Module):
                  parallels=None,
                  postprocessor=None):
         super().__init__()
-        self.embedding = build_embedding(embedding)
+        self.embedding = build_module(embedding)
 
         self.workflows = nn.ModuleList()
         for workflow in parallels:
             self.workflows.append(build_model(workflow))
 
-        self.postprocessor = build_postprocessor(postprocessor)
+        self.postprocessor = build_module(postprocessor)
 
     def forward(self, x):
 

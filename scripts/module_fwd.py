@@ -7,9 +7,9 @@ from mamba_ssm import Mamba2
 from torch import nn
 
 from uchiha import ClassicMambaBlock
-from uchiha.models.basemodules.cross_transformer import SpatialUniCrossAttention, ChannelUniCrossAttention
-from uchiha.models.basemodules.mamba import ChannelMambaBlock
-from uchiha.models.basemodules.visual_mamba import SelectiveScan2D, VisualMambaBlock
+from uchiha.models.modules.cross_transformer import SpatialUniCrossAttention, ChannelUniCrossAttention
+from uchiha.models.modules.mamba import ChannelMambaBlock
+from uchiha.models.modules.visual_mamba import SelectiveScan2D, VisualMambaBlock
 
 
 def bench():

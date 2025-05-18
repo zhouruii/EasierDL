@@ -9,9 +9,8 @@ import torch
 import torch.nn as nn
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
-from uchiha.utils import cfg_decomposition, build_norm, build_act
-from .common import MLP
-from ..builder import BASEMODULE, build_downsample
+from .common import MLP, build_act, cfg_decomposition, build_norm
+from ..builder import MODULE, build_module
 
 
 def window_partition(x, window_size):
@@ -277,7 +276,7 @@ class SwinTransformerBlock(nn.Module):
         return flops
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class SwinTransformerLayer(nn.Module):
     """ A basic Swin Transformer layer for one stage.
 
@@ -307,7 +306,7 @@ class SwinTransformerLayer(nn.Module):
         self.input_resolution = to_2tuple(input_resolution)
         self.depth = depth
 
-        self.downsample = build_downsample(downsample)
+        self.downsample = build_module(downsample)
 
         if isinstance(norm_layer, str):
             norm_layer = build_norm(norm_layer)
@@ -349,7 +348,7 @@ class SwinTransformerLayer(nn.Module):
         return flops
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class SwinTransformerLayers(nn.Module):
     """ Collection of Channel-Transformer-Layers
 

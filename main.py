@@ -5,14 +5,12 @@ from os.path import join
 from tensorboardX import SummaryWriter
 from torch import nn
 
-from uchiha.apis import train_by_epoch, validate, set_random_seed
+from uchiha.apis import train_by_epoch, validate, set_random_seed, analyze_model_structure
+from uchiha.cores.builder import build_criterion, build_optimizer, build_scheduler
 from uchiha.datasets.builder import build_dataset, build_dataloader
 from uchiha.models.builder import build_model
-from uchiha.cores.builder import build_criterion, build_optimizer, build_scheduler
-
-from uchiha.utils import count_parameters, load_config, get_root_logger, print_log, save_checkpoint, \
-    load_checkpoint, auto_resume_helper
-from uchiha.utils.logger import log_env_info, get_env_info
+from uchiha.utils import load_config, get_root_logger, print_log, save_checkpoint, \
+    load_checkpoint, auto_resume_helper, log_env_info, get_env_info
 
 
 def parse_args():
@@ -20,6 +18,7 @@ def parse_args():
     args_parser.add_argument('--seed', type=int, default=49)
     args_parser.add_argument('--config', '-c', type=str, default='configs/RainHSI.yaml')
     args_parser.add_argument('--gpu_ids', nargs='+', default=['0'])
+    args_parser.add_argument('--analyze_params', '-ap', type=int, default=0)
     args_parser.add_argument('--multi-process', '-mp', action='store_true')
     args_parser.add_argument('--no_validate', '-n', action='store_true')
 
@@ -45,11 +44,11 @@ def main():
     logger.info(f'set random seed= {args.seed}')
 
     # dataset & dataloader
-    trainset = build_dataset(cfg.data.train.dataset.to_dict())
-    trainloader = build_dataloader(trainset, cfg.data.train.dataloader.to_dict())
+    trainset = build_dataset(cfg.data.train.dataset.to_dict(), phase='train')
+    trainloader = build_dataloader(trainset, cfg.data.train.dataloader.to_dict(), phase='train')
 
-    valset = build_dataset(cfg.data.val.dataset.to_dict())
-    valloader = build_dataloader(valset, cfg.data.val.dataloader.to_dict())
+    valset = build_dataset(cfg.data.val.dataset.to_dict(), phase='val')
+    valloader = build_dataloader(valset, cfg.data.val.dataloader.to_dict(), phase='val')
 
     # model
     model = build_model(cfg.model.to_dict())
@@ -59,8 +58,7 @@ def main():
         logger.info(f'Use GPUs: {device_ids}')
     else:
         model = model.cuda()
-    total_params = count_parameters(model)
-    logger.info(f'total_params: {total_params}')
+    analyze_model_structure(model, logger, max_depth=args.analyze_params)
 
     # loss function
     criterion = build_criterion(cfg.loss.to_dict())

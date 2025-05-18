@@ -4,10 +4,10 @@ import torch
 from pytorch_wavelets import DWT1DInverse, DWTInverse
 from torch import nn, Tensor
 
-from ..builder import POSTPROCESSOR
+from uchiha.models.builder import MODULE
 
 
-@POSTPROCESSOR.register_module()
+@MODULE.register_module()
 class IDWT2d(nn.Module):
     """ 2D Inverse Discrete Wavelet Transform
 
@@ -28,7 +28,7 @@ class IDWT2d(nn.Module):
         return torch.cat((LL, LH, HL, HH), dim=1)
 
 
-@POSTPROCESSOR.register_module()
+@MODULE.register_module()
 class IDWT1d(nn.Module):
     """ 1D Inverse Discrete Wavelet Transform
 
@@ -55,7 +55,7 @@ class IDWT1d(nn.Module):
         return self.fc(pooling)
 
 
-@POSTPROCESSOR.register_module()
+@MODULE.register_module()
 class WeightedSum(nn.Module):
     """ assign weights to multiple inputs and accumulate
 

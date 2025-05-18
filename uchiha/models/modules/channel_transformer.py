@@ -3,9 +3,8 @@ import torch.nn.functional as F
 from timm.layers import DropPath, to_2tuple
 from torch import nn
 
-from .common import MLP
-from ..builder import BASEMODULE, build_downsample
-from ...utils.model import build_norm, build_act, cfg_decomposition
+from .common import MLP, build_norm, build_act, cfg_decomposition
+from ..builder import MODULE, build_module
 
 
 class ChannelAttention(nn.Module):
@@ -273,7 +272,7 @@ class ChannelTransformerBlockV2(nn.Module):
         return x.permute(0, 2, 1)
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class ChannelTransformerLayer(nn.Module):
     """ Stacked Channel-Transformer-Block
 
@@ -311,7 +310,7 @@ class ChannelTransformerLayer(nn.Module):
         self.input_resolution = to_2tuple(input_resolution) if isinstance(input_resolution, int) else input_resolution
         self.depth = depth
 
-        self.downsample = build_downsample(downsample)
+        self.downsample = build_module(downsample)
 
         if isinstance(norm_layer, str):
             norm_layer = build_norm(norm_layer)
@@ -340,7 +339,7 @@ class ChannelTransformerLayer(nn.Module):
         return out
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class ChannelTransformerLayerV2(nn.Module):
     """ Stacked Channel-Transformer-Block
 
@@ -380,7 +379,7 @@ class ChannelTransformerLayerV2(nn.Module):
         self.input_resolution = to_2tuple(input_resolution) if isinstance(input_resolution, int) else input_resolution
         self.depth = depth
 
-        self.downsample = build_downsample(downsample)
+        self.downsample = build_module(downsample)
 
         if isinstance(norm_layer, str):
             norm_layer = build_norm(norm_layer)
@@ -409,7 +408,7 @@ class ChannelTransformerLayerV2(nn.Module):
         return out
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class ChannelTransformerLayers(nn.Module):
     """ Collection of Channel-Transformer-Layers
 
@@ -484,7 +483,7 @@ class ChannelTransformerLayers(nn.Module):
             self.layers.append(layer)
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class ChannelTransformerLayerList(nn.ModuleList):
     """ Collection of Channel-Transformer-Layers
 
@@ -563,7 +562,7 @@ class ChannelTransformerLayerList(nn.ModuleList):
         self.extend(layers)
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class UnetChannelTransformerLayers(nn.Module):
     """ Collection of Channel-Transformer-Layers in the shape of unet
 
@@ -641,7 +640,7 @@ class UnetChannelTransformerLayers(nn.Module):
             self.layers.append(layer)
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class UnetChannelTransformerLayerList(nn.Module):
     """ Collection of Channel-Transformer-Layers in the shape of unet
 

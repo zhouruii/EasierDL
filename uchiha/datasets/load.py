@@ -1,4 +1,3 @@
-# TODO 代码优化
 import re
 from os import listdir
 from os.path import join, isdir
@@ -19,6 +18,14 @@ def read_pts(data_root, is1d=False):
 
 
 def read_txt(path):
+    def extract_numbers(input_string):
+        # 去除多余的制表符和空格
+        cleaned_string = re.sub(r'[\t\s]+', ' ', input_string.strip())
+        # 提取所有数字（包括整数和浮点数）
+        numbers = re.findall(r'-?\d+(?:\.\d+)?', cleaned_string)
+        # 转换为浮点数列表
+        number_list = [float(num) for num in numbers]
+        return number_list
     data = []
     with open(path, 'r', encoding='utf-8') as f:
         for line in f:
@@ -39,13 +46,3 @@ def read_npy(path):
         data = np.load(path)
 
     return data
-
-
-def extract_numbers(input_string):
-    # 去除多余的制表符和空格
-    cleaned_string = re.sub(r'[\t\s]+', ' ', input_string.strip())
-    # 提取所有数字（包括整数和浮点数）
-    numbers = re.findall(r'-?\d+(?:\.\d+)?', cleaned_string)
-    # 转换为浮点数列表
-    number_list = [float(num) for num in numbers]
-    return number_list

@@ -1,2 +1,4 @@
 from .compose import Compose
-from .transforms import Pad, Normalize, EasyToTensor
+from .common import EasyToTensor
+from .normalize import Normalize
+from .pad import Pad

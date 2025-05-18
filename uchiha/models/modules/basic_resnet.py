@@ -4,12 +4,12 @@ from typing import Optional, Callable
 
 from torch import nn, Tensor
 
-from ..builder import BASEMODULE
-from ...utils.model import conv3x3, conv1x1
+from ..builder import MODULE
+from .common import conv3x3, conv1x1
 
 
 # TODO 待整合
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class BasicResidualBlock(nn.Module):
     """ basic residual block (RB)
 
@@ -73,7 +73,7 @@ class BasicResidualBlock(nn.Module):
         return out
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class ResidualBottleneck(nn.Module):
     """ basic residual bottleneck
 

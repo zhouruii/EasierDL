@@ -1,18 +1,17 @@
 from torch import nn
-from torch.nn import ModuleList
 
-from uchiha.models.builder import (build_basemodule, build_embedding, build_preprocessor, build_head, MODEL,
-                                   build_downsample, build_upsample, build_postprocessor)
+from uchiha.models.builder import build_module, MODEL
+
 
 build = {
-    'embedding': build_embedding,
-    'basemodule': build_basemodule,
-    'basemodules': build_basemodule,
-    'downsample': build_downsample,
-    'downsamples': build_downsample,
-    'upsample': build_upsample,
-    'upsamples': build_upsample,
-    'head': build_head,
+    'embedding': build_module,
+    'basemodule': build_module,
+    'modules': build_module,
+    'downsample': build_module,
+    'downsamples': build_module,
+    'upsample': build_module,
+    'upsamples': build_module,
+    'head': build_module,
 }
 
 
@@ -51,11 +50,11 @@ class Stack(nn.Module):
                  postprocessor=None):
 
         super().__init__()
-        self.preprocessor: nn.Module = build_preprocessor(preprocessor)
+        self.preprocessor: nn.Module = build_module(preprocessor)
 
         self.stacks: nn.ModuleList = _build_stacks(stacks)
 
-        self.postprocessor: nn.Module = build_postprocessor(postprocessor)
+        self.postprocessor: nn.Module = build_module(postprocessor)
 
     def forward(self, x):
         # preprocess

@@ -2,10 +2,10 @@ import math
 
 from torch import nn
 
-from ..builder import UPSAMPLE
+from uchiha.models.builder import MODULE
 
 
-@UPSAMPLE.register_module()
+@MODULE.register_module()
 class PixelShuffle(nn.Module):
     """ `PixelShuffle` to image and sequence
 
@@ -28,3 +28,16 @@ class PixelShuffle(nn.Module):
         upsample = self.upsample(x.view(B, C, H, W))
         fc = self.fc(upsample.flatten(2).transpose(1, 2))
         return fc
+
+
+@MODULE.register_module()
+class PixelShuffleUpsample(nn.Module):
+    def __init__(self, in_channels=128, factor=2):
+        super(PixelShuffleUpsample, self).__init__()
+
+        self.body = nn.Sequential(
+            nn.Conv2d(in_channels, in_channels * factor, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.PixelShuffle(factor))
+
+    def forward(self, x):
+        return self.body(x)

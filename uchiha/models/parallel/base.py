@@ -1,8 +1,6 @@
 from torch import nn
 
-from ..builder import (build_preprocessor, build_embedding, build_basemodule,
-                       build_downsample, build_head, MODEL, build_model, build_postprocessor)
-from ...utils.misc import strings_to_list
+from ..builder import (MODEL, build_model, build_module)
 
 
 @MODEL.register_module()
@@ -26,13 +24,13 @@ class Parallel(nn.Module):
                  postprocessor=None):
 
         super().__init__()
-        self.preprocessor: nn.Module = build_preprocessor(preprocessor)
+        self.preprocessor: nn.Module = build_module(preprocessor)
 
         self.workflows = nn.ModuleList()
         for workflow in parallels:
             self.workflows.append(build_model(workflow))
 
-        self.postprocessor: nn.Module = build_postprocessor(postprocessor)
+        self.postprocessor: nn.Module = build_module(postprocessor)
 
     def forward(self, x):
         if self.preprocessor:
@@ -52,4 +50,3 @@ class Parallel(nn.Module):
             out = y_parallel
 
         return out
-

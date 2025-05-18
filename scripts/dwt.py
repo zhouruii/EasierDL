@@ -127,6 +127,6 @@ if __name__ == '__main__':
         lq_path='/home/disk2/ZR/datasets/AVIRIS/512/rain/storm/f130804t01p00r04rdn_e_23.npy',
         gt_path='/home/disk2/ZR/datasets/AVIRIS/512/gt/f130804t01p00r04rdn_e_23.npy'
     )
-    # transform.transform()
+    transform.transform()
     # transform.visualize()
     plot_smooth_spectral_curves(transform.gt_data.squeeze().numpy(), transform.lq_data.squeeze().numpy(), 56, 56)

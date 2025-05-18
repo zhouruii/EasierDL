@@ -4,7 +4,7 @@ from torch import nn
 
 from ..builder import MODEL
 from .base import Stack
-from ...utils import build_norm
+from ..modules.common import build_norm
 from ...utils.misc import strings_to_list
 
 

@@ -1,0 +1,23 @@
+SelfCrossAttentionLayer:
+  type: SelfCrossAttentionLayer
+  in_channels: 128
+  num_heads: 8
+  num_blocks: 4
+  freq_cfg:
+    type: DWT
+    in_channels: 128
+    J: 1
+    wave: haar
+    mode: reflect
+  prior_cfg: # forward for prior, can be None
+    type: GRCPBranch
+    in_channels: 6
+    num_heads: 8
+    strategy: dilation
+  sparse_strategy: MultiscaleTopK
+  ffn_cfg:
+    type: LeFF
+    in_channels: 128
+    ratio: 4
+    use_eca: true
+  ln_bias: true

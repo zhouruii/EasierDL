@@ -2,8 +2,7 @@ import torch
 
 from torch import nn
 
-from ..builder import build_preprocessor, build_embedding, build_basemodule, build_downsample, build_upsample, \
-    build_bottleneck, build_head, build_fusion, MODEL
+from ..builder import build_module, MODEL
 from ...utils.misc import strings_to_list
 
 
@@ -20,10 +19,10 @@ class SpatialUNet(nn.Module):
                  fusion=None,
                  head=None, ):
         super().__init__()
-        self.preprocessor = build_preprocessor(preprocessor)
-        self.embedding = build_embedding(embedding)
+        self.preprocessor = build_module(preprocessor)
+        self.embedding = build_module(embedding)
 
-        self.basemodule = build_basemodule(strings_to_list(basemodule))
+        self.basemodule = build_module(strings_to_list(basemodule))
         if hasattr(self.basemodule, 'layers'):
             self.layers = self.basemodule.layers
         else:
@@ -32,15 +31,15 @@ class SpatialUNet(nn.Module):
         self.encoder = self.layers[:self.num_layers]
         self.decoder = self.layers[self.num_layers:]
 
-        self.downsample = build_downsample(downsample)
-        self.upsample = build_upsample(upsample)
-        self.bottleneck = build_bottleneck(bottleneck)
+        self.downsample = build_module(downsample)
+        self.upsample = build_module(upsample)
+        self.bottleneck = build_module(bottleneck)
 
-        self.fusion = build_fusion(strings_to_list(fusion))
+        self.fusion = build_module(strings_to_list(fusion))
         if hasattr(self.fusion, 'fusions'):
             self.fusion = self.fusion.fusions
 
-        self.head = build_head(head)
+        self.head = build_module(head)
 
     def forward_features(self, x):
         # preprocess

@@ -4,8 +4,8 @@ import torch.nn as nn
 import math
 import torch.utils.model_zoo as model_zoo
 
-from .basic_resnet import conv3x3
-from ..builder import BASEMODULE, build_downsample
+from .common import conv3x3
+from ..builder import MODULE, build_module
 
 model_urls = {
     'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
@@ -62,7 +62,7 @@ class SAM(nn.Module):
         return self.sigmoid(x)
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class BasicCAM(nn.Module):
     """ basic Channel Attention Module(CAM)
 
@@ -70,13 +70,12 @@ class BasicCAM(nn.Module):
         in_channel (int): number of input channels
         out_channel (int): number of output channels
         stride (int): the stride for the convolution operation. Default: 1
-        downsample (nn.Module): operations performed when residual is applied. Default: None
+        downsample (dict): operations performed when residual is applied. Default: None
     """
 
     expansion = 1
 
     def __init__(self, in_channel, out_channel, stride=1, downsample=None):
-
         super(BasicCAM, self).__init__()
         self.conv1 = conv3x3(in_channel, out_channel, stride)
         self.bn1 = nn.BatchNorm2d(out_channel)
@@ -86,7 +85,7 @@ class BasicCAM(nn.Module):
 
         self.ca = CAM(out_channel)
 
-        self.downsample = build_downsample(downsample)
+        self.downsample_opt = build_module(downsample)
         self.stride = stride
 
     def forward(self, x):
@@ -101,8 +100,8 @@ class BasicCAM(nn.Module):
 
         out = self.ca(out) * out
 
-        if self.downsample is not None:
-            residual = self.downsample(x)
+        if self.downsample_opt is not None:
+            residual = self.downsample_opt(x)
 
         out += residual
         out = self.relu(out)
@@ -110,7 +109,7 @@ class BasicCAM(nn.Module):
         return out
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class BasicSAM(nn.Module):
     """ basic Spatial Attention Module(SAM)
 
@@ -118,13 +117,12 @@ class BasicSAM(nn.Module):
         in_channel (int): number of input channels
         out_channel (int): number of output channels
         stride (int): the stride for the convolution operation. Default: 1
-        downsample (nn.Module): operations performed when residual is applied. Default: None
+        downsample (dict): operations performed when residual is applied. Default: None
     """
 
     expansion = 1
 
     def __init__(self, in_channel, out_channel, stride=1, downsample=None):
-
         super(BasicSAM, self).__init__()
         self.conv1 = conv3x3(in_channel, out_channel, stride)
         self.bn1 = nn.BatchNorm2d(out_channel)
@@ -134,7 +132,7 @@ class BasicSAM(nn.Module):
 
         self.sa = SAM()
 
-        self.downsample = build_downsample(downsample)
+        self.downsample_opt = build_module(downsample)
         self.stride = stride
 
     def forward(self, x):
@@ -149,8 +147,8 @@ class BasicSAM(nn.Module):
 
         out = self.sa(out) * out
 
-        if self.downsample is not None:
-            residual = self.downsample(x)
+        if self.downsample_opt is not None:
+            residual = self.downsample_opt(x)
 
         out += residual
         out = self.relu(out)
@@ -297,8 +295,7 @@ class ResNet(nn.Module):
                 nn.BatchNorm2d(planes * block.expansion),
             )
 
-        layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample))
+        layers = [block(self.inplanes, planes, stride, downsample)]
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             layers.append(block(self.inplanes, planes))
@@ -396,3 +393,88 @@ def resnet152_cbam(pretrained=False, **kwargs):
         now_state_dict.update(pretrained_state_dict)
         model.load_state_dict(now_state_dict)
     return model
+
+
+class GlobalMinPool2d(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x):
+        noise = x.view(x.size(0), x.size(1), -1).min(dim=-1, keepdim=True)[0]
+        return noise.unsqueeze(-1)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}()"
+
+
+@MODULE.register_module()
+class BCAM(nn.Module):
+    def __init__(self, in_channels, ratio=0.5, min_proj=False):
+        super(BCAM, self).__init__()
+        self.first_dwconv = conv3x3(in_channels, in_channels, groups=in_channels)
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.max_pool = nn.AdaptiveMaxPool2d(1)
+        self.min_pool = GlobalMinPool2d()
+
+        self.proj = nn.Sequential(nn.Conv2d(in_channels, int(in_channels * ratio), 1, bias=False),
+                                  nn.ReLU(),
+                                  nn.Conv2d(int(in_channels * ratio), in_channels, 1, bias=False))
+        if min_proj:
+            self.proj_for_min = nn.Conv2d(in_channels, in_channels, 1, groups=in_channels)
+        else:
+            self.proj_for_min = None
+
+        self.act = nn.ReLU()
+
+    def forward(self, x):
+        # x.shape (B, C, H, W)
+        x = self.first_dwconv(x)
+
+        avg_out = self.proj(self.avg_pool(x))
+        max_out = self.proj(self.max_pool(x))
+        out = avg_out + max_out
+
+        if self.proj_for_min:
+            min_out = self.proj_for_min(self.min_pool(x))
+        else:
+            min_out = self.min_pool(x)
+
+        out -= min_out
+        att = self.act(out)
+
+        return att * x
+
+
+class BasicECA1d(nn.Module):
+    """Constructs an ECA module.
+    Args:
+        channel: Number of channels of the input feature map
+        k_size: Adaptive selection of kernel size
+    """
+
+    def __init__(self, channel, k_size=3):
+        super(BasicECA1d, self).__init__()
+        self.avg_pool = nn.AdaptiveAvgPool1d(1)
+        self.conv = nn.Conv1d(1, 1, kernel_size=k_size, padding=(k_size - 1) // 2, bias=False)
+        self.sigmoid = nn.Sigmoid()
+        self.channel = channel
+        self.k_size = k_size
+
+    def forward(self, x):
+        # b hw c
+        # feature descriptor on the global spatial information
+        y = self.avg_pool(x.transpose(-1, -2))
+
+        # Two different branches of ECA module
+        y = self.conv(y.transpose(-1, -2))
+
+        # Multi-scale information fusion
+        y = self.sigmoid(y)
+
+        return x * y.expand_as(x)
+
+    def flops(self):
+        flops = 0
+        flops += self.channel * self.channel * self.k_size
+
+        return flops

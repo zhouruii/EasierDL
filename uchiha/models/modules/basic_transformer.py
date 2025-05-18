@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from ..builder import BASEMODULE
+from ..builder import MODULE
 
 
 def _init_vit_weights(m):
@@ -113,7 +113,7 @@ class Block(nn.Module):
         return x
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class SimpleVisionTransformerLayer(nn.Module):
     """ Vision Transformer (the simplest implementation)
 

@@ -4,10 +4,10 @@ import torch
 from timm.layers import to_2tuple
 from torch import nn
 
-from ..builder import DOWNSAMPLE
+from uchiha.models.builder import MODULE
 
 
-@DOWNSAMPLE.register_module()
+@MODULE.register_module()
 class PixelUnShuffle(nn.Module):
     """ `PixelUnShuffle` to image and sequence
 
@@ -33,7 +33,7 @@ class PixelUnShuffle(nn.Module):
         return self.norm(fc)
 
 
-@DOWNSAMPLE.register_module()
+@MODULE.register_module()
 class DownsampleConv(nn.Module):
     """ `Conv` with stride > 1 to downsample image
 
@@ -67,7 +67,7 @@ class DownsampleConv(nn.Module):
             return self.activate(self.downsample(x))
 
 
-@DOWNSAMPLE.register_module()
+@MODULE.register_module()
 class PatchMerging(nn.Module):
     r""" Patch Merging Layer.
 
@@ -114,3 +114,15 @@ class PatchMerging(nn.Module):
         if self.downsample is not None:
             flops += self.downsample.flops()
         return flops
+
+
+@MODULE.register_module()
+class PixelShuffleDownsample(nn.Module):
+    def __init__(self, in_channels=128, factor=2):
+        super(PixelShuffleDownsample, self).__init__()
+
+        self.body = nn.Sequential(nn.Conv2d(in_channels, in_channels // factor, kernel_size=3, stride=1, padding=1, bias=False),
+                                  nn.PixelUnshuffle(factor))
+
+    def forward(self, x):
+        return self.body(x)

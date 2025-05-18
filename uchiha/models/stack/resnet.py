@@ -8,9 +8,10 @@ import torch
 from torch import nn, Tensor
 from torch.hub import load_state_dict_from_url
 
-from ..basemodules.basic_resnet import BasicResidualBlock, ResidualBottleneck, conv1x1
+from ..modules.basic_resnet import BasicResidualBlock, ResidualBottleneck
+from ..modules.common import conv1x1
 
-from ..builder import build_basemodule, MODEL
+from ..builder import build_module, MODEL
 
 model_urls = {
     'resnet18': 'https://download.pytorch.org/models/resnet18-f37072fd.pth',

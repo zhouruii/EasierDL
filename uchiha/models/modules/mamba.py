@@ -21,10 +21,10 @@ try:
 except ImportError:
     causal_conv1d_fn = None
 
-from ..builder import BASEMODULE
+from ..builder import MODULE
 
-BASEMODULE.register_module(module=Mamba2, name='Mamba2Block')
-BASEMODULE.register_module(module=Mamba, name='MambaBlock')
+MODULE.register_module(module=Mamba2, name='Mamba2Block')
+MODULE.register_module(module=Mamba, name='MambaBlock')
 
 
 # TODO 将VMamba中其他简单的初始化方法集成进来
@@ -167,7 +167,7 @@ class InitMambaParams:
             return A_logs, Ds, dt_projections
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class ClassicMambaBlock(nn.Module):
     def __init__(self,
                  input_dim=256,
@@ -305,7 +305,7 @@ class ClassicMambaBlock(nn.Module):
         return out
 
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class ChannelMambaBlock(nn.Module):
     def __init__(self,
                  seq_len=16,
@@ -451,7 +451,7 @@ class ChannelMambaBlock(nn.Module):
 
         return out.transpose(1, 2)
 
-@BASEMODULE.register_module()
+@MODULE.register_module()
 class ChannelMambaLayer(nn.Module):
     def __init__(self,
                  depth=2,

@@ -3,17 +3,19 @@ data:
   train:
     dataset:
       type: MultiLevelRainHSIDataset
-      data_root: /home/disk2/ZR/datasets/AVIRIS/512/train
+      root_dir: /home/disk2/ZR/datasets/AVIRIS/512
+      split_file: /home/disk2/ZR/datasets/AVIRIS/512/train.txt
       pipelines:
         - type: EasyToTensor
           mode: CHW
     dataloader:
-      batch_size: 2
+      batch_size: 1
       shuffle: true
   val:
     dataset:
       type: MultiLevelRainHSIDataset
-      data_root: /home/disk2/ZR/datasets/AVIRIS/512/val
+      root_dir: /home/disk2/ZR/datasets/AVIRIS/512
+      split_file: /home/disk2/ZR/datasets/AVIRIS/512/val.txt
       pipelines:
         - type: EasyToTensor
           mode: CHW
@@ -21,74 +23,56 @@ data:
       batch_size: 2
       shuffle: false
 
+num_bands: &num_bands 224       # 波段数
+embed_dim: &embed_dim 16       # 传播维度
+
 model:
-  type: Parallel
-  preprocessor:
-    type: DWT1d
-    scales: 1
-    wave: haar
-    padding: zero
-  parallels:
-    - type: ChannelTransformer
-      embedding:
-        type: PatchEmbedding
-        img_size: 4
-        patch_size: 2
-        in_channel: 165
-        embed_dim: 256
-        norm_layer: nn.LayerNorm
-      basemodule:
-        type: ChannelTransformerLayer
-        dim: 256
-        input_resolution: 2
-        depth: 2
-        num_heads: 16
-        mlp_ratio: 2.0
-        qkv_bias: true
-        qk_scale: null
-        drop_rate: 0.2 # drop_rate
-        attn_drop: 0.0
-        drop_path: 0.1
-      head:
-        type: FCHead
-        embed_dim: 256
-        pred_num: 1
-    - type: ChannelTransformer
-      embedding:
-        type: PatchEmbedding
-        img_size: 4
-        patch_size: 2
-        in_channel: 165
-        embed_dim: 256
-        norm_layer: nn.LayerNorm
-      basemodule:
-        type: ChannelTransformerLayer
-        dim: 256
-        input_resolution: 2
-        depth: 1
-        num_heads: 16
-        mlp_ratio: 2.0
-        qkv_bias: true
-        qk_scale: null
-        drop_rate: 0.2 # drop_rate
-        attn_drop: 0.0
-        drop_path: 0.1
-      head:
-        type: FCHead
-        embed_dim: 256
-        pred_num: 1
-  postprocessor:
-    type: WeightedSum
-    weights:
-      - 0.8
-      - 0.2
+  type: HDRFormer
+  in_channels: *num_bands
+  out_channels: *num_bands
+  prior_extractor:
+    type: GroupRCP
+    split_bands: [50, 100, 150]
+  band_selector:
+    type: BCAM
+    in_channels: *num_bands  # !!int *base * 2
+    ratio: 0.5
+    min_proj: false
+  embedding_cfg:
+    type: OverlapPatchEmbedding
+    in_channels: *num_bands
+    embed_dim: *embed_dim
+    bias: false
+  fusion_cfg:
+    type: CatPWConvFusion
+  sampling_cfg:
+    downsample: PixelShuffleDownsample
+    upsample: PixelShuffleUpsample
+    factor: 2
+  transformer_cfg:
+    type: SelfCrossAttentionLayer
+    num_heads: [2, 2, 2, 2]
+    num_blocks: [2, 2, 2, 2]
+    freq_cfg:
+      type: DWT
+      J: 1
+      wave: haar
+      mode: reflect
+    prior_cfg:   # forward for prior
+      type: GRCPBranch
+      strategy: dilation
+    sparse_strategy: MultiscaleTopK
+    ffn_cfg:
+      type: LeFF
+      ratio: 4
+      use_eca: true
+    ln_bias: true
+
+
+
+
 
 loss:
-#  type: MSELoss
-#  type: MultiL1Loss
-#  weights:
-#    - 0.8
-#    - 0.2
   type: L1Loss
 
 optimizer:
