@@ -1,30 +1,41 @@
-work_dir: experiment/AVIRIS/firstTry
+work_dir: experiment/hdr_former/AVIRIS/p128
 data:
   train:
     dataset:
       type: MultiLevelRainHSIDataset
-      root_dir: /home/disk2/ZR/datasets/AVIRIS/512
-      split_file: /home/disk2/ZR/datasets/AVIRIS/512/train.txt
+      root_dir: /home/disk2/ZR/datasets/AVIRIS/128/npy
+      split_file: /home/disk2/ZR/datasets/AVIRIS/128/npy/train.txt
       pipelines:
+        - type: RandomFlip
+          directions: [original, horizontal, vertical, diagonal]
+          probs: [0.25, 0.25, 0.25, 0.25]
+        - type: RandomRotation
+          angles: [0, 90, 180, 270]
+          prob: 0.5
         - type: EasyToTensor
           mode: CHW
     dataloader:
-      batch_size: 1
+      batch_size: 4
       shuffle: true
+      num_workers: 4
+      pin_memory: true
+      persistent_workers: false
+      prefetch_factor: 4
+#      drop_last: true
   val:
     dataset:
       type: MultiLevelRainHSIDataset
-      root_dir: /home/disk2/ZR/datasets/AVIRIS/512
-      split_file: /home/disk2/ZR/datasets/AVIRIS/512/val.txt
+      root_dir: /home/disk2/ZR/datasets/AVIRIS/128/npy
+      split_file: /home/disk2/ZR/datasets/AVIRIS/128/npy/val.txt
       pipelines:
         - type: EasyToTensor
           mode: CHW
     dataloader:
-      batch_size: 2
+      batch_size: 8
       shuffle: false
 
 num_bands: &num_bands 224       # 波段数
-embed_dim: &embed_dim 16       # 传播维度
+embed_dim: &embed_dim 64      # 传播维度
 
 model:
   type: HDRFormer
@@ -35,7 +46,7 @@ model:
     split_bands: [50, 100, 150]
   band_selector:
     type: BCAM
-    in_channels: *num_bands  # !!int *base * 2
+    in_channels: *num_bands
     ratio: 0.5
     min_proj: false
   embedding_cfg:
@@ -51,8 +62,8 @@ model:
     factor: 2
   transformer_cfg:
     type: SelfCrossAttentionLayer
-    num_heads: [2, 2, 2, 2]
-    num_blocks: [2, 2, 2, 2]
+    num_heads: [2, 4, 4, 8]
+    num_blocks: [4, 6, 6, 8]
     freq_cfg:
       type: DWT
       J: 1
@@ -67,36 +78,49 @@ model:
       ratio: 4
       use_eca: true
     ln_bias: true
-
-
-
+  reconstruction:
+    type: FreqDecouplingReconstruction
+    d: 1
+    in_channels: *num_bands
+    filter_kernel_size: 3
+    filter_groups: 8
+    norm: GN
+#  reconstruction:
+#    type: HDRReconstruction
+#    d: 1
+#    in_channels: *num_bands
 
 
 loss:
-  type: L1Loss
+  type: AdaptiveSpatialSpectralLossV1
+  eps: 1.0e-6
+#  type: AdaptiveSpatialSpectralLossV2
+#  eps: 1.0e-6
+#  type: SpatialSpectralFreqLoss
+#  version: v1
+#  eps: 1.0e-6
+#  wave: haar
+#  J: 1
+#  mode: reflect
 
 optimizer:
   type: AdamW
-  lr: 1.0e-4
+  lr: 5.0e-4
   weight_decay: 0.01
-#  type: Adam
-#  lr: 0.001
+
 
 scheduler:
-  type: StepLR
-  step_size: 20
-  gamma: 0.5
-#  type: CosineAnnealingLR
-#  T_max: 100
-#  eta_min: 1.0e-6
+  type: CosineAnnealingLR
+  T_max: 100
+  eta_min: 1.0e-6
 
 train:
   epoch: 100
-  print_freq: 5
+  print_freq: 2
 
 val:
   val_freq: 1
-  metric: R2
+  metric: psnr
 
 checkpoint:
   save_freq: 100

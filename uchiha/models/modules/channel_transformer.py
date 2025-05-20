@@ -46,7 +46,6 @@ class ChannelAttention(nn.Module):
         Args:
             x (Tensor):: input features with shape of (num_windows*B, N, C)
         """
-        # TODO v2版本 qk使用空间域的全连接映射
         B_, N, C = x.shape
 
         qkv = self.qkv(x)

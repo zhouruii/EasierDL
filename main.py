@@ -11,12 +11,13 @@ from uchiha.datasets.builder import build_dataset, build_dataloader
 from uchiha.models.builder import build_model
 from uchiha.utils import load_config, get_root_logger, print_log, save_checkpoint, \
     load_checkpoint, auto_resume_helper, log_env_info, get_env_info
+from uchiha.utils.logger import ETACalculator
 
 
 def parse_args():
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument('--seed', type=int, default=49)
-    args_parser.add_argument('--config', '-c', type=str, default='configs/RainHSI.yaml')
+    args_parser.add_argument('--config', '-c', type=str, default='configs/hdr_former/v0.yaml')
     args_parser.add_argument('--gpu_ids', nargs='+', default=['0'])
     args_parser.add_argument('--analyze_params', '-ap', type=int, default=0)
     args_parser.add_argument('--multi-process', '-mp', action='store_true')
@@ -92,16 +93,18 @@ def main():
     metric = cfg.val.metric
     save_freq = cfg.checkpoint.save_freq
     total_epoch = cfg.train.epoch
+    eta_calc = ETACalculator(total_steps=total_epoch * len(trainloader))
     logger.info('start training...')
 
     for epoch in range(start_epoch, total_epoch):
         # train
         writer, model, optimizer, scheduler = (
-            train_by_epoch(epoch, print_freq, trainloader, model, optimizer, scheduler, criterion, writer))
+            train_by_epoch(epoch, total_epoch, print_freq, trainloader, model, optimizer, scheduler, criterion, writer,
+                           eta_calc))
 
         # val
         if (epoch + 1) % val_freq == 0:
-            print_log(f'epoch:{epoch + 1}/{total_epoch}, validate...', logger)
+            print_log(f'epoch:[{epoch + 1}/{total_epoch}]\tstart validating...', logger)
             _ = validate(epoch, valloader, model, writer, metric)
 
         # save checkpoint

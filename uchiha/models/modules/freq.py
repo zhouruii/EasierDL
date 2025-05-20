@@ -1,10 +1,11 @@
 import torch
 from torch import nn
+import torch.nn.functional as F
 from einops import rearrange
-
 from pytorch_wavelets import DWTForward, DWTInverse, DTCWTForward, DTCWTInverse
 
-from uchiha.models.modules.common import conv3x3
+from .common import conv3x3
+from ..builder import MODULE
 
 
 class WaveletProj(nn.Module):
@@ -91,7 +92,7 @@ class FreqProj(nn.Module):
     FT_TYPE = ['DWT', 'DTCWT']
 
     def __init__(self,
-                 cfg=None,):
+                 cfg=None, ):
         super().__init__()
         freq_cfg = cfg.copy()
         freq = freq_cfg.pop('type')
@@ -138,3 +139,157 @@ class FreqQKVGenerator(nn.Module):
         v = self.dw_conv_v(v)
 
         return q, k, v
+
+
+@MODULE.register_module()
+class DynamicDecoupler(nn.Module):
+    """
+    refer to SFNet (ICLR 2023)
+    """
+
+    def __init__(self, in_channels, kernel_size=3, group=8, norm='BN'):
+        super(DynamicDecoupler, self).__init__()
+        assert in_channels % group == 0, \
+            f'in_channels:{in_channels} must be divided by groups: {group}'
+        self.in_channels = in_channels
+        self.kernel_size = kernel_size
+        self.group = group
+
+        num_filter_params = group * kernel_size ** 2
+        self.conv = nn.Conv2d(in_channels, num_filter_params, kernel_size=1, stride=1, bias=False)
+
+        if norm == 'BN':
+            self.norm = nn.BatchNorm2d(num_filter_params)
+        elif norm == 'GN':
+            self.norm = nn.GroupNorm(group, num_filter_params)
+        else:
+            raise NotImplementedError(f'norm type: {norm} not supported yet !')
+        self.act = nn.Softmax(dim=-2)
+        nn.init.kaiming_normal_(self.conv.weight, mode='fan_out', nonlinearity='relu')
+        self.pad = nn.ReflectionPad2d(kernel_size // 2)
+        self.ap_1 = nn.AdaptiveAvgPool2d((1, 1))
+
+    def forward(self, x):
+        identity_input = x
+        low_filter1 = self.ap_1(x)
+        low_filter = self.conv(low_filter1)
+        low_filter = self.norm(low_filter)
+
+        n, c, h, w = x.shape
+        # prepare conv
+        x = F.unfold(self.pad(x), kernel_size=self.kernel_size).reshape(n, self.group, c // self.group,
+                                                                        self.kernel_size ** 2, h * w)
+
+        n, c1, p, q = low_filter.shape
+        low_filter = low_filter.reshape(n, c1 // self.kernel_size ** 2, self.kernel_size ** 2, p * q).unsqueeze(2)
+        low_filter = self.act(low_filter)
+
+        # filter conv
+        low_part = torch.sum(x * low_filter, dim=3).reshape(n, c, h, w)
+
+        # inverse
+        out_high = identity_input - low_part
+        return low_part, out_high
+
+
+@MODULE.register_module()
+class GatedDynamicDecoupler(nn.Module):
+    """
+    refer to FPro (ECCV 2024)
+    """
+
+    def __init__(self, in_channels, kernel_size=3, group=8, norm='BN'):
+        super(GatedDynamicDecoupler, self).__init__()
+        self.kernel_size = kernel_size
+        self.group = group
+
+        num_filter_params = group * kernel_size ** 2
+        self.conv = nn.Conv2d(in_channels, num_filter_params, kernel_size=1, stride=1, bias=False)
+        self.conv_gate = nn.Conv2d(num_filter_params, num_filter_params, kernel_size=1, stride=1,
+                                   bias=False)
+        self.act_gate = nn.Sigmoid()
+        if norm == 'BN':
+            self.norm = nn.BatchNorm2d(num_filter_params)
+        elif norm == 'GN':
+            self.norm = nn.GroupNorm(group, num_filter_params)
+        else:
+            raise NotImplementedError(f'norm type: {norm} not supported yet !')
+        self.act = nn.Softmax(dim=-2)
+        nn.init.kaiming_normal_(self.conv.weight, mode='fan_out', nonlinearity='relu')
+
+        self.pad = nn.ReflectionPad2d(kernel_size // 2)
+
+        self.ap_1 = nn.AdaptiveAvgPool2d((1, 1))
+
+    def forward(self, x):
+        identity_input = x
+        low_filter1 = self.ap_1(x)
+        low_filter = self.conv(low_filter1)
+        low_filter = low_filter * self.act_gate(self.conv_gate(low_filter))
+        low_filter = self.norm(low_filter)
+
+        n, c, h, w = x.shape
+        # prepare conv
+        x = F.unfold(self.pad(x), kernel_size=self.kernel_size).reshape(n, self.group, c // self.group,
+                                                                        self.kernel_size ** 2, h * w)
+
+        n, c1, p, q = low_filter.shape
+        low_filter = low_filter.reshape(n, c1 // self.kernel_size ** 2, self.kernel_size ** 2, p * q).unsqueeze(2)
+        low_filter = self.act(low_filter)
+
+        # filter conv
+        low_part = torch.sum(x * low_filter, dim=3).reshape(n, c, h, w)
+
+        # inverse
+        out_high = identity_input - low_part
+        return low_part, out_high
+
+
+def chunk_mul(a, b, chunk_size=64):
+    output = torch.empty_like(a)
+    for i in range(0, a.shape[1], chunk_size):  # 按第1维分块
+        output[:, i:i + chunk_size] = a[:, i:i + chunk_size] * b[:, i:i + chunk_size]
+    return output
+
+
+@MODULE.register_module()
+class FreqDecouplingReconstruction(nn.Module):
+    def __init__(self, d=1, in_channels=128, filter_kernel_size=3, filter_groups=8, norm='BN'):
+        super().__init__()
+        assert in_channels % filter_groups == 0, \
+            f'in_channels:{in_channels} must be divided by filter_groups:{filter_groups}'
+        self.d = d
+        self.in_channels = in_channels
+        self.filter_kernel_size = filter_kernel_size
+        self.filter_groups = filter_groups
+
+        self.decoupler = GatedDynamicDecoupler(
+            in_channels=self.in_channels,
+            kernel_size=self.filter_kernel_size,
+            group=self.filter_groups,
+            norm=norm
+        )
+        self.conv_high_freq = nn.Conv2d(in_channels, 1, 1)
+        self.gamma = nn.Parameter(torch.tensor(float(1)))
+
+    def forward(self, x, raw):
+        # x: B C H W
+        low, high = self.decoupler(x)
+
+        # low part
+        shortcut = low
+        low = chunk_mul(low, raw)  # low * raw
+        low = low + raw - shortcut
+
+        # high part
+        high = self.conv_high_freq(high)
+        tau = torch.exp(self.gamma * self.d)
+        high = high * tau
+
+        return low - high
+
+
+if __name__ == '__main__':
+    _inp = torch.randn((2, 64, 128, 128))
+    module = GatedDynamicDecoupler(64)
+    _out = module(_inp)

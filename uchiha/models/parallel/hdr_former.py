@@ -59,7 +59,7 @@ class HDRFormer(nn.Module):
                  fusion_cfg=None,
                  sampling_cfg=None,
                  transformer_cfg=None,
-                 postprocessor=None):
+                 reconstruction=None):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -67,7 +67,7 @@ class HDRFormer(nn.Module):
         self.embedding = build_module(embedding_cfg)
         self.prev_band_selector = build_module(band_selector)
         self.post_band_selector = build_module(band_selector)
-        self.global_connection = build_module(postprocessor)
+        self.reconstruction = build_module(reconstruction)
 
         self.prior_dim = len(prior_extractor.get('split_bands')) * 2
         self.embed_dim = embedding_cfg.get('embed_dim')
@@ -121,6 +121,8 @@ class HDRFormer(nn.Module):
         )
 
     def forward(self, x):
+        # TODO: PatchEmbedding, regularization, loss, act, norm, Position coding, scheduler
+        shortcut = x
         depth = len(self.encoders)
         rcp_prior = self.prior_extractor(x)
         feat = self.embedding(self.prev_band_selector(x))
@@ -152,6 +154,6 @@ class HDRFormer(nn.Module):
 
         feat = self.out_proj(feat)
         feat = self.post_band_selector(feat)
-        out = self.global_connection(feat)
+        out = self.reconstruction(feat, shortcut)
 
         return out

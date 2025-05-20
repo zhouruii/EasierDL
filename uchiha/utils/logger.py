@@ -1,5 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import logging
+import math
+import time
 from os import mkdir
 from os.path import dirname, exists
 import sys
@@ -184,6 +186,39 @@ def log_env_info(logger, info):
 
     logger.info("" + "=" * 40)
     logger.info("ENVIRONMENT INFO".center(40))
+
+
+class ETACalculator:
+    def __init__(self, total_steps):
+        self.start_time = time.time()
+        self.total_steps = total_steps
+        self.steps_completed = 0
+
+    def update(self, steps=1):
+        """更新已完成步数，返回剩余时间（秒）"""
+        self.steps_completed += steps
+        elapsed = time.time() - self.start_time
+        time_per_step = elapsed / self.steps_completed
+        remaining_steps = self.total_steps - self.steps_completed
+        return remaining_steps * time_per_step
+
+    def format_eta(self, seconds):
+        """将秒数转换为 days/hours/minutes/seconds 格式"""
+        days = int(seconds // 86400)
+        hours = int((seconds % 86400) // 3600)
+        minutes = int((seconds % 3600) // 60)
+        seconds = int(seconds % 60)
+
+        parts = []
+        if days > 0:
+            parts.append(f"{days}d")
+        if hours > 0 or days > 0:  # 即使hours=0，如果有days也显示0hours
+            parts.append(f"{hours}h")
+        if minutes > 0 or hours > 0 or days > 0:
+            parts.append(f"{minutes}m")
+        parts.append(f"{seconds}s")  # 始终显示秒
+
+        return "".join(parts)
 
 
 if __name__ == "__main__":

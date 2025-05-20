@@ -1,5 +1,5 @@
-from uchiha.datasets.builder import PIPELINES
-from uchiha.datasets.pipelines.geometric import impad, impad_to_multiple
+from ..builder import PIPELINES
+from .geometric import impad, impad_to_multiple
 
 
 @PIPELINES.register_module()

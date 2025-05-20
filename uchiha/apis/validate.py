@@ -19,23 +19,32 @@ def validate(epoch, dataloader, model, writer, metric):
     dataset = dataloader.dataset
     targets = []
     preds = []
+    indexes = []
     model.eval()
     with torch.no_grad():
         for idx, data in enumerate(dataloader):
             # data
             sample = data['sample'].cuda()
-            targets.append(data['target'])
-
             # forward
             with torch.no_grad():
                 pred = model(sample)
-                preds.append(pred)
+
+            targets.append(data['target'].numpy())
+            indexes.append(data['index'].numpy())
+            preds.append(pred.cpu().numpy())
 
     # evaluate
-    results = dataset.evaluate(preds, targets, metric)
+    results = dataset.evaluate(preds, targets, metric, indexes)
 
     # log
-    for ele in results:
-        writer.add_scalar(f'{ele}_{metric}', results[ele], epoch)
+    if isinstance(results, (int, float, complex)):
+        writer.add_scalar(f'{metric}', results, epoch)
+    elif isinstance(results, dict):
+        for ele in results:
+            writer.add_scalar(f'{ele}_{metric}', results[ele], epoch)
+    elif isinstance(results, (list, tuple, str, bytes)):
+        pass
+    else:
+        raise NotImplementedError(f'results type:{type(results)} not supported yet !')
 
     return results

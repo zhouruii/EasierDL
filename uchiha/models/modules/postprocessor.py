@@ -83,6 +83,30 @@ class WeightedSum(nn.Module):
         return result
 
 
+@MODULE.register_module()
+class HDRReconstruction(nn.Module):
+    def __init__(self, d=1, in_channels=128):
+        super().__init__()
+        self.d = d
+        self.in_channels = in_channels
+
+        self.conv_tau = nn.Conv2d(in_channels, in_channels, 1, bias=False)
+        self.conv_rain = nn.Conv2d(in_channels, 1, 1, bias=False)
+        self.gamma = nn.Parameter(torch.tensor(float(1)))
+
+    def forward(self, x, raw):
+        tau = self.conv_tau(x)
+        rain = self.conv_rain(x)
+
+        shortcut = tau
+        tau = tau * raw
+        tau = tau + raw - shortcut
+
+        rain = rain * torch.exp(self.gamma * self.d)
+
+        return tau - rain
+
+
 if __name__ == '__main__':
     dwt = DWT1DInverse(wave='haar')
     X = torch.randn(10, 5, 100)
