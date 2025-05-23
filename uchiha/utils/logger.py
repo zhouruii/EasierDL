@@ -1,11 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import logging
-import math
+import platform
+import sys
 import time
 from os import mkdir
 from os.path import dirname, exists
-import sys
-import platform
 
 import torch.distributed as dist
 
@@ -203,7 +202,7 @@ class ETACalculator:
         return remaining_steps * time_per_step
 
     def format_eta(self, seconds):
-        """将秒数转换为 days/hours/minutes/seconds 格式"""
+        """将秒数转换为 DDdHHhMMmSSs 格式（两位数标准格式）"""
         days = int(seconds // 86400)
         hours = int((seconds % 86400) // 3600)
         minutes = int((seconds % 3600) // 60)
@@ -211,12 +210,12 @@ class ETACalculator:
 
         parts = []
         if days > 0:
-            parts.append(f"{days}d")
-        if hours > 0 or days > 0:  # 即使hours=0，如果有days也显示0hours
-            parts.append(f"{hours}h")
+            parts.append(f"{days:02d}d")  # 两位数天
+        if hours > 0 or days > 0:
+            parts.append(f"{hours:02d}h")  # 两位数小时
         if minutes > 0 or hours > 0 or days > 0:
-            parts.append(f"{minutes}m")
-        parts.append(f"{seconds}s")  # 始终显示秒
+            parts.append(f"{minutes:02d}m")  # 两位数分钟
+        parts.append(f"{seconds:02d}s")  # 两位数秒
 
         return "".join(parts)
 

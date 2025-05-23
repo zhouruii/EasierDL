@@ -1,9 +1,0 @@
-terminaltables
-scikit-learn
-opencv-python
-timm==1.0.8   # 0.4.2
-
-
-# ------------------------ DWT ------------------------ #
-# pytorch_wavelets https://github.com/fbcotter/pytorch_wavelets
-# PyWavelets

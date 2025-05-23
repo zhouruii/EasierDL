@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import MSELoss, L1Loss, CrossEntropyLoss, HuberLoss
+from torch.nn import MSELoss, L1Loss, CrossEntropyLoss
 
 from pytorch_wavelets import DWTForward, DWTInverse
 
@@ -10,7 +10,6 @@ from .builder import CRITERION
 CRITERION.register_module(module=MSELoss)
 CRITERION.register_module(module=L1Loss)
 CRITERION.register_module(module=CrossEntropyLoss)
-CRITERION.register_module(module=HuberLoss)
 
 
 @CRITERION.register_module()

@@ -1,5 +1,5 @@
-import numpy as np
 from tabulate import tabulate
+from torch import nn
 
 
 def count_parameters(module):
@@ -14,116 +14,79 @@ def count_parameters(module):
     return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
 
-def analyze_model(model, depth=0, max_depth=3, parent_name="", visited_params=None):
-    results = []
-    if depth > max_depth:
-        return results
-
-    # 初始化已统计参数集合
-    if visited_params is None:
-        visited_params = set()
-
-    for name, child in model.named_children():
-        full_name = f"{parent_name}.{name}" if parent_name else name
-
-        # 统计当前模块的独立参数（排除已统计过的参数）
-        child_params = set(id(p) for p in child.parameters())
-        new_params = child_params - visited_params
-        param_count = sum(p.numel() for p in child.parameters()
-                          if p.requires_grad and id(p) in new_params)
-
-        # 更新已统计参数集合
-        visited_params.update(new_params)
-
-        module_info = {
-            "name": full_name,
-            "type": child.__class__.__name__,
-            "params": param_count,
-            "depth": depth,
-            "is_leaf": len(list(child.children())) == 0
-        }
-        results.append(module_info)
-
-        # 递归分析子模块（传递已统计参数集合）
-        if not module_info["is_leaf"]:
-            results.extend(analyze_model(
-                child, depth + 1, max_depth, full_name, visited_params
-            ))
-
-    return results
+def unwrap_model(model):
+    """解包DDP/DataParallel包裹的模型"""
+    if hasattr(model, 'module'):  # 处理DataParallel/DDP包裹
+        return model.module
+    return model
 
 
-def format_size(num_bytes):
-    """格式化参数量显示"""
-    if num_bytes == 0:
-        return "0"
-    units = ['', 'K', 'M', 'B', 'T']
-    k = 1000.0
-    magnitude = int(np.floor(np.log(num_bytes) / np.log(k)))
-    return f"{num_bytes / k ** magnitude:.2f}{units[magnitude]}"
+def format_param_count(n):
+    """格式化参数量为 K/M 单位。"""
+    if n >= 1_000_000:
+        return f"{n / 1_000_000:.2f}M"
+    elif n >= 1_000:
+        return f"{n / 1_000:.2f}K"
+    else:
+        return str(n)
 
 
-def visualize_analysis(results, logger):
-    """可视化展示分析结果"""
-    table_data = []
-    total_params = 0
+def log_model_parameters(model: nn.Module, logger, max_depth: int = 1):
+    """
+    记录模型的参数结构，以表格形式展示参数总数和比例，并按参数量排序。
 
-    for item in results:
-        indent = "    " * item["depth"]
-        display_name = f"{indent}└─ {item['name']}" if item["depth"] > 0 else item["name"]
+    Args:
+        model (nn.Module): 模型对象。
+        logger: 日志记录器。
+        max_depth (int): 展示的最大层级。
+    """
 
-        # 计算百分比
-        param_count = item["params"]
-        total_params += param_count
+    def collect_named_param_info(_model, _max_depth):
+        _rows = []
+        total_params = count_parameters(_model)
+        stack = [("", _model, 0)]  # (路径, 模块, 当前深度)
 
-        table_data.append([
-            display_name,
-            item["type"],
-            format_size(param_count),
-            f"{param_count:,}",
-            "✓" if item["is_leaf"] else ""
-        ])
+        while stack:
+            prefix, module, depth = stack.pop(0)
+            if depth > _max_depth:
+                continue
 
-    # 按参数量降序排序
-    table_data.sort(key=lambda x: -int(x[3].replace(",", "")))
+            name = prefix if prefix != "" else _model.__class__.__name__
+            n_params = count_parameters(module)
+            percent = f"{(n_params / total_params) * 100:.2f}%" if total_params > 0 else "0.00%"
 
-    # 添加总计行
-    table_data.append([
-        "TOTAL",
-        "",
-        format_size(total_params),
-        f"{total_params:,}",
-        ""
-    ])
+            _rows.append({
+                "depth": depth,
+                "name": name,
+                "type": module.__class__.__name__,
+                "params": n_params,
+                "percent": percent
+            })
 
-    logger.info(tabulate(
+            if depth < _max_depth:
+                for child_name, child in module.named_children():
+                    full_name = f"{prefix}.{child_name}" if prefix else child_name
+                    stack.append((full_name, child, depth + 1))
+
+        return _rows, total_params
+
+    logger.info("== Start analyzing model parameters ==")
+    rows, total = collect_named_param_info(model, max_depth)
+
+    # ✅ 按参数量降序排序
+    rows.sort(key=lambda x: x["params"], reverse=True)
+
+    # ✅ 转为 tabulate 可读格式
+    table_data = [
+        [r["depth"], r["name"], r["type"], format_param_count(r["params"]), r["percent"]]
+        for r in rows
+    ]
+
+    table = tabulate(
         table_data,
-        headers=["Module", "Type", "Params (Formatted)", "Params (Exact)", "Leaf"],
-        tablefmt="grid",
-        stralign="right"
-    ))
+        headers=["Depth", "Module Name", "Type", "Params", "Percent"],
+        tablefmt="fancy_grid"
+    )
 
-    return total_params
-
-
-def analyze_model_structure(model, logger, max_depth=3):
-    if max_depth == 0:
-        return
-    """完整分析流程"""
-    logger.info(f"\n{' Model Analysis ':=^80}")
-    logger.info(f"Model Class: {model.__class__.__name__}")
-    results = analyze_model(model, max_depth=max_depth)
-    total = visualize_analysis(results, logger)
-
-    # 打印内存占用估算
-    param_size = sum(p.numel() * p.element_size() for p in model.parameters())
-    buffer_size = sum(b.numel() * b.element_size() for b in model.buffers())
-    logger.info(f"\nEstimated Memory Usage: {format_size(param_size + buffer_size)} bytes")
-    logger.info(f"Trainable Parameters: {format_size(total)}")
-    logger.info("=" * 80)
-
-    return total
-
-
-if __name__ == '__main__':
-    print(format_size(1401924))
+    logger.info("\n" + table)
+    logger.info(f"== Total parameters: {format_param_count(total)} ==")

@@ -19,7 +19,7 @@ def build_optimizer(params, cfg):
 
     """
     logger = get_root_logger()
-    logger.info("start building criterion...")
+    logger.info("start building optimizer...")
 
     optimizer = OPTIMIZER.get(cfg.pop('type'))
     optimizer = optimizer(params, **cfg)
@@ -58,11 +58,12 @@ def build_scheduler(optimizer, cfg):
         returns the built scheduler
 
     """
+    scheduler_cfg = cfg.copy()
     logger = get_root_logger()
-    logger.info("start building criterion...")
+    logger.info("start building scheduler...")
 
-    scheduler = SCHEDULER.get(cfg.pop('type'))
-    scheduler = scheduler(optimizer, **cfg)
+    scheduler = SCHEDULER.get(scheduler_cfg.pop('type'))
+    scheduler = scheduler(optimizer, **scheduler_cfg)
 
     logger.info('success!')
     return scheduler

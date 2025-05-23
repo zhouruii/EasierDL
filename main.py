@@ -2,10 +2,11 @@ import argparse
 from datetime import datetime
 from os.path import join
 
+import torch
 from tensorboardX import SummaryWriter
 from torch import nn
 
-from uchiha.apis import train_by_epoch, validate, set_random_seed, analyze_model_structure
+from uchiha.apis import train_by_epoch, validate, set_random_seed, log_model_parameters, unwrap_model
 from uchiha.cores.builder import build_criterion, build_optimizer, build_scheduler
 from uchiha.datasets.builder import build_dataset, build_dataloader
 from uchiha.models.builder import build_model
@@ -55,18 +56,19 @@ def main():
     model = build_model(cfg.model.to_dict())
     if len(args.gpu_ids) > 1:
         device_ids = [int(i) for i in args.gpu_ids]
-        model = nn.DataParallel(model, device_ids=device_ids).cuda()
+        torch.cuda.set_device(device_ids[0])
+        model = nn.DataParallel(model.cuda(), device_ids=device_ids)
         logger.info(f'Use GPUs: {device_ids}')
     else:
         model = model.cuda()
-    analyze_model_structure(model, logger, max_depth=args.analyze_params)
+    log_model_parameters(unwrap_model(model), logger, max_depth=args.analyze_params)
 
     # loss function
-    criterion = build_criterion(cfg.loss.to_dict())
+    criterion = build_criterion(cfg.train.loss.to_dict())
 
     # optimizer & scheduler
-    optimizer = build_optimizer(model.parameters(), cfg.optimizer.to_dict())
-    scheduler = build_scheduler(optimizer, cfg.scheduler.to_dict())
+    optimizer = build_optimizer(model.parameters(), cfg.train.optimizer.to_dict())
+    scheduler = build_scheduler(optimizer, cfg.train.scheduler.to_dict())
 
     # resume
     logger.info('start loading checkpoint...')
@@ -88,18 +90,17 @@ def main():
         logger.info(f'no checkpoint was loaded! start_epoch: {start_epoch + 1}')
 
     # train & val
-    print_freq = cfg.train.print_freq
     val_freq = cfg.val.val_freq
     metric = cfg.val.metric
     save_freq = cfg.checkpoint.save_freq
-    total_epoch = cfg.train.epoch
+    total_epoch = cfg.train.total_epoch
     eta_calc = ETACalculator(total_steps=total_epoch * len(trainloader))
     logger.info('start training...')
 
     for epoch in range(start_epoch, total_epoch):
         # train
         writer, model, optimizer, scheduler = (
-            train_by_epoch(epoch, total_epoch, print_freq, trainloader, model, optimizer, scheduler, criterion, writer,
+            train_by_epoch(cfg, epoch, trainloader, model, optimizer, scheduler, criterion, writer,
                            eta_calc))
 
         # val

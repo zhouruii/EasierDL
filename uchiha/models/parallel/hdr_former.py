@@ -1,4 +1,5 @@
 from torch import nn
+from torch.nn import init
 
 from ..builder import MODEL, build_module
 
@@ -120,8 +121,24 @@ class HDRFormer(nn.Module):
             nn.Conv2d(abs(self.out_channels - self.embed_dim) // 2, self.out_channels, 1, bias=False)
         )
 
+        self.apply(self._initialize_weights)
+
+    def _initialize_weights(self, m):
+        if isinstance(m, nn.Conv2d):
+            init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            if m.bias is not None:
+                init.constant_(m.bias, 0)
+        elif isinstance(m, nn.Linear):
+            init.trunc_normal_(m.weight, std=0.02)
+            # init.xavier_normal_(m.weight)
+            if m.bias is not None:
+                init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm):
+            init.constant_(m.bias, 0)
+            init.constant_(m.weight, 1.0)
+
     def forward(self, x):
-        # TODO: PatchEmbedding, regularization, loss, act, norm, Position coding, scheduler
+        # TODO: regularization, check(act, norm), Position coding
         shortcut = x
         depth = len(self.encoders)
         rcp_prior = self.prior_extractor(x)

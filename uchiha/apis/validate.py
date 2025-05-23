@@ -41,7 +41,7 @@ def validate(epoch, dataloader, model, writer, metric):
         writer.add_scalar(f'{metric}', results, epoch)
     elif isinstance(results, dict):
         for ele in results:
-            writer.add_scalar(f'{ele}_{metric}', results[ele], epoch)
+            writer.add_scalar(ele, results[ele], epoch)
     elif isinstance(results, (list, tuple, str, bytes)):
         pass
     else:

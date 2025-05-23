@@ -6,16 +6,15 @@ import torch
 from ..utils import print_log, get_root_logger
 
 
-def train_by_epoch(epoch, total_epoch, print_freq, dataloader, model, optimizer, scheduler, criterion, writer,
+def train_by_epoch(cfg, epoch, dataloader, model, optimizer, scheduler, criterion, writer,
                    eta_calculator):
     """ train for one epoch
 
     Prints logs based on the configured frequency (based on the number of iterations)
 
     Args:
+        cfg (class): Config class
         epoch (int): the number of epoch trained
-        total_epoch (int): the number of total epoch
-        print_freq (int): Frequency of printing logs
         dataloader (torch.utils.data.Dataloader): training set's dataloader
         model (torch.nn.Module): model built from configuration file
         optimizer (class): optimizer built from configuration file
@@ -28,6 +27,10 @@ def train_by_epoch(epoch, total_epoch, print_freq, dataloader, model, optimizer,
         writer (dict): The updated logger, also return the updated model, optimizer and scheduler.
 
     """
+    print_freq = cfg.train.print_freq
+    total_epoch = cfg.train.total_epoch
+    use_grad_clip = cfg.train.use_grad_clip
+
     model.train()
     for idx, data in enumerate(dataloader):
         # data
@@ -41,6 +44,8 @@ def train_by_epoch(epoch, total_epoch, print_freq, dataloader, model, optimizer,
         # backward & optimize
         optimizer.zero_grad()
         loss.backward()
+        if use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 0.01)
         optimizer.step()
 
         eta = eta_calculator.update()
@@ -49,7 +54,7 @@ def train_by_epoch(epoch, total_epoch, print_freq, dataloader, model, optimizer,
         if (idx + 1) % print_freq == 0:
             current_lr = optimizer.param_groups[0]['lr']
             print_log(
-                f'epoch:[{epoch + 1}/{total_epoch}]\titer:[{idx + 1}/{len(dataloader)}]\tloss: {loss}\t'
+                f'epoch:[{epoch + 1}/{total_epoch}]\titer:[{idx + 1}/{len(dataloader)}]\tloss: {loss:.6f}\t'
                 f'lr:{current_lr}\teta:{eta_calculator.format_eta(eta)}',
                 get_root_logger())
 

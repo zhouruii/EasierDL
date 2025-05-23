@@ -6,6 +6,22 @@ import torch
 from einops import rearrange
 from torch import nn
 import torch.nn.functional as F
+from torch.nn import init
+
+
+def initialize_weights(module):
+    """智能权重初始化（自动识别层类型）"""
+    if isinstance(module, nn.Conv2d):
+        # 卷积层：Kaiming初始化（适配ReLU）
+        init.kaiming_normal_(module.weight, mode='fan_out', nonlinearity='relu')
+        if module.bias is not None:
+            init.constant_(module.bias, 0)
+
+    elif isinstance(module, nn.Linear):
+        # 全连接层：Xavier初始化
+        init.xavier_normal_(module.weight)
+        if module.bias is not None:
+            init.constant_(module.bias, 0)
 
 
 def to_3d(x):

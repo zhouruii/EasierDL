@@ -157,6 +157,7 @@ class MultiLevelRainHSIDataset(Dataset):
         return os.path.basename(path)
 
 
+@DATASET.register_module()
 class HDF5MultiLevelRainHSIDataset(Dataset):
     """基于HDF5存储的多级噪声HSI数据集"""
     NOISE_LEVELS = ['small', 'medium', 'heavy', 'storm']
@@ -188,9 +189,11 @@ class HDF5MultiLevelRainHSIDataset(Dataset):
 
     def _validate_samples(self):
         """验证HDF5中是否存在所有样本"""
+        # hdf5中没有后缀名
         with h5py.File(self.h5_path, 'r') as hf:
             missing = []
             for name in self.sample_names:
+                name = name.replace('.npy', '')
                 # 验证GT
                 if f'gt/{name}' not in hf:
                     missing.append(f'gt/{name}')
@@ -213,6 +216,7 @@ class HDF5MultiLevelRainHSIDataset(Dataset):
 
         sample_name = self.sample_names[sample_idx]
         noise_level = self.NOISE_LEVELS[noise_idx]
+        sample_name = sample_name.replace('.npy', '')
 
         # 从HDF5加载数据（内存映射）
         gt = self.h5[f'gt/{sample_name}'][:]
@@ -227,21 +231,33 @@ class HDF5MultiLevelRainHSIDataset(Dataset):
 
         return self.pipelines(results) if self.pipelines else results
 
-    def evaluate(self, preds: List[np.ndarray], targets: List[np.ndarray],
-                 metric: str, indexes: List[int]) -> float:
+    def evaluate(self, preds: List[np.ndarray], targets: List[np.ndarray], metric,
+                 indexes: List[int]) -> dict:
         """
-        评估指标计算（与原NPY版本完全兼容）
-        """
-        assert len(preds) == len(targets), "preds和targets长度必须一致"
-        metric = metric.upper()
-        assert metric in ['PSNR', 'SSIM'], f"不支持的指标: {metric}"
+        同时计算PSNR和SSIM指标
 
-        all_scores = []
+        Args:
+            preds: 模型输出列表，每个元素形状为 (B, C, H, W)
+            targets: 真实标签列表，每个元素形状为 (B, C, H, W)
+            metric: 需要计算的指标，默认为['PSNR','SSIM']
+            indexes: 原始数据索引列表
+
+        Returns:
+            dict: 包含平均PSNR和SSIM的字典
+        """
+        assert len(preds) == len(targets) == len(indexes), "输入列表长度必须一致"
+        assert metric is None or metric.upper() == 'PSNR' or metric.upper() == 'SSIM', \
+            '默认只支持PSNR和SSIM'
+
+        psnr_scores = []
+        ssim_scores = []
         logger = get_root_logger()
+
         for pred_batch, target_batch, index_batch in zip(preds, targets, indexes):
             B, C, H, W = pred_batch.shape
 
             for i in range(B):
+                # 获取当前样本
                 pred = pred_batch[i]  # (C,H,W)
                 target = target_batch[i]
                 idx = index_batch[i]
@@ -254,28 +270,44 @@ class HDF5MultiLevelRainHSIDataset(Dataset):
                     pred_img = np.transpose(pred, (1, 2, 0))
                     target_img = np.transpose(target, (1, 2, 0))
 
-                # 计算指标
-                if metric == 'PSNR':
-                    score = psnr(target_img, pred_img,
-                                 data_range=target_img.max() - target_img.min())
-                else:
-                    multichannel = C > 1
-                    score = ssim(
-                        target_img, pred_img,
-                        multichannel=multichannel,
-                        channel_axis=2 if multichannel else None,
-                        data_range=target_img.max() - target_img.min()
-                    )
+                # 计算PSNR
+                data_range = target_img.max() - target_img.min()
+                psnr_val = psnr(target_img, pred_img, data_range=data_range)
 
-                all_scores.append(score)
-                # log
-                logger.info(f'validating:{self.get_filename(idx)}    '
-                            f'metric: {metric}   '
-                            f'result: {score}')
+                # 计算SSIM
+                multichannel = C > 1
+                ssim_val = ssim(
+                    target_img, pred_img,
+                    multichannel=multichannel,
+                    channel_axis=2 if multichannel else None,
+                    data_range=data_range
+                )
 
-        final_score = np.mean(all_scores)
-        logger.info(f'mean score: {final_score}')
-        return final_score
+                # 记录结果
+                psnr_scores.append(psnr_val)
+                ssim_scores.append(ssim_val)
+
+                # 日志记录
+                # logger.info(
+                #     f"Validating: {self.get_filename(idx)} | "
+                #     f"PSNR: {psnr_val:.2f} dB | "
+                #     f"SSIM: {ssim_val:.4f}"
+                # )
+
+        # 计算平均值
+        mean_psnr = np.mean(psnr_scores)
+        mean_ssim = np.mean(ssim_scores)
+
+        # 最终日志输出
+        logger.info(f"\n{' Evaluation Results ':=^60}")
+        logger.info(f"Mean PSNR: {mean_psnr:.2f} dB")
+        logger.info(f"Mean SSIM: {mean_ssim:.4f}")
+        logger.info("=" * 60)
+
+        return {
+            'psnr': mean_psnr,
+            'ssim': mean_ssim
+        }
 
     def get_filename(self, idx):
         """获取原始文件名（不含噪声级别信息）"""

@@ -1,3 +1,3 @@
 from .train import train_by_epoch, set_random_seed
 from .validate import validate
-from .parameter import count_parameters, analyze_model_structure
+from .parameter import count_parameters, unwrap_model, log_model_parameters
