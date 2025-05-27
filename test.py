@@ -3,15 +3,11 @@ from datetime import datetime
 from os.path import join
 
 import torch
-from tensorboardX import SummaryWriter
 
-from uchiha.apis import train_by_epoch, validate, set_random_seed
+from uchiha.apis import set_random_seed, count_parameters
 from uchiha.datasets.builder import build_dataset, build_dataloader
 from uchiha.models.builder import build_model
-from uchiha.cores.builder import build_criterion, build_optimizer, build_scheduler
-
-from uchiha.utils import count_parameters, load_config, get_root_logger, print_log, save_checkpoint, \
-    load_checkpoint, auto_resume_helper
+from uchiha.utils import load_config, get_root_logger
 
 
 def parse_args():

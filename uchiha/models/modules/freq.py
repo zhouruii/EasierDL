@@ -65,9 +65,13 @@ class DTCWTProj(nn.Module):
         self.conv_l = nn.Sequential(
             conv3x3(in_channels, in_channels, groups=in_channels),
             conv3x3(in_channels, in_channels, groups=in_channels),
+            conv3x3(in_channels, in_channels, groups=in_channels),
         )
         # 15 45 75 105 135 165
-        self.conv_h = nn.ModuleList([conv3x3(in_channels, in_channels, groups=in_channels) for _ in range(6)])
+        self.conv_h = nn.ModuleList([nn.Sequential(
+            conv3x3(in_channels, in_channels, groups=in_channels),
+            conv3x3(in_channels, in_channels, groups=in_channels),
+        ) for _ in range(6)])
 
     def forward(self, x):
         # x.shape (B,C,H,W)

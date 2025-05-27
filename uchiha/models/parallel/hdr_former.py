@@ -121,7 +121,7 @@ class HDRFormer(nn.Module):
             nn.Conv2d(abs(self.out_channels - self.embed_dim) // 2, self.out_channels, 1, bias=False)
         )
 
-        self.apply(self._initialize_weights)
+        # self.apply(self._initialize_weights)
 
     def _initialize_weights(self, m):
         if isinstance(m, nn.Conv2d):

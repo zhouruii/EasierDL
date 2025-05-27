@@ -7,6 +7,8 @@ MODEL = Registry('model')
 
 MODULE = Registry('module')
 
+BASELINE = Registry('baseline')
+
 MODULE.register_module(module=nn.Identity, name='Identity')
 
 

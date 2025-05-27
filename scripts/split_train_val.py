@@ -10,8 +10,8 @@ def parse_args():
     """Parse arguments."""
     parser = argparse.ArgumentParser(description='Splitting dataset')
     parser.add_argument('--seed', type=int, default=49)
-    parser.add_argument('--root', type=str, default='/home/disk2/ZR/datasets/AVIRIS/128/npy/gt')
-    parser.add_argument('--target', type=str, default='/home/disk2/ZR/datasets/AVIRIS/128/npy')
+    parser.add_argument('--root', type=str, default='/home/disk2/ZR/datasets/OurHSI/128/npy/gt')
+    parser.add_argument('--target', type=str, default='/home/disk2/ZR/datasets/OurHSI/128/npy')
     parser.add_argument("--train", type=str, default='data/npy/train/reflectivity')
     parser.add_argument("--val", type=str, default='data/npy/val/reflectivity')
     parser.add_argument("--ratio", type=float, default=0.1)
