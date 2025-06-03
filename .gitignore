@@ -164,6 +164,7 @@ cython_debug/
 data
 
 experiment/
+experiments/
 
 BSD300
 Streaks_Garg06

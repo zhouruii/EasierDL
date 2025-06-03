@@ -44,7 +44,12 @@ model:
   prior_extractor:
     type: GroupRCP
     split_bands: [50, 100, 150]
-  band_selector:
+  prev_band_selector:
+    type: BCAM
+    in_channels: *num_bands
+    ratio: 0.5
+    min_proj: false
+  post_band_selector:
     type: BCAM
     in_channels: *num_bands
     ratio: 0.5

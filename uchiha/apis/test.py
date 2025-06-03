@@ -1,14 +1,13 @@
 import torch
+from tqdm import tqdm
 
 
-def validate(epoch, dataloader, model, writer, metric):
+def simple_test(dataloader, model, metric):
     """ validation during training
 
     Args:
-        epoch (int): the training epoch when the validation frequency is reached
         dataloader (torch.utils.data.Dataloader): validation set's dataloader
         model (torch.nn.Module): model built from configuration file
-        writer (SummaryWriter): tensorboard-based loggers
         metric (str): model's performance metrics for specific tasks
 
     Returns:
@@ -21,8 +20,11 @@ def validate(epoch, dataloader, model, writer, metric):
     preds = []
     indexes = []
     model.eval()
+
+    pbar = tqdm(dataloader, desc="testing", total=len(dataloader))
+
     with torch.no_grad():
-        for idx, data in enumerate(dataloader):
+        for idx, data in enumerate(pbar):
             # data
             sample = data['sample'].cuda()
             # forward
@@ -32,18 +34,11 @@ def validate(epoch, dataloader, model, writer, metric):
             indexes.append(data['index'].numpy())
             preds.append(pred.cpu().numpy())
 
+            pbar.set_postfix(iter=f"{idx + 1}/{len(dataloader)}")
+
     # evaluate
     results = dataset.evaluate(preds, targets, metric, indexes)
 
-    # log
-    if isinstance(results, (int, float, complex)):
-        writer.add_scalar(f'{metric}', results, epoch)
-    elif isinstance(results, dict):
-        for ele in results:
-            writer.add_scalar(ele, results[ele], epoch)
-    elif isinstance(results, (list, tuple, str, bytes)):
-        pass
-    else:
-        raise NotImplementedError(f'results type:{type(results)} not supported yet !')
+    pbar.close()
 
     return results

@@ -409,7 +409,7 @@ class GlobalMinPool2d(nn.Module):
 
 @MODULE.register_module()
 class BCAM(nn.Module):
-    def __init__(self, in_channels, ratio=0.5, min_proj=False):
+    def __init__(self, in_channels, ratio=0.5, min_proj=False, act='ReLU', residual=False):
         super(BCAM, self).__init__()
         self.first_dwconv = conv3x3(in_channels, in_channels, groups=in_channels)
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
@@ -424,10 +424,19 @@ class BCAM(nn.Module):
         else:
             self.proj_for_min = None
 
-        self.act = nn.ReLU()
+        if act == 'ReLU':
+            self.act = nn.ReLU()
+        elif act == 'Sigmoid':
+            self.act = nn.Sigmoid()
+        else:
+            raise NotImplementedError(f'activation function:{act} not supported yet !')
+
+        self.residual = residual
+        self.post_act = nn.LeakyReLU() if residual else None
 
     def forward(self, x):
         # x.shape (B, C, H, W)
+        residual = x
         x = self.first_dwconv(x)
 
         avg_out = self.proj(self.avg_pool(x))
@@ -442,7 +451,10 @@ class BCAM(nn.Module):
         out -= min_out
         att = self.act(out)
 
-        return att * x
+        if self.residual:
+            return self.post_act(residual + att * x)
+        else:
+            return att * x
 
 
 class BasicECA1d(nn.Module):

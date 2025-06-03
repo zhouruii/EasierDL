@@ -1,4 +1,4 @@
-work_dir: experiment/hdr_former/OURHSI/baseline
+work_dir: experiments/hdr_former/OURHSI/baseline
 data:
   train:
     dataset:
@@ -83,7 +83,7 @@ model:
     d: 0.3
     in_channels: *num_bands
     filter_kernel_size: 3
-    filter_groups: 8
+    filter_groups: 1
     norm: GN
 
 train:
@@ -113,6 +113,6 @@ val:
   metric: psnr
 
 checkpoint:
-  save_freq: 10
+  save_freq: 3
   resume_from: null
   auto_resume: false

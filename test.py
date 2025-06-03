@@ -3,8 +3,9 @@ from datetime import datetime
 from os.path import join
 
 import torch
+from torch import nn
 
-from uchiha.apis import set_random_seed, count_parameters
+from uchiha.apis import set_random_seed, log_model_parameters, unwrap_model, simple_test
 from uchiha.datasets.builder import build_dataset, build_dataloader
 from uchiha.models.builder import build_model
 from uchiha.utils import load_config, get_root_logger
@@ -13,8 +14,9 @@ from uchiha.utils import load_config, get_root_logger
 def parse_args():
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument('--seed', type=int, default=49)
-    args_parser.add_argument('--config', type=str, default='configs/spectral/Zn/dwt_channel.yaml')
-    args_parser.add_argument('--checkpoint', '-c', default='experiment/Zn/dwt_channel/checkpoints/100.pth')
+    args_parser.add_argument('--config', type=str, default='configs/hdr_former/AVIRIS/test.yaml')
+    args_parser.add_argument('--checkpoint', '-c', default='experiments/hdr_former/AVIRIS/baseline/checkpoints/100.pth')
+    args_parser.add_argument('--gpu_ids', nargs='+', default=['0'])
 
     return args_parser.parse_args()
 
@@ -35,39 +37,33 @@ def main():
     logger.info(f'set random seed= {args.seed}')
 
     # dataset & dataloader
-    testset = build_dataset(cfg.data.val.dataset.to_dict())
-    testloader = build_dataloader(testset, cfg.data.val.dataloader.to_dict())
+    testset = build_dataset(cfg.data.test.dataset.to_dict(), phase='test')
+    testloader = build_dataloader(testset, cfg.data.test.dataloader.to_dict(), phase='test')
 
     # model
-    model = build_model(cfg.model.to_dict()).cuda()
-    total_params = count_parameters(model)
-    logger.info(f'total_params: {total_params}')
+    model = build_model(cfg.model.to_dict())
+    if len(args.gpu_ids) > 1:
+        device_ids = [int(i) for i in args.gpu_ids]
+        torch.cuda.set_device(device_ids[0])
+        model = nn.DataParallel(model.cuda(), device_ids=device_ids)
+        logger.info(f'Use GPUs: {device_ids}')
+    else:
+        model = model.cuda()
+    log_model_parameters(unwrap_model(model), logger, max_depth=1)
 
     # resume
-    checkpoint = torch.load(args.checkpoint, map_location='cpu')
+    checkpoint = torch.load(args.checkpoint)
     model.load_state_dict(checkpoint['state_dict'])
     logger.info(f'checkpoint:{args.checkpoint} was loaded successfully!')
 
     # train & val
-    metric = cfg.val.metric
+    metric = cfg.metric
     logger.info('start testing...')
 
-    targets = []
-    preds = []
-    model.eval()
-    with torch.no_grad():
-        for idx, data in enumerate(testloader):
-            # data
-            sample = data['sample'].cuda()
-            targets.append(data['target'])
-
-            # forward
-            with torch.no_grad():
-                pred = model(sample)
-                preds.append(pred)
-
     # evaluate
-    results = testset.evaluate(preds, targets, metric)
+    results = simple_test(dataloader=testloader,
+                          model=model,
+                          metric=metric)
 
     print(results)
 

@@ -1,8 +1,6 @@
-import math
-
+import torch.nn.functional as F
 from einops import rearrange
 from torch import nn
-import torch.nn.functional as F
 
 from uchiha.models.modules.cbam import BasicECA1d
 from ..builder import MODULE
@@ -42,9 +40,9 @@ class LeFF(nn.Module):
     Uformer: A General U-Shaped Transformer for Image Restoration
     """
 
-    def __init__(self, in_channels=32, ratio=4, act_layer=nn.GELU, use_eca=False):
+    def __init__(self, in_channels=32, ratio=4.0, act_layer=nn.GELU, use_eca=False):
         super().__init__()
-        hidden_dim = in_channels * ratio
+        hidden_dim = int(in_channels * ratio)
 
         self.linear1 = nn.Sequential(nn.Linear(in_channels, hidden_dim),
                                      act_layer())

@@ -55,7 +55,8 @@ class HDRFormer(nn.Module):
                  in_channels=224,
                  out_channels=224,
                  prior_extractor=None,
-                 band_selector=None,
+                 prev_band_selector=None,
+                 post_band_selector=None,
                  embedding_cfg=None,
                  fusion_cfg=None,
                  sampling_cfg=None,
@@ -66,8 +67,8 @@ class HDRFormer(nn.Module):
         self.out_channels = out_channels
         self.prior_extractor = build_module(prior_extractor)
         self.embedding = build_module(embedding_cfg)
-        self.prev_band_selector = build_module(band_selector)
-        self.post_band_selector = build_module(band_selector)
+        self.prev_band_selector = build_module(prev_band_selector)
+        self.post_band_selector = build_module(post_band_selector)
         self.reconstruction = build_module(reconstruction)
 
         self.prior_dim = len(prior_extractor.get('split_bands')) * 2

@@ -54,8 +54,8 @@ def train_by_epoch(cfg, epoch, dataloader, model, optimizer, scheduler, criterio
         if (idx + 1) % print_freq == 0:
             current_lr = optimizer.param_groups[0]['lr']
             print_log(
-                f'epoch:[{epoch + 1}/{total_epoch}]\titer:[{idx + 1}/{len(dataloader)}]\tloss: {loss:.6f}\t'
-                f'lr:{current_lr}\teta:{eta_calculator.format_eta(eta)}',
+                f'epoch:[{epoch + 1}/{total_epoch}]\titer:[{idx + 1}/{len(dataloader)}]\tloss:{loss:.6f}\t'
+                f'lr:{current_lr:6e}\teta:{eta_calculator.format_eta(eta)}',
                 get_root_logger())
 
         writer.add_scalar('loss', loss.item(), epoch * len(dataloader) + idx)
