@@ -143,4 +143,4 @@ val:
 checkpoint:
   save_freq: 10
   resume_from: null
-  auto_resume: false
+  auto_resume: true

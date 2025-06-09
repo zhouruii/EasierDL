@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 
-from ..builder import BASELINE
+from ..builder import MODEL
 
 
 def to_3d(x):
@@ -181,10 +181,10 @@ class Upsample(nn.Module):
 
 
 # ---------- Restormer -----------------------
-@BASELINE.register_module()
+@MODEL.register_module()
 class Restormer(nn.Module):
     def __init__(self,
-                 inp_channels=3,
+                 in_channels=3,
                  out_channels=3,
                  dim=48,
                  num_blocks=None,
@@ -202,7 +202,7 @@ class Restormer(nn.Module):
             heads = [1, 2, 4, 8]
         if num_blocks is None:
             num_blocks = [4, 6, 6, 8]
-        self.patch_embed = OverlapPatchEmbed(inp_channels, dim)
+        self.patch_embed = OverlapPatchEmbed(in_channels, dim)
 
         self.encoder_level1 = nn.Sequential(*[
             TransformerBlock(dim=dim, num_heads=heads[0], ffn_expansion_factor=ffn_expansion_factor, bias=bias,
