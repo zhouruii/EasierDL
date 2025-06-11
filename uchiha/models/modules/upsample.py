@@ -34,6 +34,7 @@ class PixelShuffle(nn.Module):
 class PixelShuffleUpsample(nn.Module):
     def __init__(self, in_channels=128, factor=2):
         super(PixelShuffleUpsample, self).__init__()
+        self.in_channel = in_channels
 
         self.body = nn.Sequential(
             nn.Conv2d(in_channels, in_channels * factor, kernel_size=3, stride=1, padding=1, bias=False),

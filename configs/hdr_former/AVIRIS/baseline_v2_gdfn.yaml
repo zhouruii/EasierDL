@@ -1,4 +1,4 @@
-work_dir: experiments/hdr_former/AVIRIS/baseline_v2
+work_dir: experiments/hdr_former/AVIRIS/baseline_v2_GDFN
 data:
   train:
     dataset:
@@ -35,7 +35,7 @@ data:
       shuffle: false
 
 num_bands: &num_bands 224       # 波段数
-embed_dim: &embed_dim 64      # 传播维度
+embed_dim: &embed_dim 48      # 传播维度
 
 model:
   type: HDRFormer
@@ -83,9 +83,9 @@ model:
       strategy: dilation
     sparse_strategy: MultiscaleTopK
     ffn_cfg:
-      type: LeFF
-      ratio: 4
-      use_eca: true
+      type: GDFN
+      ffn_expansion_factor: 2.66
+      bias: false
     ln_bias: true
   reconstruction:
     type: FreqDecouplingReconstruction

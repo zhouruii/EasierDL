@@ -9,6 +9,7 @@ from torch.optim import Optimizer
 def save_checkpoint(model: torch.nn.Module,
                     optimizer: Optimizer,
                     filepath: str,
+                    scheduler=None,
                     meta=None) -> None:
     """ save model parameters
 
@@ -16,6 +17,7 @@ def save_checkpoint(model: torch.nn.Module,
         model (torch.nn.Module): The model that needs to save the parameters
         optimizer (Optimizer): The optimizer that needs to save the parameters.
         filepath (str): Save path
+        scheduler (_LRScheduler): LR Scheduler
         meta (dict): Other meta information to be saved
 
     """
@@ -39,19 +41,25 @@ def save_checkpoint(model: torch.nn.Module,
         for name, optim in optimizer.items():
             checkpoint['optimizer'][name] = optim.state_dict()
 
+    # save scheduler state dict in the checkpoint
+    if scheduler is not None:
+        checkpoint['scheduler'] = scheduler.state_dict()
+
     # save
     torch.save(checkpoint, filepath)
 
 
 def load_checkpoint(filename: str,
                     model: torch.nn.Module,
-                    optimizer: Optimizer, ) -> dict:
+                    optimizer: Optimizer,
+                    scheduler=None,) -> dict:
     """
 
     Args:
         filename (str): Path of model storage
         model (torch.nn.Module): The model with random initialization parameters
         optimizer (Optimizer): The optimizer with random initialization parameters
+        scheduler (_LRScheduler): LR Scheduler
 
     Returns:
         dict: Dict containing model/optimizer parameters and other meta information
@@ -68,6 +76,10 @@ def load_checkpoint(filename: str,
 
     # optimizer
     optimizer.load_state_dict(checkpoint['optimizer'])
+
+    # scheduler
+    if scheduler is not None:
+        scheduler.load_state_dict(checkpoint['scheduler'])
 
     # clean memory
     del checkpoint

@@ -82,7 +82,7 @@ def main():
         else:
             resume = None
     if resume:
-        meta = load_checkpoint(resume, model, optimizer)
+        meta = load_checkpoint(resume, model, optimizer, scheduler=scheduler)
         start_epoch = meta.get('epoch', 0)
         logger.info(f'checkpoint:{resume} was loaded successfully, start_epoch: {start_epoch + 1}')
     else:
@@ -112,7 +112,8 @@ def main():
         if (epoch + 1) % save_freq == 0:
             logger.info(f'saving checkpoint in epoch: {epoch + 1}')
             meta = dict(epoch=epoch + 1)
-            save_checkpoint(model, optimizer, join(f'{work_dir}/checkpoints', f'{epoch + 1}.pth'), meta)
+            save_checkpoint(model, optimizer, join(f'{work_dir}/checkpoints', f'{epoch + 1}.pth'), scheduler=scheduler,
+                            meta=meta)
 
     writer.close()
 

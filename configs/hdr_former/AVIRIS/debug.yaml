@@ -1,10 +1,10 @@
-work_dir: experiments/hdr_former/AVIRIS/baseline_v2
+work_dir: experiments/hdr_former/AVIRIS/debug
 data:
   train:
     dataset:
       type: HDF5MultiLevelRainHSIDataset
       h5_path: /home/disk2/ZR/datasets/AVIRIS/128/dataset.h5
-      split_file: /home/disk2/ZR/datasets/AVIRIS/128/npy/train.txt
+      split_file: /home/disk2/ZR/datasets/AVIRIS/128/npy/train_for_debug.txt
       pipelines:
         - type: RandomFlip
           directions: [original, horizontal, vertical, diagonal]
@@ -26,7 +26,7 @@ data:
     dataset:
       type: HDF5MultiLevelRainHSIDataset
       h5_path: /home/disk2/ZR/datasets/AVIRIS/128/dataset.h5
-      split_file: /home/disk2/ZR/datasets/AVIRIS/128/npy/val.txt
+      split_file: /home/disk2/ZR/datasets/AVIRIS/128/npy/val_for_debug.txt
       pipelines:
         - type: EasyToTensor
           mode: CHW
@@ -100,9 +100,9 @@ model:
 #    in_channels: *num_bands
 
 train:
-  total_epoch: &total_epoch 100
+  total_epoch: &total_epoch 10
   use_grad_clip: true
-  print_freq: 50
+  print_freq: 1
 
   loss:
     type: MSELoss
@@ -127,7 +127,7 @@ train:
   scheduler:
     type: LinearWarmupCosineLR
     total_epochs: *total_epoch
-    warmup_epochs: 10
+    warmup_epochs: 1
     warmup_start_lr: 3.0e-4
     min_lr: 1.0e-6
 #    type: CosineAnnealingLR
@@ -137,10 +137,10 @@ train:
 
 
 val:
-  val_freq: 1
+  val_freq: 2
   metric: psnr
 
 checkpoint:
-  save_freq: 10
-  resume_from: null
-  auto_resume: false
+  save_freq: 2
+  resume_from: ~
+  auto_resume: true

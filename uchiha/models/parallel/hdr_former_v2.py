@@ -1,17 +1,8 @@
+import torch
 from torch import nn
 from torch.nn import init
 
 from ..builder import MODEL, build_module
-
-
-def get_actual_index(num_layers, stage):
-    assert stage < 2 * num_layers
-    if stage <= num_layers:
-        c = stage - 1
-    else:
-        c = 2 * num_layers - stage - 1
-
-    return c
 
 
 def fill_former_cfg(cfg, channels_former, channels_prior, num_heads, num_blocks):
@@ -45,8 +36,9 @@ def create_sampling_module(former_samplings, prior_samplings, sampling_cfg, samp
                                                           in_channels=channels_prior)))
 
 
+# last decoder differs from v1
 @MODEL.register_module()
-class HDRFormer(nn.Module):
+class HDRFormerV2(nn.Module):
     """
     Hyperspectral DeRaining Transformer model.
     """
@@ -61,6 +53,7 @@ class HDRFormer(nn.Module):
                  fusion_cfg=None,
                  sampling_cfg=None,
                  transformer_cfg=None,
+                 num_refinement_blocks=None,
                  reconstruction=None):
         super().__init__()
         self.in_channels = in_channels
@@ -75,51 +68,74 @@ class HDRFormer(nn.Module):
         self.embed_dim = embedding_cfg.get('embed_dim')
         self.num_heads = transformer_cfg.get('num_heads')
         self.num_blocks = transformer_cfg.get('num_blocks')
+        self.num_refinement_blocks = num_refinement_blocks
         self.num_layers = len(self.num_blocks)
 
         downsample_type = sampling_cfg.pop('downsample')
         upsample_type = sampling_cfg.pop('upsample')
 
         cfg = transformer_cfg.copy()
-        self.encoders = nn.ModuleList()
-        self.bottleneck = nn.Identity()
-        self.decoders = nn.ModuleList()
         self.former_samplings = nn.ModuleList()
         self.prior_samplings = nn.ModuleList()
-        for i in range(1, 2 * self.num_layers):
-            stage = get_actual_index(self.num_layers, i)
-            channels_former = self.embed_dim * (2 ** stage)
-            channels_prior = self.prior_dim * (2 ** stage)
+
+        # encoder
+        self.encoders = nn.ModuleList()
+        for i in range(0, self.num_layers - 1):
+            channels_former = self.embed_dim * (2 ** i)
+            channels_prior = self.prior_dim * (2 ** i)
             filled_former_cfg = fill_former_cfg(cfg=cfg,
                                                 channels_former=channels_former,
                                                 channels_prior=channels_prior,
-                                                num_heads=self.num_heads[stage],
-                                                num_blocks=self.num_blocks[stage])
+                                                num_heads=self.num_heads[i],
+                                                num_blocks=self.num_blocks[i])
 
-            if i < self.num_layers:
-                self.encoders.append(build_module(filled_former_cfg))
-                create_sampling_module(self.former_samplings, self.prior_samplings, sampling_cfg, downsample_type,
-                                       channels_former, channels_prior)
+            self.encoders.append(build_module(filled_former_cfg))
+            create_sampling_module(self.former_samplings, self.prior_samplings, sampling_cfg, downsample_type,
+                                   channels_former, channels_prior)
 
-            elif i > self.num_layers:
+        # bottleneck
+        self.bottleneck = build_module(fill_former_cfg(cfg=cfg,
+                                                       channels_former=self.embed_dim * (2 ** (self.num_layers - 1)),
+                                                       channels_prior=self.prior_dim * (2 ** (self.num_layers - 1)),
+                                                       num_heads=self.num_heads[self.num_layers - 1],
+                                                       num_blocks=self.num_blocks[self.num_layers - 1]))
+
+        # decoder
+        self.decoders = nn.ModuleList()
+        for i in range(self.num_layers, 2 * self.num_layers - 1):
+            channels_former = self.embed_dim * (2 ** (self.num_layers - 2 - i % self.num_layers))
+            channels_prior = self.prior_dim * (2 ** (self.num_layers - 2 - i % self.num_layers))
+            filled_former_cfg = fill_former_cfg(cfg=cfg,
+                                                channels_former=channels_former,
+                                                channels_prior=channels_prior,
+                                                num_heads=self.num_heads[i % self.num_layers],
+                                                num_blocks=self.num_blocks[i % self.num_layers])
+            create_sampling_module(self.former_samplings, self.prior_samplings, sampling_cfg, upsample_type,
+                                   channels_former * 2, channels_prior * 2)
+            if i != 2 * self.num_layers - 2:
                 self.decoders.append(build_module(filled_former_cfg))
-                if i < 2 * self.num_layers - 1:
-                    create_sampling_module(self.former_samplings, self.prior_samplings, sampling_cfg, upsample_type,
-                                           channels_former, channels_prior)
             else:
-                self.bottleneck = build_module(filled_former_cfg)
-                create_sampling_module(self.former_samplings, self.prior_samplings, sampling_cfg, upsample_type,
-                                       channels_former, channels_prior)
+                self.decoders.append(build_module(fill_former_cfg(cfg=cfg,
+                                                                  channels_former=self.embed_dim * 2,
+                                                                  channels_prior=self.prior_dim * 2,
+                                                                  num_heads=self.num_heads[0],
+                                                                  num_blocks=self.num_blocks[0] + self.num_refinement_blocks)))
 
-        self.fusions = nn.ModuleList()
+        self.former_fusions = nn.ModuleList()
         complete_fusion_cfg = fusion_cfg.copy()
-        for i in range(self.num_layers - 1, 0, -1):
+        for i in range(self.num_layers - 1, 1, -1):
             complete_fusion_cfg['in_channels'] = self.embed_dim * (2 ** i)
-            self.fusions.append(build_module(complete_fusion_cfg))
+            self.former_fusions.append(build_module(complete_fusion_cfg))
+
+        self.prior_fusions = nn.ModuleList()
+        complete_fusion_cfg = fusion_cfg.copy()
+        for i in range(self.num_layers - 1, 1, -1):
+            complete_fusion_cfg['in_channels'] = self.prior_dim * (2 ** i)
+            self.prior_fusions.append(build_module(complete_fusion_cfg))
 
         self.out_proj = nn.Sequential(
-            nn.Conv2d(self.embed_dim, abs(self.out_channels + self.embed_dim) // 2, 1, bias=False),
-            nn.Conv2d(abs(self.out_channels + self.embed_dim) // 2, self.out_channels, 1, bias=False)
+            nn.Conv2d(self.embed_dim * 2, abs(self.out_channels + self.embed_dim * 2) // 2, 1, bias=False),
+            nn.Conv2d(abs(self.out_channels + self.embed_dim * 2) // 2, self.out_channels, 1, bias=False)
         )
 
     def _initialize_weights(self, m):
@@ -144,14 +160,16 @@ class HDRFormer(nn.Module):
 
         # encode
         to_fuse_feats = []
+        to_fuse_rcp_priors = []
         for i in range(depth):
             encoder = self.encoders[i]
             former_downsample = self.former_samplings[i]
             prior_downsample = self.prior_samplings[i]
-            to_fuse_feat, rcp_prior = encoder(feat, rcp_prior)
+            to_fuse_feat, to_fuse_rcp_prior = encoder(feat, rcp_prior)
             feat = former_downsample(to_fuse_feat)
-            rcp_prior = prior_downsample(rcp_prior)
+            rcp_prior = prior_downsample(to_fuse_rcp_prior)
             to_fuse_feats.append(to_fuse_feat)
+            to_fuse_rcp_priors.append(to_fuse_rcp_prior)
 
         # bottleneck
         feat, rcp_prior = self.bottleneck(feat, rcp_prior)
@@ -161,10 +179,17 @@ class HDRFormer(nn.Module):
             decoder = self.decoders[i]
             former_upsample = self.former_samplings[i + depth]
             prior_upsample = self.prior_samplings[i + depth]
-            fusion = self.fusions[i]
+
             feat = former_upsample(feat)
             rcp_prior = prior_upsample(rcp_prior)
-            feat = fusion(feat, to_fuse_feats[depth - 1 - i])
+            if i < depth - 1:
+                former_fusion = self.former_fusions[i]
+                prior_fusion = self.prior_fusions[i]
+                feat = former_fusion(feat, to_fuse_feats[depth - 1 - i])
+                rcp_prior = prior_fusion(rcp_prior, to_fuse_rcp_priors[depth - 1 - i])
+            else:
+                feat = torch.cat((feat, to_fuse_feats[0]), dim=1)
+                rcp_prior = torch.cat((rcp_prior, to_fuse_rcp_priors[0]), dim=1)
             feat, rcp_prior = decoder(feat, rcp_prior)
 
         feat = self.out_proj(feat)

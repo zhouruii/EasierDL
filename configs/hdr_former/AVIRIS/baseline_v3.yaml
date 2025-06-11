@@ -1,4 +1,4 @@
-work_dir: experiments/hdr_former/AVIRIS/baseline_v2
+work_dir: experiments/hdr_former/AVIRIS/baseline_v3
 data:
   train:
     dataset:
@@ -15,12 +15,12 @@ data:
         - type: EasyToTensor
           mode: CHW
     dataloader:
-      batch_size: 8
+      batch_size: 4
       shuffle: true
-      num_workers: 8
+      num_workers: 4
       pin_memory: true
       persistent_workers: false
-      prefetch_factor: 8
+      prefetch_factor: 4
       drop_last: true
   val:
     dataset:
@@ -31,14 +31,14 @@ data:
         - type: EasyToTensor
           mode: CHW
     dataloader:
-      batch_size: 8
+      batch_size: 4
       shuffle: false
 
 num_bands: &num_bands 224       # 波段数
-embed_dim: &embed_dim 64      # 传播维度
+embed_dim: &embed_dim 48      # 传播维度
 
 model:
-  type: HDRFormer
+  type: HDRFormerV2
   in_channels: *num_bands
   out_channels: *num_bands
   prior_extractor:
@@ -71,7 +71,7 @@ model:
     factor: 2
   transformer_cfg:
     type: SelfCrossAttentionLayer
-    num_heads: [2, 4, 4, 8]
+    num_heads: [1, 2, 4, 8]
     num_blocks: [4, 6, 6, 8]
     freq_cfg:
       type: DWT
@@ -83,10 +83,11 @@ model:
       strategy: dilation
     sparse_strategy: MultiscaleTopK
     ffn_cfg:
-      type: LeFF
-      ratio: 4
-      use_eca: true
+      type: GDFN
+      ffn_expansion_factor: 2.66
+      bias: false
     ln_bias: true
+  num_refinement_blocks: 4
   reconstruction:
     type: FreqDecouplingReconstruction
     d: 0.4
