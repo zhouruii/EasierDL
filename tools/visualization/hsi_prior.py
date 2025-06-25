@@ -128,18 +128,18 @@ def visualize_prior_maps(*args):
 
 
 if __name__ == '__main__':
-    filename = 'f130804t01p00r04rdn_e_14.npy'
-    data_path = os.path.join('/home/disk2/ZR/datasets/AVIRIS/512/train/rain/storm', filename)
-    gt_path = os.path.join('/home/disk2/ZR/datasets/AVIRIS/512/train/gt', filename)
+    filename = 'f130803t01p00r15rdn_e_16.npy'
+    data_path = os.path.join('/home/disk2/ZR/datasets/AVIRIS/512/rain/storm', filename)
+    gt_path = os.path.join('/home/disk2/ZR/datasets/AVIRIS/512/gt', filename)
     # data_path = '/home/disk2/ZR/datasets/AVIRIS/512/train/rain/storm/f130804t01p00r04rdn_e_11.npy'
     # gt_path = '/home/disk2/ZR/datasets/AVIRIS/512/train/gt/f130804t01p00r04rdn_e_11.npy'
     data = np.load(data_path)
     gt = np.load(gt_path)
     # 计算DCP和RCP
-    dcp = dark_channel_prior(data, window_size=3)
-    rcp = residual_channel_prior(data)
-    mean = mean_channel(data)
-    transmission = get_haze_transmission(data, split_band=110)
+    # dcp = dark_channel_prior(data, window_size=3)
+    sorted_rcp = residual_channel_prior(data)
+    # mean = mean_channel(data)
+    transmission = get_haze_transmission(data, split_band=190)
 
     # 即时可视化
-    visualize_prior_maps(data, gt, dcp, rcp, transmission)
+    visualize_prior_maps(data, gt, sorted_rcp, transmission)

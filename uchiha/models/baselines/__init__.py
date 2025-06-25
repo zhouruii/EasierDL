@@ -4,3 +4,8 @@ from .FADformer import FADformer
 from .FPro import FPro
 from .AST import AST
 from .Uformer import Uformer
+from .DGNL_Net import DGNLNet
+from .AIDTransformer import AIDTransformer
+from .HyperDehazeNet import HyperDehazeNet
+from .PReNet import PReNet
+from .SGNet import SGNet

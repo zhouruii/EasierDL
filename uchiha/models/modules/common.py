@@ -314,3 +314,49 @@ def sequence_to_image(x):
     B, L, C = x.shape
     H, W = int(math.sqrt(L)), int(math.sqrt(L))
     return x.view(B, H, W, C).permute(0, 3, 1, 2)
+
+
+class SingleBatchNorm(nn.BatchNorm2d):
+    def __init__(self, num_features, momentum=1.0, eps=1e-5):
+        super(SingleBatchNorm, self).__init__(
+            num_features,
+            affine=True,
+            track_running_stats=True,
+            momentum=momentum,
+            eps=eps
+        )
+        self.running_var = None
+        self.running_mean = None
+
+    def forward(self, x: torch.Tensor):
+        # 如果是训练模式，只使用 running stats
+        if self.training:
+            # 强制使用 running mean/var
+            exponential_average_factor = self.momentum
+
+            # 手动调用 _check_input_dim
+            self._check_input_dim(x)
+
+            # 计算当前 batch 的 mean & var（我们不使用）
+            mean = x.mean([0, 2, 3])
+            var = x.var([0, 2, 3], unbiased=False)
+
+            # 更新 running mean/var（可选）
+            with torch.no_grad():
+                self.running_mean = exponential_average_factor * mean + (
+                        1 - exponential_average_factor) * self.running_mean
+                self.running_var = exponential_average_factor * var + (
+                        1 - exponential_average_factor) * self.running_var
+
+            # 实际归一化时仍使用 running stats
+            mean = self.running_mean
+            var = self.running_var
+        else:
+            mean = self.running_mean
+            var = self.running_var
+
+        x = (x - mean[None, :, None, None]) / torch.sqrt(var[None, :, None, None] + self.eps)
+        if self.affine:
+            x = x * self.weight[None, :, None, None] + self.bias[None, :, None, None]
+
+        return x
