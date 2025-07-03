@@ -179,7 +179,7 @@ if __name__ == '__main__':
     # random.seed(seed)
 
     model = RainModelForAVIRIS(
-        hsi_path='/home/disk2/ZR/datasets/AVIRIS/512/gt/f130412t01p00r11rdn_e_44.npy',
+        hsi_path='/home/disk2/ZR/datasets/AVIRIS/512/gt/f130412t01p00r11rdn_e_48.npy',
         bands_path='/home/disk2/ZR/datasets/AVIRIS/512/meta.pkl',
         r0=0.155,  # 0.248
         level=4,

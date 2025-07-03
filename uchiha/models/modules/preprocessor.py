@@ -170,6 +170,29 @@ def get_sorted_rcp(hyperspectral_tensor, split_bands=None):
     return torch.cat(rcps, dim=1)  # B×L×H×W
 
 
+def get_sorted_rcp_pw(image: torch.Tensor, split_bands: list) -> torch.Tensor:
+    """
+    输入: CHW torch.Tensor
+    功能: 排序 + 切分点差值
+    输出: HWN torch.Tensor
+    """
+    c, h, w = image.shape
+    flattened = image.permute(1, 2, 0).reshape(-1, c)  # L x C
+    sorted_flattened, _ = torch.sort(flattened, dim=1)
+
+    results = []
+    for split_idx in split_bands:
+        if not (0 < split_idx < c):
+            raise ValueError(f"切分点 {split_idx} 超出通道范围 (1~{c - 1})")
+        front = sorted_flattened[:, :split_idx]
+        back = sorted_flattened[:, split_idx:]
+        diff = front.mean(dim=1) - back.mean(dim=1)
+        results.append(diff)
+
+    output = torch.stack(results, dim=1)  # L x N
+    return output.reshape(h, w, -1)  # HWN
+
+
 @MODULE.register_module()
 class GroupRCP(nn.Module):
     """ Group-based Residue Channel Prior
@@ -178,15 +201,28 @@ class GroupRCP(nn.Module):
         split_bands (List): 划分的波段索引，在其两侧进行残差运算
     """
 
-    def __init__(self, split_bands=None):
+    def __init__(self, split_bands=None, strategy=None):
         super().__init__()
         self.split_bands = split_bands
 
+        if strategy is None:
+            self.strategy = ['sorted', 'serial']
+        else:
+            self.strategy = strategy
+
     def forward(self, x):
         # x.shape (B, C, H, W)
-        sorted_rcp = get_sorted_rcp(x, self.split_bands)
-        serial_rcp = get_serial_rcp(x, self.split_bands)
-        rcp = torch.cat([sorted_rcp, serial_rcp], dim=1)
+        rcp = []
+        for s in self.strategy:
+            if s == 'sorted':
+                rcp.append(get_sorted_rcp(x, self.split_bands))
+            elif s == 'serial':
+                rcp.append(get_serial_rcp(x, self.split_bands))
+            elif s == 'sorted_pw':
+                rcp.append(get_sorted_rcp_pw(x, self.split_bands))
+            else:
+                raise ValueError(f"Invalid strategy: {s}")
+        rcp = torch.cat(rcp, dim=1)
 
         return rcp
 

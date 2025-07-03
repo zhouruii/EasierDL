@@ -163,7 +163,7 @@ def compare_experiments(experiment_paths, names=None, save_name="comparison_resu
 
 if __name__ == '__main__':
     train_df, val_df = parse_log(
-        r"/home/disk1/ZR/PythonProjects/uchiha/experiments/hdr_former/AVIRIS/baseline_v2/logs/2025-05-30-15-47.log")
+        r"/experiments/hdr_former/AVIRIS/ours/baseline_v2/logs/2025-05-30-15-47.log")
     plot_single_experiment(train_df, val_df, exp_name="baseline_v2")
 
     compare_experiments(
