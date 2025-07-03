@@ -9,3 +9,4 @@ from .AIDTransformer import AIDTransformer
 from .HyperDehazeNet import HyperDehazeNet
 from .PReNet import PReNet
 from .SGNet import SGNet
+from .D3_Dehaze import D3
