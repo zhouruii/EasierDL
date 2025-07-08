@@ -96,7 +96,7 @@ def main():
     total_epoch = cfg.train.total_epoch
     eta_calc = ETACalculator(total_steps=total_epoch * len(trainloader))
     logger.info('start training...')
-
+    # torch.autograd.set_detect_anomaly(True)
     for epoch in range(start_epoch, total_epoch):
         # train
         writer, model, optimizer, scheduler = (

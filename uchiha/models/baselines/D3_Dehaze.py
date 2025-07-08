@@ -70,8 +70,18 @@ class PSA(nn.Module):
         b, c, h, w = x.size()
 
         SPC_out = x.view(b, self.S, c // self.S, h, w)
+        # for idx, conv in enumerate(self.convs):
+        #     SPC_out[:, idx, :, :, :] = conv(SPC_out[:, idx, :, :, :])
+
+        # 用列表存储每组卷积结果
+        outputs = []
         for idx, conv in enumerate(self.convs):
-            SPC_out[:, idx, :, :, :] = conv(SPC_out[:, idx, :, :, :])
+            part = SPC_out[:, idx, :, :, :]  # [b, c//S, h, w]
+            out = conv(part)  # 卷积后形状一致
+            outputs.append(out.unsqueeze(1))  # [b, 1, c//S, h, w]
+
+        # 拼回 [b, S, c//S, h, w]
+        SPC_out_new = torch.cat(outputs, dim=1)
 
         se_out = []
         for idx, se in enumerate(self.se_blocks):
@@ -157,7 +167,7 @@ class PR(nn.Module):
         v_max = F.max_pool2d(c1, kernel_size=7, stride=3)
         v_range = self.relu(self.conv_max(v_max))
         c3 = self.relu(self.conv3(v_range))
-        c3 = self.conv3_(c3)
+        c3 = self.conv3(c3)
         c3 = F.interpolate(c3, (x.size(2), x.size(3)), mode='bilinear', align_corners=False)
         cf = self.conv_f(c1_)
         c4 = self.conv4(c3 + cf)
@@ -253,7 +263,7 @@ class D3(nn.Module):
         self.HD = HD(self.dim)
         post_precess = [
             conv(self.dim, self.dim, kernel_size),
-            conv(self.dim, 3, kernel_size)
+            conv(self.dim, in_channels, kernel_size)
         ]
         self.pre = nn.Sequential(*pre_process)
         self.post = nn.Sequential(*post_precess)
