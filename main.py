@@ -54,13 +54,18 @@ def main():
 
     # model
     model = build_model(cfg.model.to_dict())
-    if len(args.gpu_ids) > 1:
-        device_ids = [int(i) for i in args.gpu_ids]
-        torch.cuda.set_device(device_ids[0])
-        model = nn.DataParallel(model.cuda(), device_ids=device_ids)
-        logger.info(f'Use GPUs: {device_ids}')
+    gpu_ids = [int(i) for i in args.gpu_ids]
+    if len(gpu_ids) > 1:
+        torch.cuda.set_device(gpu_ids[0])  # 当前上下文绑定主卡
+        model = nn.DataParallel(model, device_ids=gpu_ids).cuda(gpu_ids[0])
+        device = torch.device(f'cuda:{gpu_ids[0]}')
+        print(f'Using GPUs: {gpu_ids}')
     else:
-        model = model.cuda()
+        device_id = gpu_ids[0]
+        device = torch.device(f'cuda:{device_id}')
+        torch.cuda.set_device(device)  # 当前上下文绑定该卡
+        model = model.to(device)
+        print(f'Using single GPU: {device}')
     log_model_parameters(unwrap_model(model), logger, max_depth=args.analyze_params)
 
     # loss function
@@ -101,12 +106,12 @@ def main():
         # train
         writer, model, optimizer, scheduler = (
             train_by_epoch(cfg, epoch, trainloader, model, optimizer, scheduler, criterion, writer,
-                           eta_calc))
+                           eta_calc, device))
 
         # val
         if (epoch + 1) % val_freq == 0:
             print_log(f'epoch:[{epoch + 1}/{total_epoch}]\tstart validating...', logger)
-            _ = validate(epoch, valloader, model, writer, metric)
+            _ = validate(epoch, valloader, model, writer, metric, device)
 
         # save checkpoint
         if (epoch + 1) % save_freq == 0:

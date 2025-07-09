@@ -1,7 +1,7 @@
 import torch
 
 
-def validate(epoch, dataloader, model, writer, metric):
+def validate(epoch, dataloader, model, writer, metric, device):
     """ validation during training
 
     Args:
@@ -10,6 +10,7 @@ def validate(epoch, dataloader, model, writer, metric):
         model (torch.nn.Module): model built from configuration file
         writer (SummaryWriter): tensorboard-based loggers
         metric (str): model's performance metrics for specific tasks
+        device (torch.device): device to run the model
 
     Returns:
         results (dict): Dictionary, the key is the name corresponding to cls or ele,
@@ -24,7 +25,7 @@ def validate(epoch, dataloader, model, writer, metric):
     with torch.no_grad():
         for idx, data in enumerate(dataloader):
             # data
-            sample = data['sample'].cuda()
+            sample = data['sample'].to(device, non_blocking=True)
             # forward
             pred = model(sample)
 

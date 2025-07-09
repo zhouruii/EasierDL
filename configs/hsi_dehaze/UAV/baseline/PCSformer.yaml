@@ -1,0 +1,78 @@
+work_dir: experiments/hsi_dehaze/UAV/comparison/PCSformer
+data:
+  train:
+    dataset:
+      type: HSIDehazeDataset
+      lq_path: /home/disk2/ZR/datasets/HSIDeD-UAV/train/hazy/*.mat
+      gt_path: /home/disk2/ZR/datasets/HSIDeD-UAV/train/clean/*.mat
+      loader_type: mat
+      dataset_name: AVIRIS
+    dataloader:
+      batch_size: 1
+      shuffle: true
+      num_workers: 1
+      pin_memory: true
+      drop_last: true
+  val:
+    dataset:
+      type: HSIDehazeDataset
+      lq_path: /home/disk2/ZR/datasets/HSIDeD-UAV/test/hazy/*.mat
+      gt_path: /home/disk2/ZR/datasets/HSIDeD-UAV/test/clean/*.mat
+      loader_type: mat
+      dataset_name: AVIRIS
+    dataloader:
+      batch_size: 1
+      shuffle: false
+
+num_bands: &num_bands 468      # 波段数
+
+model:
+  type: PCSformer
+  config:
+    model:
+      model_resolution: 256  # patch_size = 2
+      in_channels: *num_bands
+      embed_dim: [ 48, 96, 96, 96, 48 ]
+      depth: [ 4, 6, 8, 6, 4 ]
+      split_size: [ 1, 2, 8, 2, 1 ]
+      proxy_downscale: [ 4, 2, 2 ]
+      num_heads: [ 4, 8, 8, 4, 4 ]
+      mlp_ratio: 4.
+      qkv_bias: True
+      attn_drop_rate: 0.
+      proj_drop_rata: 0.
+      drop_path_rate: 0.
+      num_refinement_blocks: 5
+      refinement_block_dim: 48
+
+
+train:
+  total_epoch: &total_epoch 300
+  use_grad_clip: true
+  print_freq: 50
+
+  loss:
+    type: MSELoss
+
+  optimizer:
+    type: AdamW
+    lr: 3.0e-4
+    weight_decay: 1.0e-4
+    betas: [ 0.9, 0.999 ]
+
+
+  scheduler:
+    type: LinearWarmupCosineLR
+    total_epochs: *total_epoch
+    warmup_epochs: 10
+    warmup_start_lr: 3.0e-4
+    min_lr: 1.0e-6
+
+val:
+  val_freq: 5
+  metric: psnr
+
+checkpoint:
+  save_freq: 30
+  resume_from: null
+  auto_resume: false

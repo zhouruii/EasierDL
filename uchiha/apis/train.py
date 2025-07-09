@@ -7,7 +7,7 @@ from ..utils import print_log, get_root_logger
 
 
 def train_by_epoch(cfg, epoch, dataloader, model, optimizer, scheduler, criterion, writer,
-                   eta_calculator):
+                   eta_calculator, device):
     """ train for one epoch
 
     Prints logs based on the configured frequency (based on the number of iterations)
@@ -22,6 +22,7 @@ def train_by_epoch(cfg, epoch, dataloader, model, optimizer, scheduler, criterio
         criterion (class): loss function built from configuration file
         writer (SummaryWriter): tensorboard-based loggers currently support tensorboardX
         eta_calculator (class): ETA (Estimated Time) Calculator
+        device (torch.device): device to run the model
 
     Returns:
         writer (dict): The updated logger, also return the updated model, optimizer and scheduler.
@@ -34,8 +35,8 @@ def train_by_epoch(cfg, epoch, dataloader, model, optimizer, scheduler, criterio
     model.train()
     for idx, data in enumerate(dataloader):
         # data
-        sample = data['sample'].cuda()
-        target = data['target'].cuda().float()
+        sample = data['sample'].to(device, non_blocking=True)
+        target = data['target'].to(device, non_blocking=True)
 
         # forward & loss
         pred = model(sample)

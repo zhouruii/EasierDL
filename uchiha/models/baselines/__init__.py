@@ -10,3 +10,10 @@ from .HyperDehazeNet import HyperDehazeNet
 from .PReNet import PReNet
 from .SGNet import SGNet
 from .D3_Dehaze import D3
+from .DEA_Net import DEANet
+from .ConvIR import ConvIR
+from .FS_Net import FSNet
+from .PCSformer import PCSformer
+from .PUCCNet import PUCCNet
+from .SFAN import SFAN
+from .WaveUIR import WaveUIR

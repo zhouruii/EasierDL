@@ -1,3 +1,7 @@
+"""
+D3-Dehaze: a divide-and-conquer framework for enhanced single image dehazing
+"""
+
 import torch.nn as nn
 import torch
 import torch.nn.functional as F

@@ -1,0 +1,64 @@
+work_dir: experiments/hsi_dehaze/AVIRIS/comparison/ConvIR
+data:
+  train:
+    dataset:
+      type: HSIDehazeDataset
+      lq_path: /home/disk2/ZR/datasets/HSIDeD-AVI/train/hazy/*.mat
+      gt_path: /home/disk2/ZR/datasets/HSIDeD-AVI/train/clean/*.mat
+      loader_type: mat
+      dataset_name: AVIRIS
+    dataloader:
+      batch_size: 1
+      shuffle: true
+      num_workers: 1
+      pin_memory: true
+      drop_last: true
+  val:
+    dataset:
+      type: HSIDehazeDataset
+      lq_path: /home/disk2/ZR/datasets/HSIDeD-AVI/test/hazy/*.mat
+      gt_path: /home/disk2/ZR/datasets/HSIDeD-AVI/test/clean/*.mat
+      loader_type: mat
+      dataset_name: AVIRIS
+    dataloader:
+      batch_size: 1
+      shuffle: false
+
+num_bands: &num_bands 197       # 波段数
+
+model:
+  type: ConvIR
+  in_channels: *num_bands
+  version: base
+
+
+train:
+  total_epoch: &total_epoch 300
+  use_grad_clip: true
+  print_freq: 50
+
+  loss:
+    type: MSELoss
+
+  optimizer:
+    type: AdamW
+    lr: 3.0e-4
+    weight_decay: 1.0e-4
+    betas: [ 0.9, 0.999 ]
+
+
+  scheduler:
+    type: LinearWarmupCosineLR
+    total_epochs: *total_epoch
+    warmup_epochs: 10
+    warmup_start_lr: 3.0e-4
+    min_lr: 1.0e-6
+
+val:
+  val_freq: 5
+  metric: psnr
+
+checkpoint:
+  save_freq: 30
+  resume_from: null
+  auto_resume: false
