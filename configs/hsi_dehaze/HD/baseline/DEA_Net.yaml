@@ -1,4 +1,4 @@
-work_dir: experiments/hsi_dehaze/HD/comparison/D3
+work_dir: experiments/hsi_dehaze/HD/comparison/DEA_Net
 data:
   train:
     dataset:
@@ -35,8 +35,9 @@ data:
 num_bands: &num_bands 305       # 波段数
 
 model:
-  type: D3
+  type: DEANet
   in_channels: *num_bands
+  base_dim: 32
 
 
 train:

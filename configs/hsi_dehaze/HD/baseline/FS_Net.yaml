@@ -1,4 +1,4 @@
-work_dir: experiments/hsi_dehaze/HD/comparison/D3
+work_dir: experiments/hsi_dehaze/HD/comparison/FS_Net
 data:
   train:
     dataset:
@@ -35,8 +35,9 @@ data:
 num_bands: &num_bands 305       # 波段数
 
 model:
-  type: D3
+  type: FSNet
   in_channels: *num_bands
+  num_res: 16
 
 
 train:

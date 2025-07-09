@@ -113,11 +113,13 @@ def load_hd(loader, path, exchange_bands=False, first_branch_channel=102):
     clean_path = get_clean_of_HD(path)
 
     im_data = np.asanyarray(im_data, dtype="float32") / 2200
-    im_data = torch.Tensor(im_data).permute(2, 0, 1)
+    # im_data = torch.Tensor(im_data).permute(2, 0, 1)
 
     im_label = loader(clean_path)
     im_label = np.asanyarray(im_label, dtype="float32") / 2200
-    im_label = torch.Tensor(im_label)
+    im_label = np.transpose(im_label, (1, 2, 0))  # 转置为 (H, W, C)
+
+    # im_label = torch.Tensor(im_label)
 
     if exchange_bands:
         indices = compute_band_exchange_indices(im_data, first_branch_channel=first_branch_channel)
@@ -175,7 +177,7 @@ class HSIDehazeDataset(Dataset):
         return self.pipelines(results) if self.pipelines else results
 
     def __len__(self):
-        return len(self.gt_path)
+        return len(self.lq_path)
 
     def evaluate(self, preds: List[np.ndarray], targets: List[np.ndarray], metric,
                  indexes: List[int]) -> dict:

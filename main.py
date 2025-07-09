@@ -47,9 +47,11 @@ def main():
 
     # dataset & dataloader
     trainset = build_dataset(cfg.data.train.dataset.to_dict(), phase='train')
+    logger.info(f'dataset: {trainset.__class__.__name__} loaded! items: {len(trainset)}')
     trainloader = build_dataloader(trainset, cfg.data.train.dataloader.to_dict(), phase='train')
 
     valset = build_dataset(cfg.data.val.dataset.to_dict(), phase='val')
+    logger.info(f'dataset: {valset.__class__.__name__} loaded! items: {len(valset)}')
     valloader = build_dataloader(valset, cfg.data.val.dataloader.to_dict(), phase='val')
 
     # model
@@ -59,13 +61,13 @@ def main():
         torch.cuda.set_device(gpu_ids[0])  # 当前上下文绑定主卡
         model = nn.DataParallel(model, device_ids=gpu_ids).cuda(gpu_ids[0])
         device = torch.device(f'cuda:{gpu_ids[0]}')
-        print(f'Using GPUs: {gpu_ids}')
+        logger.info(f'Using GPUs: {gpu_ids}')
     else:
         device_id = gpu_ids[0]
         device = torch.device(f'cuda:{device_id}')
         torch.cuda.set_device(device)  # 当前上下文绑定该卡
         model = model.to(device)
-        print(f'Using single GPU: {device}')
+        logger.info(f'Using single GPU: {device}')
     log_model_parameters(unwrap_model(model), logger, max_depth=args.analyze_params)
 
     # loss function
