@@ -43,15 +43,39 @@
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href="#">Home</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#commands">Commands</a>
+    <li class="toctree-l2"><a class="reference internal" href="#_1">📚 目录</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#project-layout">Project layout</a>
+    <li class="toctree-l2"><a class="reference internal" href="#_2">📖 简介</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#demo">🚀 Demo</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#_3">⚙️ 安装</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1">1️⃣ 克隆仓库</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2">2️⃣ 创建虚拟环境</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-pytorch">3️⃣ 安装 PyTorch</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#4">4️⃣ 安装依赖</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#_4">🏃‍♂️ 使用</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#_5">常用参数</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_6">🚦 训练示例</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#_7">🔍 测试示例</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#_8">📂 数据集</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#_9">🔗 更多文档</a>
     </li>
     </ul>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="mkdocs/introduction.html">Introduction</a>
                 </li>
               </ul>
               <ul>
@@ -94,39 +118,121 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="welcome-to-uchiha">Welcome to Uchiha !</h1>
-<p>For full documentation visit <a href="https://www.mkdocs.org">mkdocs.org</a>.</p>
-<h2 id="commands">Commands</h2>
+                <h1 id="uchiha">🌟 深度学习简易工具箱 | Uchiha</h1>
+<blockquote>
+<p><strong>DIY your model!</strong><br />
+快速搭建、自由配置多种经典与创新的深度学习模型结构。</p>
+</blockquote>
+<p><a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg" /></a>
+<a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/python-3.9%2B-blue" /></a>
+<a href="https://pytorch.org/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-1.8.2-orange" /></a></p>
+<hr />
+<h2 id="_1">📚 目录</h2>
 <ul>
-<li><code>mkdocs new [dir-name]</code> - Create a new project.</li>
-<li><code>mkdocs serve</code> - Start the live-reloading docs server.</li>
-<li><code>mkdocs build</code> - Build the documentation site.</li>
-<li><code>mkdocs -h</code> - Print help message and exit.</li>
+<li><a href="#简介">简介</a></li>
+<li><a href="#demo">Demo</a></li>
+<li><a href="#安装">安装</a></li>
+<li><a href="#使用">使用</a></li>
+<li><a href="#数据集">数据集</a></li>
+<li><a href="#更多文档">更多文档</a></li>
 </ul>
-<h2 id="project-layout">Project layout</h2>
-<div class="highlight"><pre><span></span><code>configs
-docs/
-    index.md  # The documentation homepage.
-    ...       # Other markdown pages, images and other files.
-scripts/
-    ***.py
-    ...
-uchiha/
-    apis/
-    cores/
-    datasets/
-        pipelines/
-        ...
-    models/
-        ...
-        ...
-mkdocs.yml    # The configuration file.
+<hr />
+<h2 id="_2">📖 简介</h2>
+<p>通过<strong>配置文件</strong>，来自定义你的模型！<br />
+支持多种基础模型结构：
+- 串行结构（如经典的深度 CNN）
+- 并行结构
+- 知名的 U-Net 结构 等等</p>
+<div align="center">
+  <img src="docs/assets/jpg/stack.jpg" alt="串行结构" width="400"/>
+</div>
+<div align="center">
+
+  <img src="docs/assets/jpg/parallel.jpg" alt="并行结构" width="400"/>
+</div>
+
+<hr />
+<h2 id="demo">🚀 Demo</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>main.py<span class="w"> </span>--config<span class="w"> </span><span class="si">${</span><span class="nv">config</span><span class="p"> file</span><span class="si">}</span>
 </code></pre></div>
+<p>👉 配置文件详细用法：<a href="docs/config.md">配置讲解</a></p>
+<hr />
+<h2 id="_3">⚙️ 安装</h2>
+<h3 id="1">1️⃣ 克隆仓库</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/zhouruii/uchiha.git
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">cd</span><span class="w"> </span>uchiha-main
+</code></pre></div>
+<h3 id="2">2️⃣ 创建虚拟环境</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>your_env_name<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.9
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>conda<span class="w"> </span>activate<span class="w"> </span>your_env_name
+</code></pre></div>
+<h3 id="3-pytorch">3️⃣ 安装 PyTorch</h3>
+<p>⚠️ 请根据你的 CUDA 版本选择合适的 PyTorch，参考 <a href="https://pytorch.org/">PyTorch 官网</a></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torch</span><span class="o">==</span><span class="m">1</span>.8.2<span class="w"> </span><span class="nv">torchvision</span><span class="o">==</span><span class="m">0</span>.9.2<span class="w"> </span><span class="nv">torchaudio</span><span class="o">==</span><span class="m">0</span>.8.2<span class="w"> </span>--extra-index-url<span class="w"> </span>https://download.pytorch.org/whl/lts/1.8/cu111
+</code></pre></div>
+<h3 id="4">4️⃣ 安装依赖</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</code></pre></div>
+<hr />
+<h2 id="_4">🏃‍♂️ 使用</h2>
+<h3 id="_5">常用参数</h3>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--seed</code></td>
+<td>随机数种子</td>
+</tr>
+<tr>
+<td><code>--config</code></td>
+<td>训练程序的配置文件（核心）</td>
+</tr>
+<tr>
+<td><code>--gpu_ids</code></td>
+<td>显卡 ID，支持多卡</td>
+</tr>
+<tr>
+<td><code>--analyze_params</code></td>
+<td>参数分析深度（0=总参数量）</td>
+</tr>
+</tbody>
+</table>
+<p>📄 更多详情：<a href="docs/config.md">配置说明</a></p>
+<hr />
+<h3 id="_6">🚦 训练示例</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>main.py<span class="w"> </span>--config<span class="w"> </span><span class="si">${</span><span class="nv">config</span><span class="p"> file</span><span class="si">}</span>
+</code></pre></div>
+<p>多卡训练 + 参数递归分析：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>main.py<span class="w"> </span>--analyze_params<span class="w"> </span><span class="m">3</span><span class="w"> </span>--gpu_ids<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">3</span><span class="w"> </span>--config<span class="w"> </span>configs/baseline/Restormer.yaml
+</code></pre></div>
+<hr />
+<h3 id="_7">🔍 测试示例</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>python<span class="w"> </span>test.py<span class="w"> </span>--config<span class="w"> </span><span class="si">${</span><span class="nv">config</span><span class="p"> file</span><span class="si">}</span><span class="w"> </span>--checkpoint<span class="w"> </span><span class="si">${</span><span class="nv">checkpoint</span><span class="p"> file</span><span class="si">}</span>
+</code></pre></div>
+<p>示例：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>python<span class="w"> </span>test.py<span class="w"> </span>--config<span class="w"> </span>configs/baseline/Restormer.yaml<span class="w"> </span>--checkpoint<span class="w"> </span>your_checkpoint
+</code></pre></div>
+<hr />
+<h2 id="_8">📂 数据集</h2>
+<p>数据集准备与组织请参考 <a href="docs/data.md">数据准备</a></p>
+<hr />
+<h2 id="_9">🔗 更多文档</h2>
+<ul>
+<li><a href="docs/config.md">配置文件说明</a></li>
+<li><a href="docs/data.md">数据集准备</a></li>
+</ul>
+<hr />
+<p><strong>Have fun &amp; happy training! 🚀</strong></p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="mkdocs/introduction.html" class="btn btn-neutral float-right" title="Introduction">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="mkdocs/module.html" class="btn btn-neutral float-right" title="Module">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -154,7 +260,7 @@ mkdocs.yml    # The configuration file.
     
     
     
-      <span><a href="mkdocs/introduction.html" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="mkdocs/module.html" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
@@ -174,5 +280,5 @@ mkdocs.yml    # The configuration file.
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-07-10 09:26:58.028845+00:00
+Build Date UTC : 2025-07-10 09:29:29.084664+00:00
 -->
