@@ -11,10 +11,10 @@ class RandomRotation:
                  border_mode=cv2.BORDER_REFLECT_101):
         """
         Args:
-            angles (tuple): 旋转角度范围，例如 (-30, 30)
-            prob (float): 触发增强的概率
-            interpolation (int): 插值方法（cv2.INTER_NEAREST / INTER_LINEAR / INTER_CUBIC）
-            border_mode (int): 边界填充方式（cv2.BORDER_CONSTANT / BORDER_REPLICATE / BORDER_REFLECT_101）
+            angles (tuple): rotation angle range for example 30 30
+            prob (float): probability of triggering enhancement
+            interpolation (int): interpolation method（cv2.INTER_NEAREST / INTER_LINEAR / INTER_CUBIC）
+            border_mode (int): boundary fill method（cv2.BORDER_CONSTANT / BORDER_REPLICATE / BORDER_REFLECT_101）
         """
         if angles is None:
             angles = [-90, 90]
@@ -31,15 +31,15 @@ class RandomRotation:
             h, w = sample.shape[:2]
             center = (w / 2, h / 2)
 
-            # 随机生成旋转角度
+            # randomly generate rotation angle
             angle = random.choice(self.angles)
             if isinstance(angle, int):
                 angle = float(angle)
 
-            # 计算旋转矩阵
+            # compute the rotation matrix
             M = cv2.getRotationMatrix2D(center, angle, scale=1.0)
 
-            # 应用仿射变换
+            # applying affine transformation
             if len(sample.shape) == 3:  # HWC
                 sample_rotated = cv2.warpAffine(sample, M, (w, h), flags=self.interpolation,
                                                 borderMode=self.border_mode)

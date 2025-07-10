@@ -15,14 +15,14 @@ def count_parameters(module):
 
 
 def unwrap_model(model):
-    """解包DDP/DataParallel包裹的模型"""
-    if hasattr(model, 'module'):  # 处理DataParallel/DDP包裹
+    """unwrap the model of the ddp dataparallel"""
+    if hasattr(model, 'module'):
         return model.module
     return model
 
 
 def format_param_count(n):
-    """格式化参数量为 K/M 单位。"""
+    """format parameter quantity in k m units。"""
     if n >= 1_000_000:
         return f"{n / 1_000_000:.2f}M"
     elif n >= 1_000:
@@ -33,18 +33,18 @@ def format_param_count(n):
 
 def log_model_parameters(model: nn.Module, logger, max_depth: int = 1):
     """
-    记录模型的参数结构，以表格形式展示参数总数和比例，并按参数量排序。
+    Record the parameter structure of the model, display the total number and proportion of parameters in table form, and sort by parameter amount.
 
     Args:
-        model (nn.Module): 模型对象。
-        logger: 日志记录器。
-        max_depth (int): 展示的最大层级。
+        model (nn.Module): the model object
+        logger: the logger
+        max_depth (int): the maximum level of presentation
     """
 
     def collect_named_param_info(_model, _max_depth):
         _rows = []
         total_params = count_parameters(_model)
-        stack = [("", _model, 0)]  # (路径, 模块, 当前深度)
+        stack = [("", _model, 0)]
 
         while stack:
             prefix, module, depth = stack.pop(0)
@@ -73,10 +73,8 @@ def log_model_parameters(model: nn.Module, logger, max_depth: int = 1):
     logger.info("== Start analyzing model parameters ==")
     rows, total = collect_named_param_info(model, max_depth)
 
-    # ✅ 按参数量降序排序
     rows.sort(key=lambda x: x["params"], reverse=True)
 
-    # ✅ 转为 tabulate 可读格式
     table_data = [
         [r["depth"], r["name"], r["type"], format_param_count(r["params"]), r["percent"]]
         for r in rows

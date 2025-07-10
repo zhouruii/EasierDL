@@ -19,11 +19,11 @@ def read_pts(data_root, is1d=False):
 
 def read_txt(path):
     def extract_numbers(input_string):
-        # 去除多余的制表符和空格
+        # remove extra tabs and spaces
         cleaned_string = re.sub(r'[\t\s]+', ' ', input_string.strip())
-        # 提取所有数字（包括整数和浮点数）
+        # Extract all numbers (including integers and floating point numbers)
         numbers = re.findall(r'-?\d+(?:\.\d+)?', cleaned_string)
-        # 转换为浮点数列表
+        # convert to a list of floating point numbers
         number_list = [float(num) for num in numbers]
         return number_list
     data = []

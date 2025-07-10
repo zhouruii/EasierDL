@@ -2,48 +2,44 @@
 
 ## Atom
 ### Downsample
-::: models.components.downsample
+::: models.modules.downsample
     options:
         heading_level: 4
 
 ### Upsample
-::: models.components.upsample
+::: models.modules.upsample
     options:
         heading_level: 4
 
 ### Embedding
-::: models.components.embedding
+::: models.modules.embedding
     options:
         heading_level: 4
 
 ### Head
-::: models.components.head
+::: models.modules.head
     options:
         heading_level: 4
 
 ### Pre-process
-::: models.components.preprocessor
+::: models.modules.preprocessor
     options:
         heading_level: 4
 
 ### Post-process
-::: models.components.postprocessor
+::: models.modules.postprocessor
     options:
         heading_level: 4
 
-### Bottleneck(U-Net)
-::: models.components.bottleneck
-    options:
-        heading_level: 4
 
 ### Fusion
-::: models.components.fusion
+::: models.modules.fusion
     options:
         heading_level: 4
 
 
 ## ResNet
-::: models.basemodules.basic_resnet
+::: models.modules.basic_resnet
     options:
         heading_level: 3
         show_root_toc_entry: false
@@ -54,13 +50,13 @@
 
 ## ViT
 
-::: models.basemodules.basic_transformer
+::: models.modules.basic_transformer
     options:
         heading_level: 3
         members:
             - SimpleVisionTransformerLayer
 ### Atom
-::: models.basemodules.basic_transformer
+::: models.modules.basic_transformer
     options:
         heading_level: 4
         show_submodules: true
@@ -68,7 +64,7 @@
 
 
 ## CBAM
-::: models.basemodules.cbam
+::: models.modules.cbam
     options:
         heading_level: 3
         members:
@@ -77,7 +73,7 @@
             - BasicCBAM
             - CBAMBottleneck
 ### Atom
-::: models.basemodules.basic_transformer
+::: models.modules.basic_transformer
     options:
         heading_level: 4
         show_submodules: true
@@ -85,14 +81,14 @@
 
 
 ## Swin Transformer
-::: models.basemodules.swin_transformer
+::: models.modules.swin_transformer
     options:
         heading_level: 3
         members:
             - SwinTransformerLayer
             - SwinTransformerLayers
 ### Atom
-::: models.basemodules.swin_transformer
+::: models.modules.swin_transformer
     options:
         heading_level: 4
         show_submodules: true
@@ -100,7 +96,7 @@
 
 
 ## Channel Transformer
-::: models.basemodules.channel_transformer
+::: models.modules.channel_transformer
     options:
         heading_level: 3
         members:
@@ -108,7 +104,7 @@
             - ChannelTransformerLayers
             - UnetChannelTransformerLayers
 ### Atom
-::: models.basemodules.channel_transformer
+::: models.modules.channel_transformer
     options:
         heading_level: 4
         show_submodules: true

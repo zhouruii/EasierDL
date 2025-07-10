@@ -8,7 +8,6 @@ from ..builder import MODULE
 from .common import conv3x3, conv1x1
 
 
-# TODO 待整合
 @MODULE.register_module()
 class BasicResidualBlock(nn.Module):
     """ basic residual block (RB)

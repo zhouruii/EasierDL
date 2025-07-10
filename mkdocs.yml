@@ -1,8 +1,10 @@
 site_name: Uchiha
 site_description: Documentation for my project
 site_author: Zhou Rui
-site_url: http://localhost:8000
+site_url: https://zhouruii.github.io/uchiha/
 repo_url: https://github.com/zhouruii/uchiha
+use_directory_urls: false
+
 
 theme:
   name: readthedocs
@@ -41,8 +43,7 @@ theme:
 #    code: Roboto Mono
 
 nav:
-  - Home: mkdocs/index.md
-  - Introduction: mkdocs/introduction.md
+  - Home: index.md
   - Module: mkdocs/module.md
   - Model: mkdocs/model.md
   - Dataset: mkdocs/dataset.md

@@ -5,7 +5,7 @@ import numpy as np
 from scipy.ndimage import minimum_filter
 
 
-def get_dcp(hyperspectral_data, window_size=3):
+def dark_channel_prior(hyperspectral_data, window_size=3):
     """
     计算暗通道先验图（DCP）。
     每个像素取所有通道的最小值，再进行局部最小值滤波。
@@ -16,26 +16,10 @@ def get_dcp(hyperspectral_data, window_size=3):
     return dcp_image.astype(np.uint8)
 
 
-def get_mean_channel(hyperspectral_data):
-    """
-    计算高光谱数据的均值通道（每个像素点所有通道的平均值）。
-
-    参数:
-        hyperspectral_data: H×W×C 的高光谱数据 (np.ndarray)
-
-    返回:
-        mean_image: 单通道均值图 (H×W)
-    """
-    mean_image = np.mean(hyperspectral_data, axis=2)  # H×W
-    # 归一化到 [0, 255]
-    mean_image = (mean_image - mean_image.min()) / (mean_image.max() - mean_image.min()) * 255
-    return mean_image.astype(np.uint8)
-
-
-def get_rcp(hyperspectral_data):
+def residual_channel_prior(hyperspectral_data):
     """
     计算残余通道先验图（RCP）。
-    按照通道均值排序（并非对每个像素点都排序）
+    每个像素取所有通道的最大值减最小值。
     """
     H, W, C = hyperspectral_data.shape
 
@@ -59,38 +43,19 @@ def get_rcp(hyperspectral_data):
     # 计算差值
     rcp_image = high_mean - low_mean  # 形状 [H, W]
 
-    # 步骤4：归一化到 [0, 255]
+    # # 滤波
+    # rcp_image = torch.from_numpy(rcp_image)
+    # blur_transform = GaussianBlur(kernel_size=9, sigma=(1.0, 2.0))  # sigma 可设为范围或固定值
+    # rcp_image = blur_transform(rcp_image.unsqueeze(0)).squeeze(0).numpy()
+
+    # 步骤5：归一化到 [0, 255]
     rcp_image = (rcp_image - rcp_image.min()) / (rcp_image.max() - rcp_image.min()) * 255
     return rcp_image.astype(np.uint8)
 
 
-def get_rcp_pixel_wise(image: np.ndarray, split_points: list) -> np.ndarray:
+def mean_channel(hyperspectral_data):
     """
-    输入: HWC ndarray
-    功能: 排序 + 切分点差值
-    输出: HWN ndarray
-    """
-    h, w, c = image.shape
-    flattened = image.reshape(-1, c)
-    sorted_flattened = np.sort(flattened, axis=1)
-
-    results = []
-    for split_idx in split_points:
-        if not (0 < split_idx < c):
-            raise ValueError(f"切分点 {split_idx} 超出通道范围 (1~{c - 1})")
-        front = sorted_flattened[:, :split_idx]
-        back = sorted_flattened[:, split_idx:]
-        diff = np.mean(back, axis=1) - np.mean(front, axis=1)
-        results.append(diff)
-
-    output = np.stack(results, axis=1)
-    return output.reshape(h, w, -1)
-
-
-def get_haze_transmission(hyperspectral_data, split_band=100):
-    """
-    获取雾分布（理想状态）。
-    雾敏感波段的均值 - 雾不敏感波段的均值
+    计算高光谱数据的均值通道（每个像素点所有通道的平均值）。
 
     参数:
         hyperspectral_data: H×W×C 的高光谱数据 (np.ndarray)
@@ -98,11 +63,30 @@ def get_haze_transmission(hyperspectral_data, split_band=100):
     返回:
         mean_image: 单通道均值图 (H×W)
     """
-    # 该理论经验证并不使用去雨数据集
+    mean_image = np.mean(hyperspectral_data, axis=2)  # H×W
+    # 归一化到 [0, 255]
+    mean_image = (mean_image - mean_image.min()) / (mean_image.max() - mean_image.min()) * 255
+    return mean_image.astype(np.uint8)
+
+
+def get_haze_transmission(hyperspectral_data, split_band=100):
+    """
+    计算高光谱数据的均值通道（每个像素点所有通道的平均值）。
+
+    参数:
+        hyperspectral_data: H×W×C 的高光谱数据 (np.ndarray)
+
+    返回:
+        mean_image: 单通道均值图 (H×W)
+    """
     heavy, light = hyperspectral_data[:, :, :split_band], hyperspectral_data[:, :, split_band:]
     heavy = np.mean(heavy, axis=2)
     light = np.mean(light, axis=2)
     t = heavy - light  # H×W
+    # # 滤波
+    # t = torch.from_numpy(t)
+    # blur_transform = GaussianBlur(kernel_size=9, sigma=(1.0, 2.0))  # sigma 可设为范围或固定值
+    # t = blur_transform(t.unsqueeze(0)).squeeze(0).numpy()
     # 归一化到 [0, 255]
     t = (t - t.min()) / (t.max() - t.min()) * 255
     return t.astype(np.uint8)
@@ -143,83 +127,19 @@ def visualize_prior_maps(*args):
     plt.show()
 
 
-def visualize_channel_wise(image: np.ndarray, prefix: str = "output_channel", threshold: float = 1e-5):
-    """
-    将 HWN ndarray 的每个通道保存为带透明背景的 PNG
-    小于阈值的像素点完全透明
-    """
-    h, w, n = image.shape
-
-    for i in range(n):
-        channel = image[:, :, i]
-
-        # 归一化到 0~1（避免颜色异常）
-        norm = (channel - channel.min()) / (channel.ptp() + 1e-8)
-
-        # 创建 RGBA 图层
-        cmap = plt.get_cmap('gray')
-        rgba = cmap(norm)  # 返回 H x W x 4
-
-        # 将低于阈值的地方设为全透明
-        alpha_mask = (norm > threshold).astype(float)
-        rgba[..., -1] = alpha_mask  # 设置 alpha 通道
-
-        fig, ax = plt.subplots()
-        ax.axis('off')  # 去掉坐标轴
-        ax.imshow(rgba)
-
-        filename = f"{prefix}_{i}.png"
-        plt.savefig(filename, transparent=True, bbox_inches='tight', pad_inches=0)
-        plt.close()
-        print(f"Saved transparent {filename}")
-
-
-def visualize_rgb(image: np.ndarray, filename: str = "rgb_transparent.png", threshold: float = 1e-5):
-    """
-    将 HWC (RGB) 图像保存为带透明背景的 PNG。
-    只要像素全通道都是 0，就透明；否则保留原色。
-    """
-    if image.shape[2] != 3:
-        raise ValueError("输入图像必须是 3 通道 (RGB)")
-
-    # 归一化到 0~1（若已是 0~255，可换成 /255.0）
-    if image.dtype == np.uint8:
-        norm_rgb = image.astype(np.float32) / 255.0
-    else:
-        norm_rgb = np.clip(image, 0, 1)
-
-    # 构造 RGBA
-    h, w, _ = norm_rgb.shape
-    rgba = np.zeros((h, w, 4), dtype=np.float32)
-    rgba[..., :3] = norm_rgb
-
-    # 判断是否透明：若该像素点所有通道都小于阈值，则设为透明
-    alpha_mask = (np.sum(norm_rgb, axis=2) > threshold).astype(np.float32)
-    rgba[..., 3] = alpha_mask
-
-    fig, ax = plt.subplots()
-    ax.axis('off')
-    ax.imshow(rgba)
-
-    plt.savefig(filename, transparent=True, bbox_inches='tight', pad_inches=0)
-    plt.close()
-    print(f"Saved transparent RGB to {filename}")
-
-
 if __name__ == '__main__':
-    filename = 'f130412t01p00r11rdn_e_48.npy'
-    data_path = os.path.join('/home/disk2/ZR/datasets/AVIRIS/512/rain/storm', filename)
-    gt_path = os.path.join('/home/disk2/ZR/datasets/AVIRIS/512/gt', filename)
-    lq = np.load(data_path)
+    filename = 'f130804t01p00r04rdn_e_14.npy'
+    data_path = os.path.join('/home/disk2/ZR/datasets/AVIRIS/512/train/rain/storm', filename)
+    gt_path = os.path.join('/home/disk2/ZR/datasets/AVIRIS/512/train/gt', filename)
+    # data_path = '/home/disk2/ZR/datasets/AVIRIS/512/train/rain/storm/f130804t01p00r04rdn_e_11.npy'
+    # gt_path = '/home/disk2/ZR/datasets/AVIRIS/512/train/gt/f130804t01p00r04rdn_e_11.npy'
+    data = np.load(data_path)
     gt = np.load(gt_path)
-    H, W, C = lq.shape
+    # 计算DCP和RCP
+    dcp = dark_channel_prior(data, window_size=3)
+    rcp = residual_channel_prior(data)
+    mean = mean_channel(data)
+    transmission = get_haze_transmission(data, split_band=110)
 
-    sorted_rcp = get_rcp(lq)
-    transmission = get_haze_transmission(lq, split_band=190)
-    sorted_rcp_pw = get_rcp_pixel_wise(lq, [C // 3, C // 2, 2 * C // 3])
-
-    # 可视化
-    # visualize_prior_maps(lq, gt, sorted_rcp, transmission, sorted_rcp_pw[:, :, 1])
-    visualize_channel_wise(sorted_rcp_pw)
-    visualize_rgb(lq[:, :, [36, 19, 8]], filename='lq.png')
-    visualize_rgb(gt[:, :, [36, 19, 8]], filename='gt.png')
+    # 即时可视化
+    visualize_prior_maps(data, gt, dcp, rcp, transmission)

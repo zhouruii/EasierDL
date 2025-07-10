@@ -48,11 +48,11 @@ class CharbonnierLoss(nn.Module):
     def forward(self, pred, target):
         """
         Args:
-            pred (torch.Tensor): 模型输出，形状为 (B, C, H, W)
-            target (torch.Tensor): 真实标签，形状为 (B, C, H, W)
+            pred (torch.Tensor): model output shape is (B, C, H, W)
+            target (torch.Tensor): real label shape is (B, C, H, W)
 
         Returns:
-            loss (torch.Tensor): 标量损失值
+            loss (torch.Tensor): scalar loss value
         """
         diff = pred - target
         loss = torch.sqrt(diff * diff + self.eps).mean()
@@ -62,8 +62,8 @@ class CharbonnierLoss(nn.Module):
 class SpectrumConstancyLoss(nn.Module):
     def __init__(self):
         super(SpectrumConstancyLoss, self).__init__()
-        # 定义差分卷积核（上下左右）
-        self.register_buffer('diff_kernel', torch.tensor([[-1, 0, 1]]).float())  # 3x1 差分核
+        # Define differential convolution kernels (up, down, left, and right)
+        self.register_buffer('diff_kernel', torch.tensor([[-1, 0, 1]]).float())
 
     def forward(self, pred):
         """
@@ -75,19 +75,19 @@ class SpectrumConstancyLoss(nn.Module):
         """
         B, C, H, W = pred.shape
 
-        # 计算水平方向差分（dx）
+        # calculate horizontal difference dx
         dx = F.conv2d(pred, weight=self.diff_kernel.view(1, 1, 1, 3).repeat(C, 1, 1, 1),
                       padding=(0, 1), groups=C)  # (B, C, H, W)
 
-        # 计算垂直方向差分（dy）
+        # calculate vertical difference dy
         dy = F.conv2d(pred, weight=self.diff_kernel.view(1, 1, 3, 1).repeat(C, 1, 1, 1),
                       padding=(1, 0), groups=C)  # (B, C, H, W)
 
-        # 在通道维度上求平方和（欧氏距离平方）
+        # Sum of squares in the channel dimension (Euclidean distance squared)
         dx_sq = dx.pow(2).sum(dim=1)  # (B, H, W)
         dy_sq = dy.pow(2).sum(dim=1)  # (B, H, W)
 
-        # 求总损失（平均或求和）
+        #total loss average or sum
         loss = (dx_sq + dy_sq).mean()
 
         return loss
@@ -98,8 +98,8 @@ class AdaptiveSpatialSpectralLossV2(nn.Module):
     def __init__(self, eps=1e-3, min_alpha=0.1, max_alpha=0.9):
         """
         Args:
-            eps: Charbonnier 平滑系数
-            min_alpha/max_alpha: 动态alpha的裁剪范围（避免极端情况）
+            eps: Charbonnier smoothing-coefficient
+            min_alpha/max_alpha: Clipping range for dynamic alpha (to avoid extreme cases)
         """
         super().__init__()
         self.eps = eps
@@ -116,11 +116,11 @@ class AdaptiveSpatialSpectralLossV2(nn.Module):
         spatial_loss = torch.sqrt(spatial_diff ** 2 + self.eps ** 2).mean()  # L1
         spectral_loss = torch.sqrt(spectral_diff ** 2 + self.eps ** 2).mean()  # L2
 
-        # 动态alpha（带裁剪）
+        # dynamic alpha with clipping
         alpha = spatial_loss / (spatial_loss + spectral_loss + 1e-6)
         alpha = torch.clamp(alpha, self.min_alpha, self.max_alpha)
 
-        # 联合损失
+        # joint loss
         joint_loss = alpha * spatial_loss + (1 - alpha) * spectral_loss
 
         return joint_loss
@@ -129,26 +129,26 @@ class AdaptiveSpatialSpectralLossV2(nn.Module):
 class WaveletProcessor(nn.Module):
     def __init__(self, wavelet='haar', level=2, mode='reflect'):
         super().__init__()
-        self.dwt = DWTForward(wave=wavelet, J=level, mode=mode)  # 小波分解
-        self.idwt = DWTInverse(wave=wavelet)  # 小波重构
+        self.dwt = DWTForward(wave=wavelet, J=level, mode=mode)  # wavelet decomposition
+        self.idwt = DWTInverse(wave=wavelet)  # wavelet reconstruction
         self.level = level
 
     def forward(self, x):
-        """输入x: [B, C, H, W]"""
-        # 小波分解
-        coeffs = self.dwt(x)  # 返回 (LL, [LH, HL, HH] * level)
+        """x: [B, C, H, W]"""
+        # wavelet decomposition
+        coeffs = self.dwt(x)  # (LL, [LH, HL, HH] * level)
 
-        # 提取各频带分量
-        LL = coeffs[0]  # 低频分量 [B, C, H/(2^level), W/(2^level)]
-        HL = [c[0][:, :, 0] for c in coeffs[1]]  # 水平高频
-        LH = [c[0][:, :, 1] for c in coeffs[1]]  # 垂直高频
-        HH = [c[0][:, :, 2] for c in coeffs[1]]  # 对角线高频
+        # extract each frequency band component
+        LL = coeffs[0]  # low frequency component [B, C, H/(2^level), W/(2^level)]
+        HL = [c[0][:, :, 0] for c in coeffs[1]]  # horizontal high frequency
+        LH = [c[0][:, :, 1] for c in coeffs[1]]  # vertical high frequency
+        HH = [c[0][:, :, 2] for c in coeffs[1]]  # diagonal high frequency
 
         return {
-            'LL': LL,  # 低频
-            'HL': HL,  # 水平高频（边缘细节）
-            'LH': LH,  # 垂直高频（边缘细节）
-            'HH': HH  # 对角线高频（纹理）
+            'LL': LL,  # low frequency
+            'HL': HL,  # horizontal high frequency edge detail
+            'LH': LH,  # vertical high frequency edge detail
+            'HH': HH  # diagonal high frequency texture
         }
 
 
@@ -157,8 +157,8 @@ class SpatialSpectralFreqLoss(nn.Module):
     def __init__(self, wave='haar', J=1, mode='reflect'):
         """
         Args:
-            wave: 小波基类型 ('haar', 'db2'等)
-            J: 小波分解层数
+            wave: wavelet basis type haar db2 etc
+            J: wavelet decomposition level
         """
         super().__init__()
         self.wavelet = WaveletProcessor(wave, J, mode).cuda()
@@ -167,9 +167,9 @@ class SpatialSpectralFreqLoss(nn.Module):
     def forward(self, pred, target):
         spatial_spectral_loss = self.criterion(pred, target)
 
-        # 小波频域损失
-        pred_wave = self.wavelet(pred)  # 预测图像的小波系数
-        target_wave = self.wavelet(target)  # 真实图像的小波系数
+        # wavelet frequency domain loss
+        pred_wave = self.wavelet(pred)  # predicting the wavelet coefficients of an image
+        target_wave = self.wavelet(target)  # wavelet coefficients of real images
         freq_loss = 0
         weights = [0.5, 0.2, 0.2, 0.1]
         keys = ['LL', 'HL', 'LH', 'HH']
@@ -177,7 +177,7 @@ class SpatialSpectralFreqLoss(nn.Module):
             for p, t in zip(pred_wave[key], target_wave[key]):
                 freq_loss += self.criterion(p, t) * weight
 
-        # 加权联合损失
+        # weighted joint loss
         alpha = spatial_spectral_loss / (spatial_spectral_loss + freq_loss)
         total_loss = alpha * spatial_spectral_loss + (1 - alpha) * freq_loss
         return total_loss

@@ -7,8 +7,6 @@
         member:
             - Stack
 
-### ResNet
-TODO
 
 ::: models.stack.vit
     options:
@@ -31,6 +29,3 @@ TODO
     options:
         heading_level: 3
 
-
-## U-Net
-TODO

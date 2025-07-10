@@ -15,7 +15,7 @@ from .pipelines import Compose
 from ..utils import get_root_logger
 
 
-# ================= 波段得分与交换函数 ===================
+# ================= band score and exchange function ===================
 def compute_scores(band_data, wavelengths, a=0.01, b=2):
     # band_data: [B, C, H, W], wavelengths: [C]
     spatial_std = band_data.std(dim=[2, 3])  # [B, C]
@@ -98,7 +98,7 @@ def get_clean_of_HD(haze_path):
     return clean_path
 
 
-# ================= 数据集定义 ===================
+# ================= dataset definition ===================
 def get_loader(loader_type, path):
     if loader_type == 'tiff':
         return tiff.imread(path)
@@ -117,7 +117,7 @@ def load_hd(loader, path, exchange_bands=False, first_branch_channel=102):
 
     im_label = loader(clean_path)
     im_label = np.asanyarray(im_label, dtype="float32") / 2200
-    im_label = np.transpose(im_label, (1, 2, 0))  # 转置为 (H, W, C)
+    im_label = np.transpose(im_label, (1, 2, 0))
 
     # im_label = torch.Tensor(im_label)
 
@@ -150,6 +150,15 @@ def load_mat(loader, gt_path, lq_path):
 
 @DATASET.register_module()
 class HSIDehazeDataset(Dataset):
+    """Multi-level noise HSI data set based on HDF5 storage
+
+    Args:
+        gt_path: gt data directory
+        lq_path: lq data directory
+        loader_type: type of loader
+        dataset_name: name of the dataset
+        pipelines: data preprocessing pipeline
+    """
     def __init__(self, gt_path=None, lq_path=None, loader_type='tiff', dataset_name='HD', pipelines=None):
         super(HSIDehazeDataset, self).__init__()
         self.loader = partial(get_loader, loader_type)
@@ -182,20 +191,20 @@ class HSIDehazeDataset(Dataset):
     def evaluate(self, preds: List[np.ndarray], targets: List[np.ndarray], metric,
                  indexes: List[int]) -> dict:
         """
-        同时计算PSNR和SSIM指标
+        Calculates the similarity between the predicted data and the real data. PSNR and SSIM are supported by default.
 
         Args:
-            preds: 模型输出列表，每个元素形状为 (B, C, H, W)
-            targets: 真实标签列表，每个元素形状为 (B, C, H, W)
-            metric: 需要计算的指标，默认为['PSNR','SSIM']
-            indexes: 原始数据索引列表
+            preds: Model output list, each element shape is (B, C, H, W)
+            targets: A list of real labels, each element of shape (B, C, H, W)
+            metric: metric to be calculated. Default value: ['PSNR','SSIM']
+            indexes: raw data index list
 
         Returns:
-            dict: 包含平均PSNR和SSIM的字典
+            dict: dictionary with average psnr and ssim
         """
-        assert len(preds) == len(targets) == len(indexes), "输入列表长度必须一致"
+        assert len(preds) == len(targets) == len(indexes), "input list length must be the same"
         assert metric is None or metric.upper() == 'PSNR' or metric.upper() == 'SSIM', \
-            '默认只支持PSNR和SSIM'
+            'only psnr and ssim are supported by default'
 
         logger = get_root_logger()
         logger.info('start evaluating...')
@@ -206,11 +215,10 @@ class HSIDehazeDataset(Dataset):
             B, C, H, W = pred_batch.shape
 
             for i in range(B):
-                # 获取当前样本
                 pred = pred_batch[i]  # (C,H,W)
                 target = target_batch[i]
 
-                # 转换为(H,W,C)格式
+                #convert to (H W C) format
                 if C == 1:
                     pred_img = pred[0]
                     target_img = target[0]
@@ -218,11 +226,11 @@ class HSIDehazeDataset(Dataset):
                     pred_img = np.transpose(pred, (1, 2, 0))
                     target_img = np.transpose(target, (1, 2, 0))
 
-                # 计算PSNR
+                # calculate psnr
                 data_range = target_img.max() - target_img.min()
                 psnr_val = psnr(target_img, pred_img, data_range=data_range)
 
-                # 计算SSIM
+                # calculate ssim
                 multichannel = C > 1
                 ssim_val = ssim(
                     target_img, pred_img,

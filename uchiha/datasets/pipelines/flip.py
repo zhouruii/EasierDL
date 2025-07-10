@@ -8,24 +8,24 @@ class RandomFlip:
     def __init__(self, probs=None, directions=None):
         """
         Args:
-            probs (list): 四种翻转的概率权重，顺序为：
-                      [原图概率, 水平翻转概率, 垂直翻转概率, 对角翻转概率]
+            probs (list): The probability weights of the four flips, in the order:
+[Original probability, horizontal flip probability, vertical flip probability, diagonal flip probability]
         """
         if directions is None:
             directions = ['original', 'horizontal', 'vertical', 'diagonal']
         if probs is None:
-            probs = [0.5, 0.25, 0.25, 0.0]  # 默认设置
+            probs = [0.5, 0.25, 0.25, 0.0]
 
         self.p = probs
 
-        # 归一化概率
+        # normalized probability
         total = sum(probs)
         self.norm_p = [x / total for x in probs]
 
-        # 构建选择空间
+        # building a choice space
         self.directions = directions
 
-        # 累积概率用于随机选择
+        # Cumulative probability is used for random selection
         cum = 0.0
         self.cum_probs = []
         for probs in self.norm_p:
@@ -33,11 +33,11 @@ class RandomFlip:
             self.cum_probs.append(cum)
 
     def _apply_flip(self, img, flip_type):
-        """执行具体的翻转操作"""
+        """perform specific flip operations"""
         if flip_type == 'original':
             return img
         elif flip_type == 'horizontal':
-            return img[:, ::-1, ...].copy()  # HWC 或 HW
+            return img[:, ::-1, ...].copy()  # HWC / HW
         elif flip_type == 'vertical':
             return img[::-1, :, ...].copy()
         elif flip_type == 'diagonal':
@@ -49,15 +49,15 @@ class RandomFlip:
         sample = data['sample']
         target = data['target']
 
-        # 使用累积概率选择翻转类型
+        # use cumulative probability to select flip type
         rand_val = random.random()
-        selected = self.directions[-1]  # 默认选最后一个
+        selected = self.directions[-1]
         for i, cp in enumerate(self.cum_probs):
             if rand_val < cp:
                 selected = self.directions[i]
                 break
 
-        # 应用翻转
+        # flip
         sample = self._apply_flip(sample, selected)
         target = self._apply_flip(target, selected)
 

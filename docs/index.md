@@ -28,11 +28,11 @@
 - 知名的 U-Net 结构 等等
 
 <div align="center">
-  <img src="docs/assets/jpg/stack.jpg" alt="串行结构" width="400"/>
+  <img src="assets/jpg/stack.jpg" alt="串行结构" width="400"/>
 </div>
 <div align="center">
 
-  <img src="docs/assets/jpg/parallel.jpg" alt="并行结构" width="400"/>
+  <img src="assets/jpg/parallel.jpg" alt="并行结构" width="400"/>
 </div>
 
 ---
@@ -43,7 +43,7 @@
 python main.py --config ${config file}
 ```
 
-👉 配置文件详细用法：[配置讲解](docs/config.md)
+👉 配置文件详细用法：[配置讲解](config.md)
 
 ---
 
@@ -90,7 +90,7 @@ pip install -r requirements.txt
 | `--gpu_ids` | 显卡 ID，支持多卡 |
 | `--analyze_params` | 参数分析深度（0=总参数量） |
 
-📄 更多详情：[配置说明](docs/config.md)
+📄 更多详情：[配置说明](config.md)
 
 ---
 
@@ -124,14 +124,14 @@ python test.py --config configs/baseline/Restormer.yaml --checkpoint your_checkp
 
 ## 📂 数据集
 
-数据集准备与组织请参考 [数据准备](docs/data.md)
+数据集准备与组织请参考 [数据准备](data.md)
 
 ---
 
 ## 🔗 更多文档
 
-- [配置文件说明](docs/config.md)
-- [数据集准备](docs/data.md)
+- [配置文件说明](config.md)
+- [数据集准备](data.md)
 
 ---
 
