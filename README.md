@@ -43,7 +43,7 @@
 python main.py --config ${config file}
 ```
 
-👉 配置文件详细用法：[配置讲解](docs/config.md)
+👉 关于详细的配置说明以及各类模块参数，可以参见[项目文档](https://zhouruii.github.io/uchiha/)
 
 ---
 
