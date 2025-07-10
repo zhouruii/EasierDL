@@ -1,43 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>http://localhost:8000/config/</loc>
+         <loc>https://zhouruii.github.io/uchiha/config.html</loc>
          <lastmod>2025-07-10</lastmod>
     </url>
     <url>
-         <loc>http://localhost:8000/data/</loc>
+         <loc>https://zhouruii.github.io/uchiha/data.html</loc>
          <lastmod>2025-07-10</lastmod>
     </url>
     <url>
-         <loc>http://localhost:8000/install/</loc>
+         <loc>https://zhouruii.github.io/uchiha/install.html</loc>
          <lastmod>2025-07-10</lastmod>
     </url>
     <url>
-         <loc>http://localhost:8000/models/</loc>
+         <loc>https://zhouruii.github.io/uchiha/models.html</loc>
          <lastmod>2025-07-10</lastmod>
     </url>
     <url>
-         <loc>http://localhost:8000/mkdocs/</loc>
+         <loc>https://zhouruii.github.io/uchiha/mkdocs/index.html</loc>
          <lastmod>2025-07-10</lastmod>
     </url>
     <url>
-         <loc>http://localhost:8000/mkdocs/api/</loc>
+         <loc>https://zhouruii.github.io/uchiha/mkdocs/api.html</loc>
          <lastmod>2025-07-10</lastmod>
     </url>
     <url>
-         <loc>http://localhost:8000/mkdocs/dataset/</loc>
+         <loc>https://zhouruii.github.io/uchiha/mkdocs/dataset.html</loc>
          <lastmod>2025-07-10</lastmod>
     </url>
     <url>
-         <loc>http://localhost:8000/mkdocs/introduction/</loc>
+         <loc>https://zhouruii.github.io/uchiha/mkdocs/introduction.html</loc>
          <lastmod>2025-07-10</lastmod>
     </url>
     <url>
-         <loc>http://localhost:8000/mkdocs/model/</loc>
+         <loc>https://zhouruii.github.io/uchiha/mkdocs/model.html</loc>
          <lastmod>2025-07-10</lastmod>
     </url>
     <url>
-         <loc>http://localhost:8000/mkdocs/module/</loc>
+         <loc>https://zhouruii.github.io/uchiha/mkdocs/module.html</loc>
          <lastmod>2025-07-10</lastmod>
     </url>
 </urlset>
