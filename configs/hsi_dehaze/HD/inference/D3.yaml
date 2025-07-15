@@ -1,0 +1,17 @@
+work_dir: experiments/hsi_dehaze/HD/inference/D3
+data:
+  test:
+    dataset:
+      type: HSIDehazeDataset
+      lq_path: /media/mango/系统/6636数据/2/mk/dataset/GF5最终数据/test/haze/*.tif
+      gt_path: /media/mango/系统/6636数据/2/mk/dataset/GF5最终数据/test/clean/*.tif
+    dataloader:
+      batch_size: 1
+      shuffle: false
+
+num_bands: &num_bands 305       # 波段数
+
+model:
+  type: D3
+  in_channels: *num_bands
+

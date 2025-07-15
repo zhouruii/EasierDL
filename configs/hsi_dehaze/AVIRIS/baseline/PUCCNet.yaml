@@ -3,8 +3,8 @@ data:
   train:
     dataset:
       type: HSIDehazeDataset
-      lq_path: /home/disk2/ZR/datasets/HSIDeD-AVI/train/hazy/*.mat
-      gt_path: /home/disk2/ZR/datasets/HSIDeD-AVI/train/clean/*.mat
+      lq_path: /media/mango/系统/6636数据/2/mk/DATASET/HSIDeD-AVI/train/hazy/*.mat
+      gt_path: /media/mango/系统/6636数据/2/mk/DATASET/HSIDeD-AVI/train/clean/*.mat
       loader_type: mat
       dataset_name: AVIRIS
     dataloader:
@@ -16,8 +16,8 @@ data:
   val:
     dataset:
       type: HSIDehazeDataset
-      lq_path: /home/disk2/ZR/datasets/HSIDeD-AVI/test/hazy/*.mat
-      gt_path: /home/disk2/ZR/datasets/HSIDeD-AVI/test/clean/*.mat
+      lq_path: /media/mango/系统/6636数据/2/mk/DATASET/HSIDeD-AVI/test/hazy/*.mat
+      gt_path: /media/mango/系统/6636数据/2/mk/DATASET/HSIDeD-AVI/test/clean/*.mat
       loader_type: mat
       dataset_name: AVIRIS
     dataloader:
