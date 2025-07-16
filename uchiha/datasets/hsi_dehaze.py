@@ -1,14 +1,14 @@
-from typing import List, Dict
-import numpy as np
 import glob
-from scipy import io
-import tifffile as tiff
 from functools import partial
+from typing import List
+
+import numpy as np
+import tifffile as tiff
+import torch
+from scipy import io
 from skimage.metrics import peak_signal_noise_ratio as psnr
 from skimage.metrics import structural_similarity as ssim
-
 from torch.utils.data import Dataset
-import torch
 
 from .builder import DATASET
 from .pipelines import Compose
@@ -203,14 +203,13 @@ class HSIDehazeDataset(Dataset):
             dict: dictionary with average psnr and ssim
         """
         assert len(preds) == len(targets) == len(indexes), "input list length must be the same"
-        assert metric is None or metric.upper() == 'PSNR' or metric.upper() == 'SSIM', \
-            'only psnr and ssim are supported by default'
 
         logger = get_root_logger()
         logger.info('start evaluating...')
 
         psnrs = []
         ssims = []
+
         for pred_batch, target_batch, index_batch in zip(preds, targets, indexes):
             B, C, H, W = pred_batch.shape
 
