@@ -3,14 +3,14 @@ data:
   train:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/train/reflectivity
-      gt_path: data/spectral/train/labelZn_scale.txt
+      data_root: data/soil_pred/train/reflectivity
+      gt_path: data/soil_pred/train/labelZn_scale.txt
       elements: Zn
       pipelines:
-        - type: Pad
-          size_divisor: 2
-          mode: edge
-          pad_val: 0
+#        - type: Pad
+#          size_divisor: 2
+#          mode: edge
+#          pad_val: 0
         - type: Normalize
           scope: channel
         - type: EasyToTensor
@@ -21,14 +21,14 @@ data:
   val:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/val/reflectivity
-      gt_path: data/spectral/val/labelZn_scale.txt
+      data_root: data/soil_pred/val/reflectivity
+      gt_path: data/soil_pred/val/labelZn_scale.txt
       elements: Zn
       pipelines:
-        - type: Pad
-          size_divisor: 2
-          mode: edge
-          pad_val: 0
+#        - type: Pad
+#          size_divisor: 2
+#          mode: edge
+#          pad_val: 0
         - type: Normalize
           scope: channel
         - type: EasyToTensor
@@ -49,17 +49,19 @@ model:
       stacks:
         - embedding:
             type: PatchEmbedding
-            img_size: 4
-            patch_size: 2
+            img_size: 3
+            patch_size: 1
             in_channel: 165
             embed_dim: 256
             norm_layer: nn.LayerNorm
         - basemodule:
-            type: ClassicMambaBlock
-            input_dim: 256
-            hidden_state: 16
+            type: ChannelMambaLayer
+            depth: 1
+            seq_len: 9
+            hidden_state: 32
             expand_ratio: 2
             dw_conv_kernel_size: 3
+            factor: 4.0
         - head:
             type: FCHead
             embed_dim: 256
@@ -68,17 +70,19 @@ model:
       stacks:
         - embedding:
             type: PatchEmbedding
-            img_size: 4
-            patch_size: 2
+            img_size: 3
+            patch_size: 1
             in_channel: 165
             embed_dim: 256
             norm_layer: nn.LayerNorm
         - basemodule:
-            type: ClassicMambaBlock
-            input_dim: 256
-            hidden_state: 16
+            type: ChannelMambaLayer
+            depth: 1
+            seq_len: 9
+            hidden_state: 32
             expand_ratio: 2
             dw_conv_kernel_size: 3
+            factor: 4.0
         - head:
             type: FCHead
             embed_dim: 256
@@ -110,7 +114,7 @@ scheduler:
 #  gamma: 0.5
   type: CosineAnnealingLR
   T_max: 100
-  eta_min: 1.0e-6
+  eta_min: 1.0e-5
 
 train:
   epoch: 100

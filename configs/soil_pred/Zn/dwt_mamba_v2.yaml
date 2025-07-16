@@ -3,8 +3,8 @@ data:
   train:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/train/reflectivity
-      gt_path: data/spectral/train/labelZn_scale.txt
+      data_root: data/soil_pred/train/reflectivity
+      gt_path: data/soil_pred/train/labelZn_scale.txt
       elements: Zn
       pipelines:
         - type: Pad
@@ -21,8 +21,8 @@ data:
   val:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/val/reflectivity
-      gt_path: data/spectral/val/labelZn_scale.txt
+      data_root: data/soil_pred/val/reflectivity
+      gt_path: data/soil_pred/val/labelZn_scale.txt
       elements: Zn
       pipelines:
         - type: Pad
@@ -50,51 +50,43 @@ model:
         - embedding:
             type: PatchEmbedding
             img_size: 4
-            patch_size: 2
+            patch_size: 1
             in_channel: 165
-            embed_dim: 256
+            embed_dim: 512
             norm_layer: nn.LayerNorm
-            sequence: false
         - basemodule:
-            type: VisualMambaBlock
-            # --------------- overall --------------- #
-            input_dim: 256
-            drop_path: 0.
-            channel_first: true
-            post_norm: false
-            # --------------- SS2D --------------- #
-            hidden_state: 16
-            expand_ratio: 4  # E in Mamba
+            type: ParallelMambaBlock
+            d_model: 512
+            d_state: 128
+            d_conv: 4
+            expand: 2
+            headdim: 64
+#            use_mem_eff_path: false
         - head:
             type: FCHead
-            embed_dim: 256
+            embed_dim: 512
             pred_num: 1
-            mode: image
     - type: Stack
       stacks:
         - embedding:
             type: PatchEmbedding
             img_size: 4
-            patch_size: 2
+            patch_size: 1
             in_channel: 165
             embed_dim: 256
             norm_layer: nn.LayerNorm
-            sequence: false
         - basemodule:
-            type: VisualMambaBlock
-            # --------------- overall --------------- #
-            input_dim: 256
-            drop_path: 0.
-            channel_first: true
-            post_norm: false
-            # --------------- SS2D --------------- #
-            hidden_state: 16
-            expand_ratio: 4 # E in Mamba
+            type: ParallelMambaBlock
+            d_model: 256
+            d_state: 128
+            d_conv: 4
+            expand: 2
+            headdim: 64
+#            use_mem_eff_path: false
         - head:
             type: FCHead
             embed_dim: 256
             pred_num: 1
-            mode: image
   postprocessor:
     type: WeightedSum
     weights:
@@ -111,7 +103,7 @@ loss:
 
 optimizer:
   type: AdamW
-  lr: 3.0e-4
+  lr: 1.0e-4
   weight_decay: 0.01
 #  type: Adam
 #  lr: 0.001
@@ -122,7 +114,7 @@ scheduler:
 #  gamma: 0.5
   type: CosineAnnealingLR
   T_max: 100
-  eta_min: 1.0e-6
+  eta_min: 1.0e-5
 
 train:
   epoch: 100

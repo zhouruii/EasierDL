@@ -476,7 +476,7 @@ class SpatialAttention(nn.Module):
     def forward(self, x):
         x_avg = torch.mean(x, dim=1, keepdim=True)
         x_max, _ = torch.max(x, dim=1, keepdim=True)
-        x2 = torch.concat([x_avg, x_max], dim=1)
+        x2 = torch.cat([x_avg, x_max], dim=1)
         sattn = self.sa(x2)
         return sattn
 

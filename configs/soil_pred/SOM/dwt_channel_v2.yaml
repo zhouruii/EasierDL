@@ -3,8 +3,8 @@ data:
   train:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/train/reflectivity
-      gt_path: data/spectral/train/labelSOM_scale.txt
+      data_root: data/soil_pred/train/reflectivity
+      gt_path: data/soil_pred/train/labelSOM_scale.txt
       elements: SOM
       pipelines:
         - type: Normalize
@@ -17,8 +17,8 @@ data:
   val:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/val/reflectivity
-      gt_path: data/spectral/val/labelSOM_scale.txt
+      data_root: data/soil_pred/val/reflectivity
+      gt_path: data/soil_pred/val/labelSOM_scale.txt
       elements: SOM
       pipelines:
         - type: Normalize

@@ -3,10 +3,14 @@ data:
   train:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/train/reflectivity
-      gt_path: data/spectral/train/labelZn_scale.txt
+      data_root: data/soil_pred/train/reflectivity
+      gt_path: data/soil_pred/train/labelZn_scale.txt
       elements: Zn
       pipelines:
+        - type: Pad
+          size_divisor: 2
+          mode: edge
+          pad_val: 0
         - type: Normalize
           scope: channel
         - type: EasyToTensor
@@ -17,10 +21,14 @@ data:
   val:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/val/reflectivity
-      gt_path: data/spectral/val/labelZn_scale.txt
+      data_root: data/soil_pred/val/reflectivity
+      gt_path: data/soil_pred/val/labelZn_scale.txt
       elements: Zn
       pipelines:
+        - type: Pad
+          size_divisor: 2
+          mode: edge
+          pad_val: 0
         - type: Normalize
           scope: channel
         - type: EasyToTensor
@@ -40,19 +48,18 @@ model:
     - type: ChannelTransformer
       embedding:
         type: PatchEmbedding
-        img_size: 3
-        patch_size: 1
+        img_size: 4
+        patch_size: 2
         in_channel: 165
         embed_dim: 256
         norm_layer: nn.LayerNorm
       basemodule:
-        type: ChannelTransformerLayerV2
-        sequence: 9
-        input_resolution: 3
+        type: ChannelTransformerLayer
+        dim: 256
+        input_resolution: 2
         depth: 2
-#        num_heads: 1
-        factor: 8.0
-        mlp_ratio: 4.0
+        num_heads: 16
+        mlp_ratio: 2.0
         qkv_bias: true
         qk_scale: null
         drop_rate: 0.2 # drop_rate
@@ -65,19 +72,18 @@ model:
     - type: ChannelTransformer
       embedding:
         type: PatchEmbedding
-        img_size: 3
-        patch_size: 1
+        img_size: 4
+        patch_size: 2
         in_channel: 165
         embed_dim: 256
         norm_layer: nn.LayerNorm
       basemodule:
-        type: ChannelTransformerLayerV2
-        sequence: 9
-        input_resolution: 3
+        type: ChannelTransformerLayer
+        dim: 256
+        input_resolution: 2
         depth: 1
-#        num_heads: 1
-        factor: 8.0
-        mlp_ratio: 4.0
+        num_heads: 16
+        mlp_ratio: 2.0
         qkv_bias: true
         qk_scale: null
         drop_rate: 0.2 # drop_rate
@@ -103,18 +109,18 @@ loss:
 
 optimizer:
   type: AdamW
-  lr: 1.0e-5
+  lr: 1.0e-4
   weight_decay: 0.01
 #  type: Adam
 #  lr: 0.001
 
 scheduler:
-#  type: StepLR
-#  step_size: 20
-#  gamma: 0.5
-  type: CosineAnnealingLR
-  T_max: 100
-  eta_min: 1.0e-7
+  type: StepLR
+  step_size: 20
+  gamma: 0.5
+#  type: CosineAnnealingLR
+#  T_max: 100
+#  eta_min: 1.0e-6
 
 train:
   epoch: 100

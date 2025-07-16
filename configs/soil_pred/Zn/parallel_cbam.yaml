@@ -1,10 +1,10 @@
-work_dir: experiment/exp
+work_dir: experiment/Zn/cbam
 data:
   train:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/train/reflectivity
-      gt_path: data/spectral/train/labelZn_scale.txt
+      data_root: data/soil_pred/trainval/reflectivity
+      gt_path: data/soil_pred/trainval/labelZn_scale.txt
       elements: Zn
       pipelines:
         - type: Pad
@@ -21,8 +21,8 @@ data:
   val:
     dataset:
       type: SpectralDataset2d
-      data_root: data/spectral/val/reflectivity
-      gt_path: data/spectral/val/labelZn_scale.txt
+      data_root: data/soil_pred/val/reflectivity
+      gt_path: data/soil_pred/val/labelZn_scale.txt
       elements: Zn
       pipelines:
         - type: Pad
@@ -38,52 +38,53 @@ data:
       shuffle: false
 
 model:
-  type: ParallelSpatialChannelTransformer
-  embedding:
-    type: PatchEmbedding
-    img_size: 4
-    patch_size: 2
+  type: Parallel
+  preprocessor:
+    type: PreSimpleConv
     in_channel: 330
-    embed_dim: 512
-    norm_layer: nn.LayerNorm
+    out_channel: 256
+    depth: 2
+    stride: 1
+    copies: 2
   parallels:
     - type: Stack
       stacks:
         - basemodule:
-            type: ChannelTransformerLayer
-            dim: 512
-            input_resolution: 2
-            depth: 2
-            num_heads: 16
-            mlp_ratio: 2.0
-            qkv_bias: true
-            qk_scale: null
-            drop: 0.2 # drop_rate
-            attn_drop: 0.0
-            drop_path: 0.1
+            type: BasicCAM
+            in_channel: 256
+            out_channel: 256
+            stride: 1
+            downsample:
+              type: DownsampleConv
+              in_channel: 256
+              out_channel: 256
+              kernel_size: 1
+              stride: 1
+              padding: 0
         - head:
             type: FCHead
-            embed_dim: 512
+            embed_dim: 256
             pred_num: 1
+            mode: image
     - type: Stack
       stacks:
         - basemodule:
-            type: SwinTransformerLayer
-            dim: 512
-            input_resolution: 2
-            depth: 1
-            num_head: 16
-            window_size: 2
-            mlp_ratio: 2.0
-            qkv_bias: true
-            qk_scale: null
-            drop: 0.2 # drop_rate
-            attn_drop: 0.0
-            drop_path: 0.1
+            type: BasicSAM
+            in_channel: 256
+            out_channel: 256
+            stride: 1
+            downsample:
+              type: DownsampleConv
+              in_channel: 256
+              out_channel: 256
+              kernel_size: 1
+              stride: 1
+              padding: 0
         - head:
             type: FCHead
-            embed_dim: 512
+            embed_dim: 256
             pred_num: 1
+            mode: image
   postprocessor:
     type: WeightedSum
     weights: 2
@@ -93,7 +94,7 @@ loss:
 
 optimizer:
   type: AdamW
-  lr: 1.0e-3
+  lr: 1.0e-4
   weight_decay: 0.01
 
 scheduler:
@@ -102,10 +103,11 @@ scheduler:
   gamma: 0.5
 #  type: CosineAnnealingLR
 #  T_max: 100
-#  eta_min: 1.0e-6
+#  eta_min: 1.0e-7
 
 train:
   epoch: 100
+  print_freq: 5
 
 val:
   val_freq: 1

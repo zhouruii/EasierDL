@@ -53,7 +53,7 @@ def pt2npy(sample_dir):
 
 
 if __name__ == '__main__':
-    # sample_dir = '/home/disk1/ZR/datasets/spectral'
+    # sample_dir = '/home/disk1/ZR/datasets/soil_pred'
     # save_dir = '/data/spectral_01/train/reflectivity'
     # read(sample_dir, save_dir, to_tensor=False)
 
