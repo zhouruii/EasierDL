@@ -17,3 +17,4 @@ from .PCSformer import PCSformer
 from .PUCCNet import PUCCNet
 from .SFAN import SFAN
 from .WaveUIR import WaveUIR
+from .CSCANet import CSCANet

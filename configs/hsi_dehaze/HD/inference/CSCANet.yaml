@@ -1,0 +1,8 @@
+work_dir: experiments/hsi_dehaze/HD/inference/CSCANet
+
+num_bands: &num_bands 305       # 波段数
+
+model:
+  type: CSCANet
+
+checkpoint: experiments/hsi_dehaze/HD/comparison/CSCANet/checkpoints/30.pth
