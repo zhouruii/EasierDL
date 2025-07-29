@@ -1,8 +1,8 @@
-site_name: Uchiha
+site_name: EasierDL
 site_description: Documentation for my project
 site_author: Zhou Rui
-site_url: https://zhouruii.github.io/uchiha/
-repo_url: https://github.com/zhouruii/uchiha
+site_url: https://zhouruii.github.io/EasierDL/
+repo_url: https://github.com/zhouruii/EasierDL
 use_directory_urls: false
 
 
@@ -47,6 +47,7 @@ nav:
   - Module: mkdocs/module.md
   - Model: mkdocs/model.md
   - Dataset: mkdocs/dataset.md
+  - DIY: mkdocs/diy.md
   - API: mkdocs/api.md
 
 plugins:
