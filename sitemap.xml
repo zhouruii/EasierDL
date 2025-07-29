@@ -1,39 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://zhouruii.github.io/uchiha/index.html</loc>
-         <lastmod>2025-07-10</lastmod>
+         <loc>https://zhouruii.github.io/EasierDL/index.html</loc>
+         <lastmod>2025-07-29</lastmod>
     </url>
     <url>
-         <loc>https://zhouruii.github.io/uchiha/config.html</loc>
-         <lastmod>2025-07-10</lastmod>
+         <loc>https://zhouruii.github.io/EasierDL/config.html</loc>
+         <lastmod>2025-07-29</lastmod>
     </url>
     <url>
-         <loc>https://zhouruii.github.io/uchiha/data.html</loc>
-         <lastmod>2025-07-10</lastmod>
+         <loc>https://zhouruii.github.io/EasierDL/data.html</loc>
+         <lastmod>2025-07-29</lastmod>
     </url>
     <url>
-         <loc>https://zhouruii.github.io/uchiha/install.html</loc>
-         <lastmod>2025-07-10</lastmod>
+         <loc>https://zhouruii.github.io/EasierDL/install.html</loc>
+         <lastmod>2025-07-29</lastmod>
     </url>
     <url>
-         <loc>https://zhouruii.github.io/uchiha/models.html</loc>
-         <lastmod>2025-07-10</lastmod>
+         <loc>https://zhouruii.github.io/EasierDL/models.html</loc>
+         <lastmod>2025-07-29</lastmod>
     </url>
     <url>
-         <loc>https://zhouruii.github.io/uchiha/mkdocs/api.html</loc>
-         <lastmod>2025-07-10</lastmod>
+         <loc>https://zhouruii.github.io/EasierDL/mkdocs/api.html</loc>
+         <lastmod>2025-07-29</lastmod>
     </url>
     <url>
-         <loc>https://zhouruii.github.io/uchiha/mkdocs/dataset.html</loc>
-         <lastmod>2025-07-10</lastmod>
+         <loc>https://zhouruii.github.io/EasierDL/mkdocs/dataset.html</loc>
+         <lastmod>2025-07-29</lastmod>
     </url>
     <url>
-         <loc>https://zhouruii.github.io/uchiha/mkdocs/model.html</loc>
-         <lastmod>2025-07-10</lastmod>
+         <loc>https://zhouruii.github.io/EasierDL/mkdocs/diy.html</loc>
+         <lastmod>2025-07-29</lastmod>
     </url>
     <url>
-         <loc>https://zhouruii.github.io/uchiha/mkdocs/module.html</loc>
-         <lastmod>2025-07-10</lastmod>
+         <loc>https://zhouruii.github.io/EasierDL/mkdocs/model.html</loc>
+         <lastmod>2025-07-29</lastmod>
+    </url>
+    <url>
+         <loc>https://zhouruii.github.io/EasierDL/mkdocs/module.html</loc>
+         <lastmod>2025-07-29</lastmod>
     </url>
 </urlset>

@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="Documentation for my project" /><meta name="author" content="Zhou Rui" /><link rel="canonical" href="https://zhouruii.github.io/uchiha/index.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="Documentation for my project" /><meta name="author" content="Zhou Rui" /><link rel="canonical" href="https://zhouruii.github.io/EasierDL/index.html" />
       <link rel="shortcut icon" href="img/favicon.ico" />
-    <title>Uchiha</title>
+    <title>EasierDL</title>
     <link rel="stylesheet" href="css/theme.css" />
     <link rel="stylesheet" href="css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -15,7 +15,7 @@
         // Current page data
         var mkdocs_page_name = "Home";
         var mkdocs_page_input_path = "index.md";
-        var mkdocs_page_url = "/uchiha/index.html";
+        var mkdocs_page_url = "/EasierDL/index.html";
       </script>
     
     <!--[if lt IE 9]>
@@ -31,7 +31,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href="index.html" class="icon icon-home"> Uchiha
+          <a href="index.html" class="icon icon-home"> EasierDL
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -91,6 +91,10 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="mkdocs/diy.html">DIY</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="mkdocs/api.html">API</a>
                 </li>
               </ul>
@@ -101,7 +105,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">Uchiha</a>
+          <a href="index.html">EasierDL</a>
         
       </nav>
       <div class="wy-nav-content">
@@ -110,7 +114,7 @@
     <li><a href="index.html" class="icon icon-home" aria-label="Docs"></a></li>
       <li class="breadcrumb-item active">Home</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/zhouruii/uchiha/edit/master/docs/index.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/zhouruii/EasierDL/edit/master/docs/index.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -118,7 +122,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="uchiha">🌟 深度学习简易工具箱 | Uchiha</h1>
+                <h1 id="easierdl">🌟 深度学习简易脚手架 | EasierDL</h1>
 <blockquote>
 <p><strong>DIY your model!</strong><br />
 快速搭建、自由配置多种经典与创新的深度学习模型结构。</p>
@@ -144,23 +148,23 @@
 - 并行结构
 - 知名的 U-Net 结构 等等</p>
 <div align="center">
-  <img src="assets/jpg/stack.jpg" alt="串行结构" width="400"/>
+  <img src="docs/assets/jpg/stack.jpg" alt="串行结构" width="400"/>
 </div>
 <div align="center">
 
-  <img src="assets/jpg/parallel.jpg" alt="并行结构" width="400"/>
+  <img src="docs/assets/jpg/parallel.jpg" alt="并行结构" width="400"/>
 </div>
 
 <hr />
 <h2 id="demo">🚀 Demo</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>main.py<span class="w"> </span>--config<span class="w"> </span><span class="si">${</span><span class="nv">config</span><span class="p"> file</span><span class="si">}</span>
 </code></pre></div>
-<p>👉 配置文件详细用法：<a href="config.html">配置讲解</a></p>
+<p>👉 关于详细的配置说明以及各类模块参数，可以参见<a href="https://zhouruii.github.io/uchiha/">项目文档</a></p>
 <hr />
 <h2 id="_3">⚙️ 安装</h2>
 <h3 id="1">1️⃣ 克隆仓库</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/zhouruii/uchiha.git
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">cd</span><span class="w"> </span>uchiha-main
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/zhouruii/EasierDL.git
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">cd</span><span class="w"> </span>EasierDL-main
 </code></pre></div>
 <h3 id="2">2️⃣ 创建虚拟环境</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>your_env_name<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.9
@@ -202,7 +206,7 @@
 </tr>
 </tbody>
 </table>
-<p>📄 更多详情：<a href="config.html">配置说明</a></p>
+<p>📄 更多详情：<a href="docs/config.md">配置说明</a></p>
 <hr />
 <h3 id="_6">🚦 训练示例</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>main.py<span class="w"> </span>--config<span class="w"> </span><span class="si">${</span><span class="nv">config</span><span class="p"> file</span><span class="si">}</span>
@@ -219,12 +223,12 @@
 </code></pre></div>
 <hr />
 <h2 id="_8">📂 数据集</h2>
-<p>数据集准备与组织请参考 <a href="data.html">数据准备</a></p>
+<p>数据集准备与组织请参考 <a href="docs/data.md">数据准备</a></p>
 <hr />
 <h2 id="_9">🔗 更多文档</h2>
 <ul>
-<li><a href="config.html">配置文件说明</a></li>
-<li><a href="data.html">数据集准备</a></li>
+<li><a href="docs/config.md">配置文件说明</a></li>
+<li><a href="docs/data.md">数据集准备</a></li>
 </ul>
 <hr />
 <p><strong>Have fun &amp; happy training! 🚀</strong></p>
@@ -255,7 +259,7 @@
   <span class="rst-current-version" data-toggle="rst-current-version">
     
         <span>
-          <a href="https://github.com/zhouruii/uchiha" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/zhouruii/EasierDL" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
         </span>
     
     
@@ -280,5 +284,5 @@
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-07-10 09:37:10.644209+00:00
+Build Date UTC : 2025-07-29 08:14:35.608743+00:00
 -->

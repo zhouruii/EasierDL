@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Zhou Rui" /><link rel="canonical" href="https://zhouruii.github.io/uchiha/mkdocs/dataset.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="Zhou Rui" /><link rel="canonical" href="https://zhouruii.github.io/EasierDL/mkdocs/dataset.html" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Dataset - Uchiha</title>
+    <title>Dataset - EasierDL</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -15,7 +15,7 @@
         // Current page data
         var mkdocs_page_name = "Dataset";
         var mkdocs_page_input_path = "mkdocs\\dataset.md";
-        var mkdocs_page_url = "/uchiha/mkdocs/dataset.html";
+        var mkdocs_page_url = "/EasierDL/mkdocs/dataset.html";
       </script>
     
     <!--[if lt IE 9]>
@@ -31,7 +31,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href="../index.html" class="icon icon-home"> Uchiha
+          <a href="../index.html" class="icon icon-home"> EasierDL
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -173,6 +173,10 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="reference internal" href="diy.html">DIY</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a>
                 </li>
               </ul>
@@ -183,7 +187,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">Uchiha</a>
+          <a href="../index.html">EasierDL</a>
         
       </nav>
       <div class="wy-nav-content">
@@ -192,7 +196,7 @@
     <li><a href="../index.html" class="icon icon-home" aria-label="Docs"></a></li>
       <li class="breadcrumb-item active">Dataset</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/zhouruii/uchiha/edit/master/docs/mkdocs/dataset.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/zhouruii/EasierDL/edit/master/docs/mkdocs/dataset.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -6143,8 +6147,7 @@ each element is different data processing configuration information</p>
 <span class="normal"><a href="#__codelineno-0-249">249</a></span>
 <span class="normal"><a href="#__codelineno-0-250">250</a></span>
 <span class="normal"><a href="#__codelineno-0-251">251</a></span>
-<span class="normal"><a href="#__codelineno-0-252">252</a></span>
-<span class="normal"><a href="#__codelineno-0-253">253</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-151" name="__codelineno-0-151"></a><span class="nd">@DATASET</span><span class="o">.</span><span class="n">register_module</span><span class="p">()</span>
+<span class="normal"><a href="#__codelineno-0-252">252</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-151" name="__codelineno-0-151"></a><span class="nd">@DATASET</span><span class="o">.</span><span class="n">register_module</span><span class="p">()</span>
 <a id="__codelineno-0-152" name="__codelineno-0-152"></a><span class="k">class</span> <span class="nc">HSIDehazeDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
 <a id="__codelineno-0-153" name="__codelineno-0-153"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Multi-level noise HSI data set based on HDF5 storage</span>
 <a id="__codelineno-0-154" name="__codelineno-0-154"></a>
@@ -6199,54 +6202,53 @@ each element is different data processing configuration information</p>
 <a id="__codelineno-0-203" name="__codelineno-0-203"></a><span class="sd">            dict: dictionary with average psnr and ssim</span>
 <a id="__codelineno-0-204" name="__codelineno-0-204"></a><span class="sd">        &quot;&quot;&quot;</span>
 <a id="__codelineno-0-205" name="__codelineno-0-205"></a>        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexes</span><span class="p">),</span> <span class="s2">&quot;input list length must be the same&quot;</span>
-<a id="__codelineno-0-206" name="__codelineno-0-206"></a>        <span class="k">assert</span> <span class="n">metric</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">metric</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;PSNR&#39;</span> <span class="ow">or</span> <span class="n">metric</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;SSIM&#39;</span><span class="p">,</span> \
-<a id="__codelineno-0-207" name="__codelineno-0-207"></a>            <span class="s1">&#39;only psnr and ssim are supported by default&#39;</span>
-<a id="__codelineno-0-208" name="__codelineno-0-208"></a>
-<a id="__codelineno-0-209" name="__codelineno-0-209"></a>        <span class="n">logger</span> <span class="o">=</span> <span class="n">get_root_logger</span><span class="p">()</span>
-<a id="__codelineno-0-210" name="__codelineno-0-210"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;start evaluating...&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-211" name="__codelineno-0-211"></a>
-<a id="__codelineno-0-212" name="__codelineno-0-212"></a>        <span class="n">psnrs</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-213" name="__codelineno-0-213"></a>        <span class="n">ssims</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-214" name="__codelineno-0-214"></a>        <span class="k">for</span> <span class="n">pred_batch</span><span class="p">,</span> <span class="n">target_batch</span><span class="p">,</span> <span class="n">index_batch</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">indexes</span><span class="p">):</span>
-<a id="__codelineno-0-215" name="__codelineno-0-215"></a>            <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">pred_batch</span><span class="o">.</span><span class="n">shape</span>
-<a id="__codelineno-0-216" name="__codelineno-0-216"></a>
-<a id="__codelineno-0-217" name="__codelineno-0-217"></a>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">B</span><span class="p">):</span>
-<a id="__codelineno-0-218" name="__codelineno-0-218"></a>                <span class="n">pred</span> <span class="o">=</span> <span class="n">pred_batch</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># (C,H,W)</span>
-<a id="__codelineno-0-219" name="__codelineno-0-219"></a>                <span class="n">target</span> <span class="o">=</span> <span class="n">target_batch</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-<a id="__codelineno-0-220" name="__codelineno-0-220"></a>
-<a id="__codelineno-0-221" name="__codelineno-0-221"></a>                <span class="c1">#convert to (H W C) format</span>
-<a id="__codelineno-0-222" name="__codelineno-0-222"></a>                <span class="k">if</span> <span class="n">C</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-223" name="__codelineno-0-223"></a>                    <span class="n">pred_img</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<a id="__codelineno-0-224" name="__codelineno-0-224"></a>                    <span class="n">target_img</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<a id="__codelineno-0-225" name="__codelineno-0-225"></a>                <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-226" name="__codelineno-0-226"></a>                    <span class="n">pred_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-<a id="__codelineno-0-227" name="__codelineno-0-227"></a>                    <span class="n">target_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-<a id="__codelineno-0-228" name="__codelineno-0-228"></a>
-<a id="__codelineno-0-229" name="__codelineno-0-229"></a>                <span class="c1"># calculate psnr</span>
-<a id="__codelineno-0-230" name="__codelineno-0-230"></a>                <span class="n">data_range</span> <span class="o">=</span> <span class="n">target_img</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">target_img</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
-<a id="__codelineno-0-231" name="__codelineno-0-231"></a>                <span class="n">psnr_val</span> <span class="o">=</span> <span class="n">psnr</span><span class="p">(</span><span class="n">target_img</span><span class="p">,</span> <span class="n">pred_img</span><span class="p">,</span> <span class="n">data_range</span><span class="o">=</span><span class="n">data_range</span><span class="p">)</span>
-<a id="__codelineno-0-232" name="__codelineno-0-232"></a>
-<a id="__codelineno-0-233" name="__codelineno-0-233"></a>                <span class="c1"># calculate ssim</span>
-<a id="__codelineno-0-234" name="__codelineno-0-234"></a>                <span class="n">multichannel</span> <span class="o">=</span> <span class="n">C</span> <span class="o">&gt;</span> <span class="mi">1</span>
-<a id="__codelineno-0-235" name="__codelineno-0-235"></a>                <span class="n">ssim_val</span> <span class="o">=</span> <span class="n">ssim</span><span class="p">(</span>
-<a id="__codelineno-0-236" name="__codelineno-0-236"></a>                    <span class="n">target_img</span><span class="p">,</span> <span class="n">pred_img</span><span class="p">,</span>
-<a id="__codelineno-0-237" name="__codelineno-0-237"></a>                    <span class="n">multichannel</span><span class="o">=</span><span class="n">multichannel</span><span class="p">,</span>
-<a id="__codelineno-0-238" name="__codelineno-0-238"></a>                    <span class="n">channel_axis</span><span class="o">=</span><span class="mi">2</span> <span class="k">if</span> <span class="n">multichannel</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-239" name="__codelineno-0-239"></a>                    <span class="n">data_range</span><span class="o">=</span><span class="n">data_range</span>
-<a id="__codelineno-0-240" name="__codelineno-0-240"></a>                <span class="p">)</span>
-<a id="__codelineno-0-241" name="__codelineno-0-241"></a>
-<a id="__codelineno-0-242" name="__codelineno-0-242"></a>                <span class="n">psnrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">psnr_val</span><span class="p">)</span>
-<a id="__codelineno-0-243" name="__codelineno-0-243"></a>                <span class="n">ssims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ssim_val</span><span class="p">)</span>
-<a id="__codelineno-0-244" name="__codelineno-0-244"></a>
-<a id="__codelineno-0-245" name="__codelineno-0-245"></a>        <span class="n">mean_psnr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">psnrs</span><span class="p">)</span>
-<a id="__codelineno-0-246" name="__codelineno-0-246"></a>        <span class="n">mean_ssim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">ssims</span><span class="p">)</span>
-<a id="__codelineno-0-247" name="__codelineno-0-247"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean PSNR: </span><span class="si">{</span><span class="n">mean_psnr</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-248" name="__codelineno-0-248"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean SSIM: </span><span class="si">{</span><span class="n">mean_ssim</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-249" name="__codelineno-0-249"></a>
-<a id="__codelineno-0-250" name="__codelineno-0-250"></a>        <span class="k">return</span> <span class="p">{</span>
-<a id="__codelineno-0-251" name="__codelineno-0-251"></a>            <span class="s1">&#39;psnr&#39;</span><span class="p">:</span> <span class="n">mean_psnr</span><span class="p">,</span>
-<a id="__codelineno-0-252" name="__codelineno-0-252"></a>            <span class="s1">&#39;ssim&#39;</span><span class="p">:</span> <span class="n">mean_ssim</span>
-<a id="__codelineno-0-253" name="__codelineno-0-253"></a>        <span class="p">}</span>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a>
+<a id="__codelineno-0-207" name="__codelineno-0-207"></a>        <span class="n">logger</span> <span class="o">=</span> <span class="n">get_root_logger</span><span class="p">()</span>
+<a id="__codelineno-0-208" name="__codelineno-0-208"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;start evaluating...&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-209" name="__codelineno-0-209"></a>
+<a id="__codelineno-0-210" name="__codelineno-0-210"></a>        <span class="n">psnrs</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-211" name="__codelineno-0-211"></a>        <span class="n">ssims</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-212" name="__codelineno-0-212"></a>
+<a id="__codelineno-0-213" name="__codelineno-0-213"></a>        <span class="k">for</span> <span class="n">pred_batch</span><span class="p">,</span> <span class="n">target_batch</span><span class="p">,</span> <span class="n">index_batch</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">indexes</span><span class="p">):</span>
+<a id="__codelineno-0-214" name="__codelineno-0-214"></a>            <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">pred_batch</span><span class="o">.</span><span class="n">shape</span>
+<a id="__codelineno-0-215" name="__codelineno-0-215"></a>
+<a id="__codelineno-0-216" name="__codelineno-0-216"></a>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">B</span><span class="p">):</span>
+<a id="__codelineno-0-217" name="__codelineno-0-217"></a>                <span class="n">pred</span> <span class="o">=</span> <span class="n">pred_batch</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># (C,H,W)</span>
+<a id="__codelineno-0-218" name="__codelineno-0-218"></a>                <span class="n">target</span> <span class="o">=</span> <span class="n">target_batch</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+<a id="__codelineno-0-219" name="__codelineno-0-219"></a>
+<a id="__codelineno-0-220" name="__codelineno-0-220"></a>                <span class="c1">#convert to (H W C) format</span>
+<a id="__codelineno-0-221" name="__codelineno-0-221"></a>                <span class="k">if</span> <span class="n">C</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-222" name="__codelineno-0-222"></a>                    <span class="n">pred_img</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<a id="__codelineno-0-223" name="__codelineno-0-223"></a>                    <span class="n">target_img</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<a id="__codelineno-0-224" name="__codelineno-0-224"></a>                <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-225" name="__codelineno-0-225"></a>                    <span class="n">pred_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+<a id="__codelineno-0-226" name="__codelineno-0-226"></a>                    <span class="n">target_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+<a id="__codelineno-0-227" name="__codelineno-0-227"></a>
+<a id="__codelineno-0-228" name="__codelineno-0-228"></a>                <span class="c1"># calculate psnr</span>
+<a id="__codelineno-0-229" name="__codelineno-0-229"></a>                <span class="n">data_range</span> <span class="o">=</span> <span class="n">target_img</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">target_img</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+<a id="__codelineno-0-230" name="__codelineno-0-230"></a>                <span class="n">psnr_val</span> <span class="o">=</span> <span class="n">psnr</span><span class="p">(</span><span class="n">target_img</span><span class="p">,</span> <span class="n">pred_img</span><span class="p">,</span> <span class="n">data_range</span><span class="o">=</span><span class="n">data_range</span><span class="p">)</span>
+<a id="__codelineno-0-231" name="__codelineno-0-231"></a>
+<a id="__codelineno-0-232" name="__codelineno-0-232"></a>                <span class="c1"># calculate ssim</span>
+<a id="__codelineno-0-233" name="__codelineno-0-233"></a>                <span class="n">multichannel</span> <span class="o">=</span> <span class="n">C</span> <span class="o">&gt;</span> <span class="mi">1</span>
+<a id="__codelineno-0-234" name="__codelineno-0-234"></a>                <span class="n">ssim_val</span> <span class="o">=</span> <span class="n">ssim</span><span class="p">(</span>
+<a id="__codelineno-0-235" name="__codelineno-0-235"></a>                    <span class="n">target_img</span><span class="p">,</span> <span class="n">pred_img</span><span class="p">,</span>
+<a id="__codelineno-0-236" name="__codelineno-0-236"></a>                    <span class="n">multichannel</span><span class="o">=</span><span class="n">multichannel</span><span class="p">,</span>
+<a id="__codelineno-0-237" name="__codelineno-0-237"></a>                    <span class="n">channel_axis</span><span class="o">=</span><span class="mi">2</span> <span class="k">if</span> <span class="n">multichannel</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-238" name="__codelineno-0-238"></a>                    <span class="n">data_range</span><span class="o">=</span><span class="n">data_range</span>
+<a id="__codelineno-0-239" name="__codelineno-0-239"></a>                <span class="p">)</span>
+<a id="__codelineno-0-240" name="__codelineno-0-240"></a>
+<a id="__codelineno-0-241" name="__codelineno-0-241"></a>                <span class="n">psnrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">psnr_val</span><span class="p">)</span>
+<a id="__codelineno-0-242" name="__codelineno-0-242"></a>                <span class="n">ssims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ssim_val</span><span class="p">)</span>
+<a id="__codelineno-0-243" name="__codelineno-0-243"></a>
+<a id="__codelineno-0-244" name="__codelineno-0-244"></a>        <span class="n">mean_psnr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">psnrs</span><span class="p">)</span>
+<a id="__codelineno-0-245" name="__codelineno-0-245"></a>        <span class="n">mean_ssim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">ssims</span><span class="p">)</span>
+<a id="__codelineno-0-246" name="__codelineno-0-246"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean PSNR: </span><span class="si">{</span><span class="n">mean_psnr</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-247" name="__codelineno-0-247"></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean SSIM: </span><span class="si">{</span><span class="n">mean_ssim</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-248" name="__codelineno-0-248"></a>
+<a id="__codelineno-0-249" name="__codelineno-0-249"></a>        <span class="k">return</span> <span class="p">{</span>
+<a id="__codelineno-0-250" name="__codelineno-0-250"></a>            <span class="s1">&#39;psnr&#39;</span><span class="p">:</span> <span class="n">mean_psnr</span><span class="p">,</span>
+<a id="__codelineno-0-251" name="__codelineno-0-251"></a>            <span class="s1">&#39;ssim&#39;</span><span class="p">:</span> <span class="n">mean_ssim</span>
+<a id="__codelineno-0-252" name="__codelineno-0-252"></a>        <span class="p">}</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -6408,8 +6410,7 @@ each element is different data processing configuration information</p>
 <span class="normal"><a href="#__codelineno-0-249">249</a></span>
 <span class="normal"><a href="#__codelineno-0-250">250</a></span>
 <span class="normal"><a href="#__codelineno-0-251">251</a></span>
-<span class="normal"><a href="#__codelineno-0-252">252</a></span>
-<span class="normal"><a href="#__codelineno-0-253">253</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-191" name="__codelineno-0-191"></a><span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preds</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">targets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">metric</span><span class="p">,</span>
+<span class="normal"><a href="#__codelineno-0-252">252</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-191" name="__codelineno-0-191"></a><span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preds</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">targets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">metric</span><span class="p">,</span>
 <a id="__codelineno-0-192" name="__codelineno-0-192"></a>             <span class="n">indexes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <a id="__codelineno-0-193" name="__codelineno-0-193"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <a id="__codelineno-0-194" name="__codelineno-0-194"></a><span class="sd">    Calculates the similarity between the predicted data and the real data. PSNR and SSIM are supported by default.</span>
@@ -6424,54 +6425,53 @@ each element is different data processing configuration information</p>
 <a id="__codelineno-0-203" name="__codelineno-0-203"></a><span class="sd">        dict: dictionary with average psnr and ssim</span>
 <a id="__codelineno-0-204" name="__codelineno-0-204"></a><span class="sd">    &quot;&quot;&quot;</span>
 <a id="__codelineno-0-205" name="__codelineno-0-205"></a>    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexes</span><span class="p">),</span> <span class="s2">&quot;input list length must be the same&quot;</span>
-<a id="__codelineno-0-206" name="__codelineno-0-206"></a>    <span class="k">assert</span> <span class="n">metric</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">metric</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;PSNR&#39;</span> <span class="ow">or</span> <span class="n">metric</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;SSIM&#39;</span><span class="p">,</span> \
-<a id="__codelineno-0-207" name="__codelineno-0-207"></a>        <span class="s1">&#39;only psnr and ssim are supported by default&#39;</span>
-<a id="__codelineno-0-208" name="__codelineno-0-208"></a>
-<a id="__codelineno-0-209" name="__codelineno-0-209"></a>    <span class="n">logger</span> <span class="o">=</span> <span class="n">get_root_logger</span><span class="p">()</span>
-<a id="__codelineno-0-210" name="__codelineno-0-210"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;start evaluating...&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-211" name="__codelineno-0-211"></a>
-<a id="__codelineno-0-212" name="__codelineno-0-212"></a>    <span class="n">psnrs</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-213" name="__codelineno-0-213"></a>    <span class="n">ssims</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-214" name="__codelineno-0-214"></a>    <span class="k">for</span> <span class="n">pred_batch</span><span class="p">,</span> <span class="n">target_batch</span><span class="p">,</span> <span class="n">index_batch</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">indexes</span><span class="p">):</span>
-<a id="__codelineno-0-215" name="__codelineno-0-215"></a>        <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">pred_batch</span><span class="o">.</span><span class="n">shape</span>
-<a id="__codelineno-0-216" name="__codelineno-0-216"></a>
-<a id="__codelineno-0-217" name="__codelineno-0-217"></a>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">B</span><span class="p">):</span>
-<a id="__codelineno-0-218" name="__codelineno-0-218"></a>            <span class="n">pred</span> <span class="o">=</span> <span class="n">pred_batch</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># (C,H,W)</span>
-<a id="__codelineno-0-219" name="__codelineno-0-219"></a>            <span class="n">target</span> <span class="o">=</span> <span class="n">target_batch</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-<a id="__codelineno-0-220" name="__codelineno-0-220"></a>
-<a id="__codelineno-0-221" name="__codelineno-0-221"></a>            <span class="c1">#convert to (H W C) format</span>
-<a id="__codelineno-0-222" name="__codelineno-0-222"></a>            <span class="k">if</span> <span class="n">C</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-223" name="__codelineno-0-223"></a>                <span class="n">pred_img</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<a id="__codelineno-0-224" name="__codelineno-0-224"></a>                <span class="n">target_img</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<a id="__codelineno-0-225" name="__codelineno-0-225"></a>            <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-226" name="__codelineno-0-226"></a>                <span class="n">pred_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-<a id="__codelineno-0-227" name="__codelineno-0-227"></a>                <span class="n">target_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-<a id="__codelineno-0-228" name="__codelineno-0-228"></a>
-<a id="__codelineno-0-229" name="__codelineno-0-229"></a>            <span class="c1"># calculate psnr</span>
-<a id="__codelineno-0-230" name="__codelineno-0-230"></a>            <span class="n">data_range</span> <span class="o">=</span> <span class="n">target_img</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">target_img</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
-<a id="__codelineno-0-231" name="__codelineno-0-231"></a>            <span class="n">psnr_val</span> <span class="o">=</span> <span class="n">psnr</span><span class="p">(</span><span class="n">target_img</span><span class="p">,</span> <span class="n">pred_img</span><span class="p">,</span> <span class="n">data_range</span><span class="o">=</span><span class="n">data_range</span><span class="p">)</span>
-<a id="__codelineno-0-232" name="__codelineno-0-232"></a>
-<a id="__codelineno-0-233" name="__codelineno-0-233"></a>            <span class="c1"># calculate ssim</span>
-<a id="__codelineno-0-234" name="__codelineno-0-234"></a>            <span class="n">multichannel</span> <span class="o">=</span> <span class="n">C</span> <span class="o">&gt;</span> <span class="mi">1</span>
-<a id="__codelineno-0-235" name="__codelineno-0-235"></a>            <span class="n">ssim_val</span> <span class="o">=</span> <span class="n">ssim</span><span class="p">(</span>
-<a id="__codelineno-0-236" name="__codelineno-0-236"></a>                <span class="n">target_img</span><span class="p">,</span> <span class="n">pred_img</span><span class="p">,</span>
-<a id="__codelineno-0-237" name="__codelineno-0-237"></a>                <span class="n">multichannel</span><span class="o">=</span><span class="n">multichannel</span><span class="p">,</span>
-<a id="__codelineno-0-238" name="__codelineno-0-238"></a>                <span class="n">channel_axis</span><span class="o">=</span><span class="mi">2</span> <span class="k">if</span> <span class="n">multichannel</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-239" name="__codelineno-0-239"></a>                <span class="n">data_range</span><span class="o">=</span><span class="n">data_range</span>
-<a id="__codelineno-0-240" name="__codelineno-0-240"></a>            <span class="p">)</span>
-<a id="__codelineno-0-241" name="__codelineno-0-241"></a>
-<a id="__codelineno-0-242" name="__codelineno-0-242"></a>            <span class="n">psnrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">psnr_val</span><span class="p">)</span>
-<a id="__codelineno-0-243" name="__codelineno-0-243"></a>            <span class="n">ssims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ssim_val</span><span class="p">)</span>
-<a id="__codelineno-0-244" name="__codelineno-0-244"></a>
-<a id="__codelineno-0-245" name="__codelineno-0-245"></a>    <span class="n">mean_psnr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">psnrs</span><span class="p">)</span>
-<a id="__codelineno-0-246" name="__codelineno-0-246"></a>    <span class="n">mean_ssim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">ssims</span><span class="p">)</span>
-<a id="__codelineno-0-247" name="__codelineno-0-247"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean PSNR: </span><span class="si">{</span><span class="n">mean_psnr</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-248" name="__codelineno-0-248"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean SSIM: </span><span class="si">{</span><span class="n">mean_ssim</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-249" name="__codelineno-0-249"></a>
-<a id="__codelineno-0-250" name="__codelineno-0-250"></a>    <span class="k">return</span> <span class="p">{</span>
-<a id="__codelineno-0-251" name="__codelineno-0-251"></a>        <span class="s1">&#39;psnr&#39;</span><span class="p">:</span> <span class="n">mean_psnr</span><span class="p">,</span>
-<a id="__codelineno-0-252" name="__codelineno-0-252"></a>        <span class="s1">&#39;ssim&#39;</span><span class="p">:</span> <span class="n">mean_ssim</span>
-<a id="__codelineno-0-253" name="__codelineno-0-253"></a>    <span class="p">}</span>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a>
+<a id="__codelineno-0-207" name="__codelineno-0-207"></a>    <span class="n">logger</span> <span class="o">=</span> <span class="n">get_root_logger</span><span class="p">()</span>
+<a id="__codelineno-0-208" name="__codelineno-0-208"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;start evaluating...&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-209" name="__codelineno-0-209"></a>
+<a id="__codelineno-0-210" name="__codelineno-0-210"></a>    <span class="n">psnrs</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-211" name="__codelineno-0-211"></a>    <span class="n">ssims</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-212" name="__codelineno-0-212"></a>
+<a id="__codelineno-0-213" name="__codelineno-0-213"></a>    <span class="k">for</span> <span class="n">pred_batch</span><span class="p">,</span> <span class="n">target_batch</span><span class="p">,</span> <span class="n">index_batch</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">indexes</span><span class="p">):</span>
+<a id="__codelineno-0-214" name="__codelineno-0-214"></a>        <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">pred_batch</span><span class="o">.</span><span class="n">shape</span>
+<a id="__codelineno-0-215" name="__codelineno-0-215"></a>
+<a id="__codelineno-0-216" name="__codelineno-0-216"></a>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">B</span><span class="p">):</span>
+<a id="__codelineno-0-217" name="__codelineno-0-217"></a>            <span class="n">pred</span> <span class="o">=</span> <span class="n">pred_batch</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># (C,H,W)</span>
+<a id="__codelineno-0-218" name="__codelineno-0-218"></a>            <span class="n">target</span> <span class="o">=</span> <span class="n">target_batch</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+<a id="__codelineno-0-219" name="__codelineno-0-219"></a>
+<a id="__codelineno-0-220" name="__codelineno-0-220"></a>            <span class="c1">#convert to (H W C) format</span>
+<a id="__codelineno-0-221" name="__codelineno-0-221"></a>            <span class="k">if</span> <span class="n">C</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-222" name="__codelineno-0-222"></a>                <span class="n">pred_img</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<a id="__codelineno-0-223" name="__codelineno-0-223"></a>                <span class="n">target_img</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<a id="__codelineno-0-224" name="__codelineno-0-224"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-225" name="__codelineno-0-225"></a>                <span class="n">pred_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+<a id="__codelineno-0-226" name="__codelineno-0-226"></a>                <span class="n">target_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+<a id="__codelineno-0-227" name="__codelineno-0-227"></a>
+<a id="__codelineno-0-228" name="__codelineno-0-228"></a>            <span class="c1"># calculate psnr</span>
+<a id="__codelineno-0-229" name="__codelineno-0-229"></a>            <span class="n">data_range</span> <span class="o">=</span> <span class="n">target_img</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">target_img</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+<a id="__codelineno-0-230" name="__codelineno-0-230"></a>            <span class="n">psnr_val</span> <span class="o">=</span> <span class="n">psnr</span><span class="p">(</span><span class="n">target_img</span><span class="p">,</span> <span class="n">pred_img</span><span class="p">,</span> <span class="n">data_range</span><span class="o">=</span><span class="n">data_range</span><span class="p">)</span>
+<a id="__codelineno-0-231" name="__codelineno-0-231"></a>
+<a id="__codelineno-0-232" name="__codelineno-0-232"></a>            <span class="c1"># calculate ssim</span>
+<a id="__codelineno-0-233" name="__codelineno-0-233"></a>            <span class="n">multichannel</span> <span class="o">=</span> <span class="n">C</span> <span class="o">&gt;</span> <span class="mi">1</span>
+<a id="__codelineno-0-234" name="__codelineno-0-234"></a>            <span class="n">ssim_val</span> <span class="o">=</span> <span class="n">ssim</span><span class="p">(</span>
+<a id="__codelineno-0-235" name="__codelineno-0-235"></a>                <span class="n">target_img</span><span class="p">,</span> <span class="n">pred_img</span><span class="p">,</span>
+<a id="__codelineno-0-236" name="__codelineno-0-236"></a>                <span class="n">multichannel</span><span class="o">=</span><span class="n">multichannel</span><span class="p">,</span>
+<a id="__codelineno-0-237" name="__codelineno-0-237"></a>                <span class="n">channel_axis</span><span class="o">=</span><span class="mi">2</span> <span class="k">if</span> <span class="n">multichannel</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-238" name="__codelineno-0-238"></a>                <span class="n">data_range</span><span class="o">=</span><span class="n">data_range</span>
+<a id="__codelineno-0-239" name="__codelineno-0-239"></a>            <span class="p">)</span>
+<a id="__codelineno-0-240" name="__codelineno-0-240"></a>
+<a id="__codelineno-0-241" name="__codelineno-0-241"></a>            <span class="n">psnrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">psnr_val</span><span class="p">)</span>
+<a id="__codelineno-0-242" name="__codelineno-0-242"></a>            <span class="n">ssims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ssim_val</span><span class="p">)</span>
+<a id="__codelineno-0-243" name="__codelineno-0-243"></a>
+<a id="__codelineno-0-244" name="__codelineno-0-244"></a>    <span class="n">mean_psnr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">psnrs</span><span class="p">)</span>
+<a id="__codelineno-0-245" name="__codelineno-0-245"></a>    <span class="n">mean_ssim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">ssims</span><span class="p">)</span>
+<a id="__codelineno-0-246" name="__codelineno-0-246"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean PSNR: </span><span class="si">{</span><span class="n">mean_psnr</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> dB&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-247" name="__codelineno-0-247"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean SSIM: </span><span class="si">{</span><span class="n">mean_ssim</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-248" name="__codelineno-0-248"></a>
+<a id="__codelineno-0-249" name="__codelineno-0-249"></a>    <span class="k">return</span> <span class="p">{</span>
+<a id="__codelineno-0-250" name="__codelineno-0-250"></a>        <span class="s1">&#39;psnr&#39;</span><span class="p">:</span> <span class="n">mean_psnr</span><span class="p">,</span>
+<a id="__codelineno-0-251" name="__codelineno-0-251"></a>        <span class="s1">&#39;ssim&#39;</span><span class="p">:</span> <span class="n">mean_ssim</span>
+<a id="__codelineno-0-252" name="__codelineno-0-252"></a>    <span class="p">}</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -6499,7 +6499,7 @@ each element is different data processing configuration information</p>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="model.html" class="btn btn-neutral float-left" title="Model"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="api.html" class="btn btn-neutral float-right" title="API">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="diy.html" class="btn btn-neutral float-right" title="DIY">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -6522,14 +6522,14 @@ each element is different data processing configuration information</p>
   <span class="rst-current-version" data-toggle="rst-current-version">
     
         <span>
-          <a href="https://github.com/zhouruii/uchiha" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/zhouruii/EasierDL" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
         </span>
     
     
       <span><a href="model.html" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="api.html" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="diy.html" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
