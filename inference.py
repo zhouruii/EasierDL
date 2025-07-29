@@ -1,7 +1,11 @@
 import argparse
 
+import imageio
+import numpy as np
+
+from tools.visualization.show import TwoPercentLinear
 from uchiha.apis import set_random_seed
-from uchiha.apis.inference_dehaze import single_inference
+from uchiha.apis.inference_dehaze import single_inference, load_data, normalize
 from uchiha.utils import load_config
 
 
@@ -23,7 +27,7 @@ def inference():
 if __name__ == '__main__':
     inference()
 
-    # data = load_data('/media/mango/系统/6636数据/2/mk/dataset/GF5最终数据/test/haze/GF9.tif')
+    # data = load_data('/media/mango/系统/6636数据/2/mk/dataset/HD/train/haze/1_15.tif')
     # data = normalize(data)
     # data = np.stack([
     #     np.clip(data[:, :, 58], 0, 1),  # R

@@ -48,6 +48,8 @@ def load_data(data_path, num_bands=305):
         full_data = io.loadmat(data_path)
         data_key = list(full_data.keys())[3]
         data = full_data[data_key]
+        data = np.asanyarray(data, dtype="float32")
+        # data = normalize(data)
     else:
         raise ValueError(f"不支持的格式: {ext}")
 
@@ -118,5 +120,7 @@ def single_inference(cfg):
     name = os.path.basename(cfg.sample_path).split('.')[0]
     output_dir = cfg.work_dir
     result_name = cfg.save_name
+    channel_indices = cfg.channel_indices
 
-    single_visualize(lq=data, pred=pred, gt=gt, name=name, output_dir=output_dir, result_name=result_name)
+    single_visualize(lq=data, pred=pred, gt=gt, name=name, output_dir=output_dir, result_name=result_name,
+                     channel_indices=channel_indices)

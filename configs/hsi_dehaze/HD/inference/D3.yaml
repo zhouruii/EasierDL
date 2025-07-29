@@ -1,7 +1,11 @@
 work_dir: experiments/hsi_dehaze/HD/inference/D3
-sample_path: /media/mango/系统/6636数据/2/mk/dataset/GF5最终数据/test/haze/GF9.tif
-gt_path: /media/mango/系统/6636数据/2/mk/dataset/GF5最终数据/test/haze/GF9.tif
-save_name: D3-HD-e60
+#sample_path: /media/mango/系统/6636数据/2/mk/dataset/GF5最终数据/test/haze/GF9.tif
+#gt_path: /media/mango/系统/6636数据/2/mk/dataset/GF5最终数据/test/haze/GF9.tif
+#channel_indices: [58, 37, 19]
+sample_path: /media/mango/系统/6636数据/2/mk/dataset/HD/train/haze/1_15.tif
+gt_path: /media/mango/系统/6636数据/2/mk/dataset/HD/train/clean/1.tif
+channel_indices: [58, 37, 19]
+save_name: D3-HD-e30
 
 num_bands: &num_bands 305       # 波段数 305 197 467
 
@@ -9,7 +13,7 @@ model:
   type: D3
   in_channels: *num_bands
 
-checkpoint: experiments/hsi_dehaze/HD/comparison/D3/checkpoints/60.pth
+checkpoint: experiments/hsi_dehaze/HD/comparison/D3/checkpoints/30.pth
 
 
 #num_bands: &num_bands 197       # 波段数 305 197 467
