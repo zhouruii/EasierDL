@@ -360,3 +360,24 @@ class SingleBatchNorm(nn.BatchNorm2d):
             x = x * self.weight[None, :, None, None] + self.bias[None, :, None, None]
 
         return x
+
+
+class GatedUnit(nn.Module):
+    def __init__(self, in_channels, depth=1, kernel_size=3, stride=1, padding=1):
+        super(GatedUnit, self).__init__()
+        # 门控分支，卷积 + sigmoid
+        self.gate_conv = nn.ModuleList(nn.Conv2d(in_channels, in_channels,
+                                                 kernel_size=kernel_size,
+                                                 stride=stride,
+                                                 padding=padding) for _ in range(depth))
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        gate = x
+        for m in self.gate_conv:
+            gate = m(gate)
+        # 门控分支
+        gate = self.sigmoid(gate)  # [B, C, H, W]
+        # 门控输入
+        out = x * gate
+        return out

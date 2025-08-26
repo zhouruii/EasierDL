@@ -8,7 +8,7 @@ from .common import conv3x3
 from ..builder import MODULE
 
 
-class WaveletProj(nn.Module):
+class SimpleWaveletProj(nn.Module):
     """ DWT, refer to
     https://pytorch-wavelets.readthedocs.io/en/latest/dwt.html
     """
@@ -47,7 +47,7 @@ class WaveletProj(nn.Module):
         return out
 
 
-class DTCWTProj(nn.Module):
+class SimpleDTCWTProj(nn.Module):
     """ DTCWT:Dual-Tree Complex Wavelet Transform, refer to
     https://pytorch-wavelets.readthedocs.io/en/latest/dtcwt.html
     """
@@ -107,9 +107,9 @@ class FreqProj(nn.Module):
         assert freq in self.FT_TYPE, f'transform : {freq} not supported !'
 
         if freq == 'DWT':
-            self.proj = WaveletProj(**freq_cfg)
+            self.proj = SimpleWaveletProj(**freq_cfg)
         elif freq == 'DTCWT':
-            self.proj = DTCWTProj(**freq_cfg)
+            self.proj = SimpleDTCWTProj(**freq_cfg)
         else:
             raise NotImplementedError(f'transform : {freq} not supported !')
 

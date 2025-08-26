@@ -170,27 +170,27 @@ def get_sorted_rcp(hyperspectral_tensor, split_bands=None):
     return torch.cat(rcps, dim=1)  # B×L×H×W
 
 
-def get_sorted_rcp_pw(image: torch.Tensor, split_bands: list) -> torch.Tensor:
+def get_sorted_rcp_pw(hyperspectral_tensor: torch.Tensor, split_bands: list) -> torch.Tensor:
     """
     输入: CHW torch.Tensor
     功能: 排序 + 切分点差值
     输出: HWN torch.Tensor
     """
-    c, h, w = image.shape
-    flattened = image.permute(1, 2, 0).reshape(-1, c)  # L x C
+    B, C, H, W = hyperspectral_tensor.shape
+    flattened = hyperspectral_tensor.reshape(B, C, -1)  # B C L
     sorted_flattened, _ = torch.sort(flattened, dim=1)
 
     results = []
     for split_idx in split_bands:
-        if not (0 < split_idx < c):
-            raise ValueError(f"切分点 {split_idx} 超出通道范围 (1~{c - 1})")
-        front = sorted_flattened[:, :split_idx]
-        back = sorted_flattened[:, split_idx:]
-        diff = front.mean(dim=1) - back.mean(dim=1)
+        if not (0 < split_idx < C):
+            raise ValueError(f"切分点 {split_idx} 超出通道范围 (1~{C - 1})")
+        front = sorted_flattened[:, :split_idx, :]
+        back = sorted_flattened[:, split_idx:, :]
+        diff = front.mean(dim=1) - back.mean(dim=1)  # B L
         results.append(diff)
 
-    output = torch.stack(results, dim=1)  # L x N
-    return output.reshape(h, w, -1)  # HWN
+    output = torch.stack(results, dim=1)  # B N C
+    return output.reshape(B, len(results), H, W)  # HWN
 
 
 @MODULE.register_module()
@@ -210,21 +210,59 @@ class GroupRCP(nn.Module):
         else:
             self.strategy = strategy
 
-    def forward(self, x):
-        # x.shape (B, C, H, W)
+    @staticmethod
+    def get_prior(x, split_bands, strategy):
         rcp = []
-        for s in self.strategy:
+        for s in strategy:
             if s == 'sorted':
-                rcp.append(get_sorted_rcp(x, self.split_bands))
+                rcp.append(get_sorted_rcp(x, split_bands))
             elif s == 'serial':
-                rcp.append(get_serial_rcp(x, self.split_bands))
+                rcp.append(get_serial_rcp(x, split_bands))
             elif s == 'sorted_pw':
-                rcp.append(get_sorted_rcp_pw(x, self.split_bands))
+                rcp.append(get_sorted_rcp_pw(x, split_bands))
             else:
                 raise ValueError(f"Invalid strategy: {s}")
         rcp = torch.cat(rcp, dim=1)
 
         return rcp
+
+    def forward(self, x):
+        # x.shape (B, C, H, W)
+        return self.get_prior(x, self.split_bands, self.strategy)
+
+
+@MODULE.register_module()
+class PriorDecoupler(nn.Module):
+    def __init__(self, split_ratios=None, split_idx=None, strategy=None):
+        """ RCP --> Global Rain Haze
+
+        Args:
+            split_ratios (List[float]): 先验提取时的切分点（比例），例如1/2处
+            split_idx (int): 划分雨和雾的指定通道
+            strategy (List[str]): 先验提取策略
+        """
+        super().__init__()
+        self.split_ratios = split_ratios
+        self.split_idx = split_idx
+        self.strategy = strategy
+
+        self.prior_dim = len(split_ratios) * len(strategy)
+
+    def forward(self, x):
+        # x.shape (B, C, H, W)
+        B, C, H, W = x.shape
+        global_split_bands = [int(C * ratio) for ratio in self.split_ratios]
+        global_prior = GroupRCP.get_prior(x, global_split_bands, self.strategy)
+
+        rain_insensitive_bands = x[:, :self.split_idx, :, :]
+        rain_split_bands = [int(self.split_idx * ratio) for ratio in self.split_ratios]
+        derain_prior = GroupRCP.get_prior(rain_insensitive_bands, rain_split_bands, self.strategy)
+
+        haze_insensitive_bands = x[:, self.split_idx:, :, :]
+        haze_split_bands = [int((C - self.split_idx) * ratio) for ratio in self.split_ratios]
+        dehaze_prior = GroupRCP.get_prior(haze_insensitive_bands, haze_split_bands, self.strategy)
+
+        return global_prior, derain_prior, dehaze_prior
 
 
 if __name__ == '__main__':

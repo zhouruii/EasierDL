@@ -5,12 +5,12 @@ from torch.nn import init
 from ..builder import MODEL, build_module
 
 
-def fill_former_cfg(cfg, channels_former, channels_prior, num_heads, num_blocks):
+def fill_former_cfg(cfg, channels_former, channels_prior, num_heads, num_blocks, window_size):
     filled_cfg = cfg.copy()
     filled_cfg['in_channels'] = channels_former
     filled_cfg['num_heads'] = num_heads
     filled_cfg['num_blocks'] = num_blocks
-    filled_cfg['freq_cfg']['in_channels'] = channels_former
+    filled_cfg['window_size'] = window_size
     filled_cfg['prior_cfg']['in_channels'] = channels_prior
     filled_cfg['prior_cfg']['num_heads'] = num_heads
     filled_cfg['ffn_cfg']['in_channels'] = channels_former
@@ -64,9 +64,10 @@ class HDRFormerV2(nn.Module):
         self.post_band_selector = build_module(post_band_selector)
         self.reconstruction = build_module(reconstruction)
 
-        self.prior_dim = len(prior_extractor.get('split_bands')) * 2
+        self.prior_dim = len(prior_extractor.get('split_ratios')) * 2
         self.embed_dim = embedding_cfg.get('embed_dim')
         self.num_heads = transformer_cfg.get('num_heads')
+        self.window_sizes = transformer_cfg.get('window_size')
         self.num_blocks = transformer_cfg.get('num_blocks')
         self.num_refinement_blocks = num_refinement_blocks
         self.num_layers = len(self.num_blocks)
@@ -87,7 +88,8 @@ class HDRFormerV2(nn.Module):
                                                 channels_former=channels_former,
                                                 channels_prior=channels_prior,
                                                 num_heads=self.num_heads[i],
-                                                num_blocks=self.num_blocks[i])
+                                                num_blocks=self.num_blocks[i],
+                                                window_size=self.window_sizes[i])
 
             self.encoders.append(build_module(filled_former_cfg))
             create_sampling_module(self.former_samplings, self.prior_samplings, sampling_cfg, downsample_type,
@@ -98,7 +100,8 @@ class HDRFormerV2(nn.Module):
                                                        channels_former=self.embed_dim * (2 ** (self.num_layers - 1)),
                                                        channels_prior=self.prior_dim * (2 ** (self.num_layers - 1)),
                                                        num_heads=self.num_heads[self.num_layers - 1],
-                                                       num_blocks=self.num_blocks[self.num_layers - 1]))
+                                                       num_blocks=self.num_blocks[self.num_layers - 1],
+                                                       window_size=self.window_sizes[self.num_layers - 1]))
 
         # decoder
         self.decoders = nn.ModuleList()
@@ -109,7 +112,8 @@ class HDRFormerV2(nn.Module):
                                                 channels_former=channels_former,
                                                 channels_prior=channels_prior,
                                                 num_heads=self.num_heads[i % self.num_layers],
-                                                num_blocks=self.num_blocks[i % self.num_layers])
+                                                num_blocks=self.num_blocks[i % self.num_layers],
+                                                window_size=self.window_sizes[i % self.num_layers])
             create_sampling_module(self.former_samplings, self.prior_samplings, sampling_cfg, upsample_type,
                                    channels_former * 2, channels_prior * 2)
             if i != 2 * self.num_layers - 2:
@@ -119,7 +123,9 @@ class HDRFormerV2(nn.Module):
                                                                   channels_former=self.embed_dim * 2,
                                                                   channels_prior=self.prior_dim * 2,
                                                                   num_heads=self.num_heads[0],
-                                                                  num_blocks=self.num_blocks[0] + self.num_refinement_blocks)))
+                                                                  num_blocks=self.num_blocks[
+                                                                                 0] + self.num_refinement_blocks,
+                                                                  window_size=self.window_sizes[0])))
 
         self.former_fusions = nn.ModuleList()
         complete_fusion_cfg = fusion_cfg.copy()

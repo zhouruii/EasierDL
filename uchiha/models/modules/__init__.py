@@ -5,12 +5,12 @@ from .channel_transformer import ChannelTransformerLayer, ChannelTransformerLaye
     ChannelTransformerLayerList
 from .swin_transformer import SwinTransformerLayer, SwinTransformerLayers
 
-from .cross_transformer import SelfCrossAttentionLayer
+from .cross_transformer import SelfCrossAttentionLayer, WaveletHeterogeneousAttentionLayer
 from .downsample import *
 from .embedding import *
 from .fusion import CatPWConvFusion
 from .head import FCHead
-from .preprocessor import DWT1d, DWT2d, GroupRCP
+from .preprocessor import DWT1d, DWT2d, GroupRCP, PriorDecoupler
 from .upsample import *
 from .postprocessor import IDWT1d, IDWT2d, WeightedSum
 from .ffn import LeFF, GDFN

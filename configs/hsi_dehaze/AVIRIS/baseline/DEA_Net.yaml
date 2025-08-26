@@ -8,10 +8,12 @@ data:
       loader_type: mat
       dataset_name: AVIRIS
     dataloader:
-      batch_size: 1
+      batch_size: 8
       shuffle: true
-      num_workers: 1
+      num_workers: 8
       pin_memory: true
+      persistent_workers: false
+      prefetch_factor: 8
       drop_last: true
   val:
     dataset:
@@ -21,7 +23,7 @@ data:
       loader_type: mat
       dataset_name: AVIRIS
     dataloader:
-      batch_size: 1
+      batch_size: 8
       shuffle: false
 
 num_bands: &num_bands 197       # 波段数
