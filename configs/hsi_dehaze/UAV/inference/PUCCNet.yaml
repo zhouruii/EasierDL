@@ -1,0 +1,16 @@
+work_dir: experiments/hsi_dehaze/UAV/inference/PUCCNet
+sample_path: /media/mango/系统/6636数据/2/mk/DATASET/HSIDeD-UAV/test/hazy/1_22_5_3.mat
+gt_path: /media/mango/系统/6636数据/2/mk/DATASET/HSIDeD-UAV/test/clean/1_22_5_3.mat
+channel_indices: [136, 67, 17]
+save_name: PUCCNet-UAV-e30
+
+
+num_bands: &num_bands 468
+
+model:
+  type: PUCCNet
+  in_channels: *num_bands
+
+checkpoint: experiments/hsi_dehaze/UAV/comparison/PUCCNet/checkpoints/30.pth
+
+

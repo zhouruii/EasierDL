@@ -105,19 +105,59 @@ def replace_with_zoom(image, rect_coords, zoom_scale=2.0):
 
 # 使用示例
 if __name__ == "__main__":
-    for img_path in glob.glob('./samples/*.png'):
-        test_img = cv2.imread(img_path)
-        test_img = TwoPercentLinear(test_img)
-        # cv2.rectangle(test_img, (240, 130), (512, 512), (255, 0, 0), 1)
+    img_path = 'samples/2_12_1_3-D3-AVIRIS-e30.png'
+    test_img = cv2.imread(img_path)
+    test_img = cv2.cvtColor(test_img, cv2.COLOR_BGR2RGB)
 
-        # 裁剪并拉伸
-        result = crop_and_square(test_img, crop_coords=(245, 145, 512, 507))
+    square = 45
+    start_x = 38
+    start_y = 166
+    show = replace_with_zoom(test_img, rect_coords=(start_x, start_y, start_x + square, start_y + square),
+                             zoom_scale=2.0)
+    imageio.imwrite(img_path.replace('samples', 'results'), show)
 
-        square = 40
-        start_x = 125
-        start_y = 105
-        show = replace_with_zoom(result, rect_coords=(start_x, start_y, start_x + square, start_y + square), zoom_scale=2.0)
-        imageio.imwrite(img_path.replace('samples', 'results'), show)
+    # show for HD 1-15.tif
+    # img_path = 'samples/1_15-PUCCNet-HD-e120.png'
+    # test_img = cv2.imread(img_path)
+    # # test_img = cv2.cvtColor(test_img, cv2.COLOR_BGR2RGB)
+    # # test_img = TwoPercentLinear(test_img)
+    # result = crop_and_square(test_img, crop_coords=(140, 0, 512, 507))
+    #
+    # square = 62
+    # start_x = 285
+    # start_y = 11
+    # show = replace_with_zoom(result, rect_coords=(start_x, start_y, start_x + square, start_y + square),
+    #                          zoom_scale=2.0)
+    # imageio.imwrite(img_path.replace('samples', 'results'), show)
+
+    # params for UAV
+    # square = 44
+    # start_x = 5
+    # start_y = 97
+
+    # params for AVIRIS
+    # square = 45
+    # start_x = 38
+    # start_y = 166
+
+    # show for HDD
+    # for img_path in glob.glob('./samples/*.png'):
+    #     test_img = cv2.imread(img_path)
+    #     test_img = TwoPercentLinear(test_img)
+    #     # cv2.rectangle(test_img, (240, 130), (512, 512), (255, 0, 0), 1)
+    #
+    #     # 裁剪并拉伸
+    #     result = crop_and_square(test_img, crop_coords=(245, 145, 512, 507))
+    #
+    #     square = 40
+    #     start_x = 125
+    #     start_y = 105
+    #     show = replace_with_zoom(result, rect_coords=(start_x, start_y, start_x + square, start_y + square),
+    #     zoom_scale=2.0)
+    #     imageio.imwrite(img_path.replace('samples', 'results'), show)
+
+    # params for HDD
+    # crop_coords: (245, 145, 512, 507) zoom: square = 40 start_x = 125 start_y = 105
 
     # 使用Matplotlib展示
     # plt.figure(figsize=(15, 5))

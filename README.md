@@ -1,4 +1,4 @@
-# 🌟 深度学习简易工具箱 | Uchiha
+# 🌟 深度学习简易脚手架 | EasierDL
 
 > **DIY your model!**  
 > 快速搭建、自由配置多种经典与创新的深度学习模型结构。
@@ -52,8 +52,8 @@ python main.py --config ${config file}
 ### 1️⃣ 克隆仓库
 
 ```shell
-git clone https://github.com/zhouruii/uchiha.git
-cd uchiha-main
+git clone https://github.com/zhouruii/EasierDL.git
+cd EasierDL-main
 ```
 
 ### 2️⃣ 创建虚拟环境

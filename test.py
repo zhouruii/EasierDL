@@ -5,8 +5,8 @@ from os.path import join
 import torch
 from torch import nn
 
-from inference import remove_module_prefix
 from uchiha.apis import set_random_seed, hsi_test
+from uchiha.apis.inference_dehaze import remove_module_prefix
 from uchiha.datasets.builder import build_dataset, build_dataloader
 from uchiha.models.builder import build_model
 from uchiha.utils import load_config, get_root_logger
