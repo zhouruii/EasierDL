@@ -120,9 +120,11 @@ class PatchMerging(nn.Module):
 class PixelShuffleDownsample(nn.Module):
     def __init__(self, in_channels=128, factor=2):
         super(PixelShuffleDownsample, self).__init__()
+        self.in_channels = in_channels
 
-        self.body = nn.Sequential(nn.Conv2d(in_channels, in_channels // factor, kernel_size=3, stride=1, padding=1, bias=False),
-                                  nn.PixelUnshuffle(factor))
+        self.body = nn.Sequential(
+            nn.Conv2d(in_channels, in_channels // factor, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.PixelUnshuffle(factor))
 
     def forward(self, x):
         return self.body(x)

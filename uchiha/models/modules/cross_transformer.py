@@ -286,16 +286,18 @@ class WaveletHeterogeneousAttention(nn.Module):
         self.in_channels = in_channels
         self.num_heads = num_heads
         self.window_size = window_size
+        self.sparse_strategy = sparse_strategy
         self.wavelet_transform = DWTForward(J=1, wave='haar', mode='reflect')
         self.inverse_transform = DWTInverse(wave='haar')
 
         assert in_channels % num_heads == 0, f'in_channels:{in_channels} must be divided by num_heads:{num_heads}'
+        self.head_dim = in_channels // num_heads
 
-        head_dim = in_channels // num_heads
+        # ------------------------------------------ Projection ------------------------------------------ #
+        self.linear_proj = nn.Conv2d(in_channels, in_channels * 3, kernel_size=1, padding=0)
         self.q_proj = conv3x3(in_channels, in_channels, groups=in_channels)
         self.k_proj = nn.ModuleList([conv3x3(in_channels, in_channels, groups=in_channels, stride=2) for _ in range(4)])
-        self.v_proj = conv3x3(in_channels, in_channels, groups=in_channels)
-        self.scale = nn.Parameter(torch.tensor(head_dim ** -0.5))
+        self.v_proj = nn.ModuleList([conv3x3(in_channels, in_channels, groups=in_channels, stride=2) for _ in range(4)])
 
         # ------------------------------------------ Gate Unit ------------------------------------------ #
         self.gate_ll_rain = GatedUnit(in_channels=in_channels, depth=2, kernel_size=3)
@@ -311,7 +313,12 @@ class WaveletHeterogeneousAttention(nn.Module):
         self.cat_conv = nn.Conv2d(in_channels=in_channels * 2, out_channels=in_channels, kernel_size=1)
 
         # ------------------------------------------ Attn Unit ------------------------------------------ #
-        self.sparse_opt = SparsifyAttention(sparse_strategy)
+        self.temperature = nn.Parameter(torch.ones(num_heads, 1, 1))
+        self.scale = self.head_dim ** -0.5
+        self.sparse_opt_ll = SparsifyAttention(sparse_strategy) if self.sparse_strategy else nn.Softmax(dim=-1)
+        self.sparse_opt_lh = SparsifyAttention(sparse_strategy)
+        self.sparse_opt_hl = SparsifyAttention(sparse_strategy)
+        self.sparse_opt_hh = SparsifyAttention(sparse_strategy)
         self.w1 = nn.Parameter(torch.tensor(0.5))
         self.w2 = nn.Parameter(torch.tensor(0.2))
         self.w3 = nn.Parameter(torch.tensor(0.2))
@@ -321,10 +328,14 @@ class WaveletHeterogeneousAttention(nn.Module):
 
     def forward(self, x, prior=None):
         # x.shape (B,C,H,W)
+        # ------------------------------------------ Projection ------------------------------------------ #
         _, _, H, W = x.shape
-        q = self.q_proj(x)
-        k = [proj(x) for proj in self.k_proj]
-        v = self.v_proj(x)
+        x = self.linear_proj(x)
+        q, _k, _v = torch.chunk(x, chunks=3, dim=1)
+        q = self.q_proj(q)
+        k_ll, k_lh, k_hl, k_hh = [proj(_k) for proj in self.k_proj]
+        v_ll, v_lh, v_hl, v_hh = [proj(_v) for proj in self.v_proj]
+
         # ------------------------------------------ Gate Unit ------------------------------------------ #
         LL, H = self.wavelet_transform(q)
         LH, HL, HH = H[0][:, :, 0, :, :], H[0][:, :, 1, :, :], H[0][:, :, 2, :, :]
@@ -355,50 +366,65 @@ class WaveletHeterogeneousAttention(nn.Module):
         q_hl = q_hl * mask_rp_hl
 
         # ------------------------------------------ Attn Unit ------------------------------------------ #
-        k_ll, k_lh, k_hl, k_hh = k
-        attn_ll = self.cal_self_attn(q_ll, k_ll)
-        attn_lh = self.cal_win_attn(q_lh, k_lh, self.window_size)
-        attn_hl = self.cal_win_attn(q_hl, k_hl, self.window_size)
-        attn_hh = self.cal_win_attn(q_hh, k_hh, self.window_size)
-        attn = attn_ll * self.w1 + attn_lh * self.w2 + attn_hl * self.w3 + attn_hh * self.w4
-        attn = self.sparse_opt(attn)  # (C, C)
+        out_ll = self.cal_self_attn(q_ll, k_ll, v_ll)
+        out_lh = self.cal_win_attn(q_lh, k_lh, v_lh, self.window_size, sub_band='lh')
+        out_hl = self.cal_win_attn(q_hl, k_hl, v_hl, self.window_size, sub_band='hl')
+        out_hh = self.cal_win_attn(q_hh, k_hh, v_hh, self.window_size, sub_band='hh')
+        out = self.inverse_transform((out_ll, [torch.stack([out_lh, out_hl, out_hh], dim=2)]))
 
-        res = v
+        res = _v
         res = res * mask_gp
-        v = rearrange(v, 'b (nh c) h w -> b nh c (h w)', h=H, w=W, nh=self.num_heads)
-        out = (attn @ v)
-        out = rearrange(out, 'b nh c (h w) -> b (nh c) h w', h=H, w=W, nh=self.num_heads)
+        # v = rearrange(v, 'b (nh c) h w -> b nh c (h w)', nh=self.num_heads)
+        # out = (attn @ v)
+        # out = rearrange(out, 'b nh c (h w) -> b (nh c) h w', h=H, w=W, nh=self.num_heads)
         out = out + res
 
         return self.proj_out(out), prior
 
-    def cal_self_attn(self, q, k):
-        if len(q.shape) == 4:
-            B, H, W, C = q.shape
-            q = rearrange(q, 'b c h w -> b (h w) c', h=H, w=W, c=C)
-            k = rearrange(k, 'b c h w -> b (h w) c', h=H, w=W, c=C)
-        B, L, C = q.shape
-        q = rearrange(q, 'b l (nh c) -> b nh c l', l=L, c=self.head_dim, nh=self.num_heads)
-        k = rearrange(k, 'b l (nh c) -> b nh c l', l=L, c=self.head_dim, nh=self.num_heads)
+    def cal_self_attn(self, q, k, v):
+        B, C, H, W = q.shape
+        q = rearrange(q, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
+        k = rearrange(k, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
+        v = rearrange(v, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
         q = F.normalize(q, dim=-1)
         k = F.normalize(k, dim=-1)
 
-        attn = (q @ k.transpose(-2, -1)) * self.scale
-        attn = attn.softmax(dim=-1)
+        attn = (q @ k.transpose(-2, -1)) * self.temperature  # B
+        attn = self.sparse_opt_ll(attn)
 
-        return attn
+        out = attn @ v
+        out = rearrange(out, 'b head c (h w) -> b (head c) h w', head=self.num_heads, h=H, w=W)
 
-    def cal_win_attn(self, q, k, window_size):
+        return out
+
+    def cal_win_attn(self, q, k, v, window_size, sub_band='lh'):
         B, C, H, W = q.shape
-        q = rearrange(q, 'b c h w -> b (h w) c', h=H, w=W)
-        k = rearrange(k, 'b c h w -> b (h w) c', h=H, w=W)
-        q_windows = rearrange(window_partition(q, window_size), 'nW_B, w, w, C -> nW_B, (w, w), C', w=window_size)
-        k_windows = rearrange(window_partition(k, window_size), 'nW_B, w, w, C -> nW_B, (w, w), C', w=window_size)
-        attn_windows = self.cal_self_attn(q_windows, k_windows)
-        attn_windows = rearrange(attn_windows, 'nW_B, (w, w), C -> nW_B, w, w, C', w=window_size)
-        attn = window_reverse(attn_windows, window_size, H, W)
+        q = rearrange(q, 'b c h w -> b h w c')
+        k = rearrange(k, 'b c h w -> b h w c')
+        v = rearrange(v, 'b c h w -> b h w c')
+        q_windows = rearrange(window_partition(q, window_size), 'nW_B wW wH (head c) -> nW_B head (wW wH) c',
+                              head=self.num_heads)
+        k_windows = rearrange(window_partition(k, window_size), 'nW_B wW wH (head c) -> nW_B head (wW wH) c',
+                              head=self.num_heads)
+        v_windows = rearrange(window_partition(v, window_size), 'nW_B wW wH (head c) -> nW_B head (wW wH) c',
+                              head=self.num_heads)
 
-        return attn
+        attn_windows = (q_windows @ k_windows.transpose(-2, -1)) * self.scale
+        if sub_band == 'lh':
+            sparse_opt = self.sparse_opt_lh
+        elif sub_band == 'hl':
+            sparse_opt = self.sparse_opt_hl
+        elif sub_band == 'hh':
+            sparse_opt = self.sparse_opt_hh
+        else:
+            raise NotImplementedError(f'sparse for sub-band:{sub_band} not supported yet!')
+        attn_windows = sparse_opt(attn_windows)
+        out = attn_windows @ v_windows  # B nH N C
+
+        out = rearrange(out, 'nW_B head (wW wH) C -> nW_B wW wH (head C)', wW=window_size)
+        out = rearrange(window_reverse(out, window_size, H, W), 'b h w c -> b c h w')
+
+        return out
 
 
 @MODULE.register_module()

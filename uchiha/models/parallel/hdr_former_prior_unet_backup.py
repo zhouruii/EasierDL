@@ -5,14 +5,13 @@ from torch.nn import init
 from ..builder import MODEL, build_module
 
 
-def fill_former_cfg(cfg, layer, channels_former, channels_prior, num_heads, num_blocks, window_size):
+def fill_former_cfg(cfg, channels_former, channels_prior, num_heads, num_blocks, window_size):
     filled_cfg = cfg.copy()
     filled_cfg['in_channels'] = channels_former
     filled_cfg['num_heads'] = num_heads
     filled_cfg['num_blocks'] = num_blocks
     filled_cfg['window_size'] = window_size
     filled_cfg['prior_cfg']['in_channels'] = channels_prior
-    filled_cfg['prior_cfg']['ds_scale'] = layer
     filled_cfg['ffn_cfg']['in_channels'] = channels_former
 
     return filled_cfg
@@ -24,6 +23,16 @@ def fill_sampling_cfg(cfg, sampling_type, in_channels):
     filled_cfg['in_channels'] = in_channels
 
     return filled_cfg
+
+
+def create_sampling_module(former_samplings, prior_samplings, sampling_cfg, sampling_type, channels_former,
+                           channels_prior):
+    former_samplings.append(build_module(fill_sampling_cfg(cfg=sampling_cfg,
+                                                           sampling_type=sampling_type,
+                                                           in_channels=channels_former)))
+    prior_samplings.append(build_module(fill_sampling_cfg(cfg=sampling_cfg,
+                                                          sampling_type=sampling_type,
+                                                          in_channels=channels_prior)))
 
 
 # last decoder differs from v1
@@ -54,7 +63,7 @@ class HDRFormerV2(nn.Module):
         self.post_band_selector = build_module(post_band_selector)
         self.reconstruction = build_module(reconstruction)
 
-        self.prior_dim = len(prior_extractor.get('split_ratios')) * len(prior_extractor.get('strategy'))
+        self.prior_dim = len(prior_extractor.get('split_ratios')) * 2
         self.embed_dim = embedding_cfg.get('embed_dim')
         self.num_heads = transformer_cfg.get('num_heads')
         self.window_sizes = transformer_cfg.get('window_size')
@@ -67,29 +76,28 @@ class HDRFormerV2(nn.Module):
 
         cfg = transformer_cfg.copy()
         self.former_samplings = nn.ModuleList()
+        self.prior_samplings = nn.ModuleList()
 
         # encoder
         self.encoders = nn.ModuleList()
         for i in range(0, self.num_layers - 1):
             channels_former = self.embed_dim * (2 ** i)
+            channels_prior = self.prior_dim * (2 ** i)
             filled_former_cfg = fill_former_cfg(cfg=cfg,
-                                                layer=i + 1,
                                                 channels_former=channels_former,
-                                                channels_prior=self.prior_dim,
+                                                channels_prior=channels_prior,
                                                 num_heads=self.num_heads[i],
                                                 num_blocks=self.num_blocks[i],
                                                 window_size=self.window_sizes[i])
 
             self.encoders.append(build_module(filled_former_cfg))
-            self.former_samplings.append(build_module(fill_sampling_cfg(cfg=sampling_cfg,
-                                                                        sampling_type=downsample_type,
-                                                                        in_channels=channels_former)))
+            create_sampling_module(self.former_samplings, self.prior_samplings, sampling_cfg, downsample_type,
+                                   channels_former, channels_prior)
 
         # bottleneck
         self.bottleneck = build_module(fill_former_cfg(cfg=cfg,
-                                                       layer=self.num_layers,
                                                        channels_former=self.embed_dim * (2 ** (self.num_layers - 1)),
-                                                       channels_prior=self.prior_dim,
+                                                       channels_prior=self.prior_dim * (2 ** (self.num_layers - 1)),
                                                        num_heads=self.num_heads[self.num_layers - 1],
                                                        num_blocks=self.num_blocks[self.num_layers - 1],
                                                        window_size=self.window_sizes[self.num_layers - 1]))
@@ -98,21 +106,19 @@ class HDRFormerV2(nn.Module):
         self.decoders = nn.ModuleList()
         for i in range(self.num_layers, 2 * self.num_layers - 1):
             channels_former = self.embed_dim * (2 ** (self.num_layers - 2 - i % self.num_layers))
+            channels_prior = self.prior_dim * (2 ** (self.num_layers - 2 - i % self.num_layers))
             filled_former_cfg = fill_former_cfg(cfg=cfg,
-                                                layer=self.num_layers - 1 - i % self.num_layers,
                                                 channels_former=channels_former,
-                                                channels_prior=self.prior_dim,
+                                                channels_prior=channels_prior,
                                                 num_heads=self.num_heads[i % self.num_layers],
                                                 num_blocks=self.num_blocks[i % self.num_layers],
                                                 window_size=self.window_sizes[i % self.num_layers])
-            self.former_samplings.append(build_module(fill_sampling_cfg(cfg=sampling_cfg,
-                                                                        sampling_type=upsample_type,
-                                                                        in_channels=channels_former)))
+            create_sampling_module(self.former_samplings, self.prior_samplings, sampling_cfg, upsample_type,
+                                   channels_former * 2, channels_prior * 2)
             if i != 2 * self.num_layers - 2:
                 self.decoders.append(build_module(filled_former_cfg))
             else:
                 self.decoders.append(build_module(fill_former_cfg(cfg=cfg,
-                                                                  layer=self.num_layers - 1 - i % self.num_layers,
                                                                   channels_former=self.embed_dim * 2,
                                                                   channels_prior=self.prior_dim * 2,
                                                                   num_heads=self.num_heads[0],
@@ -159,12 +165,16 @@ class HDRFormerV2(nn.Module):
 
         # encode
         to_fuse_feats = []
+        to_fuse_rcp_priors = []
         for i in range(depth):
             encoder = self.encoders[i]
             former_downsample = self.former_samplings[i]
-            to_fuse_feat, rcp_prior = encoder(feat, rcp_prior)
+            prior_downsample = self.prior_samplings[i]
+            to_fuse_feat, to_fuse_rcp_prior = encoder(feat, rcp_prior)
             feat = former_downsample(to_fuse_feat)
+            rcp_prior = prior_downsample(to_fuse_rcp_prior)
             to_fuse_feats.append(to_fuse_feat)
+            to_fuse_rcp_priors.append(to_fuse_rcp_prior)
 
         # bottleneck
         feat, rcp_prior = self.bottleneck(feat, rcp_prior)
@@ -173,13 +183,18 @@ class HDRFormerV2(nn.Module):
         for i in range(depth):
             decoder = self.decoders[i]
             former_upsample = self.former_samplings[i + depth]
+            prior_upsample = self.prior_samplings[i + depth]
 
             feat = former_upsample(feat)
+            rcp_prior = prior_upsample(rcp_prior)
             if i < depth - 1:
                 former_fusion = self.former_fusions[i]
+                prior_fusion = self.prior_fusions[i]
                 feat = former_fusion(feat, to_fuse_feats[depth - 1 - i])
+                rcp_prior = prior_fusion(rcp_prior, to_fuse_rcp_priors[depth - 1 - i])
             else:
                 feat = torch.cat((feat, to_fuse_feats[0]), dim=1)
+                rcp_prior = torch.cat((rcp_prior, to_fuse_rcp_priors[0]), dim=1)
             feat, rcp_prior = decoder(feat, rcp_prior)
 
         feat = self.out_proj(feat)

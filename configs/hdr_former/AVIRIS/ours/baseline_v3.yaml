@@ -77,7 +77,7 @@ model:
     window_size: [8, 4, 2, 1]
     num_blocks: [4, 6, 6, 8]
     prior_cfg:   # forward for prior
-      type: GRCPBranch
+      type: MultiGRCPBranch
       strategy: dilation
     sparse_strategy: MultiscaleTopK
     ffn_cfg:

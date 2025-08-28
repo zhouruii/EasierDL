@@ -14,7 +14,7 @@ from .preprocessor import DWT1d, DWT2d, GroupRCP, PriorDecoupler
 from .upsample import *
 from .postprocessor import IDWT1d, IDWT2d, WeightedSum
 from .ffn import LeFF, GDFN
-from .prior import GRCPBranch
+from .prior import GRCPBranch, MultiGRCPBranch
 
 # Mamba
 # try:

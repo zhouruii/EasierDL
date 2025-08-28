@@ -369,7 +369,8 @@ class GatedUnit(nn.Module):
         self.gate_conv = nn.ModuleList(nn.Conv2d(in_channels, in_channels,
                                                  kernel_size=kernel_size,
                                                  stride=stride,
-                                                 padding=padding) for _ in range(depth))
+                                                 padding=padding,
+                                                 groups=in_channels) for _ in range(depth))
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
