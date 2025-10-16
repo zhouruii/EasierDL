@@ -35,7 +35,7 @@ data:
       shuffle: false
 
 num_bands: &num_bands 224       # 波段数
-embed_dim: &embed_dim 48      # 传播维度
+embed_dim: &embed_dim 64      # 传播维度
 
 model:
   type: HDRFormerV2
@@ -73,9 +73,9 @@ model:
     factor: 2
   transformer_cfg:
     type: WaveletHeterogeneousAttentionLayer
-    num_heads: [1, 2, 4, 8]
-    window_size: [8, 4, 2, 1]
-    num_blocks: [4, 6, 6, 8]
+    num_heads: [2, 4, 8]
+    window_size: [4, 2, 1]
+    num_blocks: [4, 6, 8]
     prior_cfg:   # forward for prior
       type: MultiGRCPBranch
       strategy: dilation

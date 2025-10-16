@@ -15,6 +15,7 @@ from .upsample import *
 from .postprocessor import IDWT1d, IDWT2d, WeightedSum
 from .ffn import LeFF, GDFN
 from .prior import GRCPBranch, MultiGRCPBranch
+from .freq import ParllelFreqDecouplingReconstruction
 
 # Mamba
 # try:

@@ -4,7 +4,8 @@ import torch.nn.functional as F
 from einops import rearrange
 from pytorch_wavelets import DWTForward, DWTInverse, DTCWTForward, DTCWTInverse
 
-from .common import conv3x3
+from .common import conv3x3, GatedUnit
+from .cbam import BasicCAM
 from ..builder import MODULE
 
 
@@ -287,6 +288,63 @@ class FreqDecouplingReconstruction(nn.Module):
 
         # high part
         high = self.conv_high_freq(high)
+        tau = torch.exp(self.gamma * self.d)
+        high = high * tau
+
+        return low - high
+
+
+@MODULE.register_module()
+class ParllelFreqDecouplingReconstruction(nn.Module):
+    def __init__(self, d=1.0, in_channels=128, filter_kernel_size=3, filter_groups=8, norm='BN'):
+        super().__init__()
+        assert in_channels % filter_groups == 0, \
+            f'in_channels:{in_channels} must be divided by filter_groups:{filter_groups}'
+        self.d = torch.tensor(d)
+        self.in_channels = in_channels
+        self.filter_kernel_size = filter_kernel_size
+        self.filter_groups = filter_groups
+
+        self.cam = BasicCAM(in_channel=in_channels, out_channel=in_channels)
+        self.dw_conv = conv3x3(in_channels, in_channels, groups=in_channels)
+
+        self.low_filter = GatedDynamicDecoupler(
+            in_channels=self.in_channels,
+            kernel_size=self.filter_kernel_size,
+            group=self.filter_groups,
+            norm=norm
+        )
+        self.high_filter = GatedDynamicDecoupler(
+            in_channels=self.in_channels,
+            kernel_size=self.filter_kernel_size,
+            group=self.filter_groups,
+            norm=norm
+        )
+
+        self.gate_low = GatedUnit(in_channels, depth=2)
+        self.gate_high = GatedUnit(in_channels, depth=1)
+
+        self.pw_conv_low = nn.Conv2d(in_channels, in_channels, 1)
+        self.pw_conv_high = nn.Conv2d(in_channels, 1, 1)
+        self.gamma = nn.Parameter(torch.tensor(float(1)))
+
+    def forward(self, x, raw):
+        low = x
+        high = x
+        low = self.cam(low)
+        high = self.dw_conv(high)
+        # x: B C H W
+        low, _ = self.low_filter(low)
+        _, high = self.high_filter(high)
+
+        # low part
+        low = self.pw_conv_low(low)
+        shortcut = low
+        low = chunk_mul(low, raw)  # low * raw
+        low = low + raw - shortcut
+
+        # high part
+        high = self.pw_conv_high(high)
         tau = torch.exp(self.gamma * self.d)
         high = high * tau
 

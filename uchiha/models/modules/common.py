@@ -248,6 +248,10 @@ def build_act(act):
     """
     if act == 'nn.GELU':
         return nn.GELU
+    elif act == 'nn.ReLU':
+        return nn.ReLU
+    elif act == 'nn.Sigmoid':
+        return nn.Sigmoid
     elif isinstance(act, nn.Module):
         return act
     else:

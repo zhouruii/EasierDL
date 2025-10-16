@@ -2,7 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .common import conv3x3
+from .common import conv3x3, build_act
+from .basic_resnet import BasicResidualBlock
 from ..builder import MODULE
 
 
@@ -46,7 +47,7 @@ class GRCPBranch(nn.Module):
 
 
 class PixelAttention(nn.Module):
-    def __init__(self, in_channels):
+    def __init__(self, in_channels, act=None):
         super().__init__()
         self.in_channels = in_channels
 
@@ -55,7 +56,7 @@ class PixelAttention(nn.Module):
             nn.Conv2d(in_channels, hidden_channels, kernel_size=1),
             nn.ReLU(),
             nn.Conv2d(hidden_channels, 1, kernel_size=1),
-            nn.Sigmoid()
+            nn.Sigmoid() if act is None else act()
         )
 
     def forward(self, x):
@@ -64,7 +65,7 @@ class PixelAttention(nn.Module):
 
 
 class SpatialAttention(nn.Module):
-    def __init__(self, in_channels, strategy='dilation'):
+    def __init__(self, in_channels, strategy='dilation', act=None):
         super().__init__()
         self.in_channels = in_channels
         self.strategy = strategy
@@ -79,8 +80,7 @@ class SpatialAttention(nn.Module):
             self.level3 = conv3x3(3, 1, 1, 1, 3)
 
         self.fusion_conv = conv3x3(3, 1)
-        self.act = nn.Sigmoid()
-        self.post_conv = conv3x3(in_channels, in_channels)
+        self.act = nn.Sigmoid() if act is None else act()
 
     def forward(self, x):
         # x.shape (B, C, H, W)
@@ -103,18 +103,16 @@ class SpatialAttention(nn.Module):
 
 @MODULE.register_module()
 class MultiGRCPBranch(nn.Module):
-    def __init__(self, in_channels, strategy='dilation', ds_scale=1):
+    def __init__(self, in_channels, strategy='dilation', act=None, ds_scale=1):
         super().__init__()
         self.in_channels = in_channels
         self.strategy = strategy
         self.ds_scale = ds_scale
+        self.act = build_act(act)
 
-        self.gp_branch = nn.Sequential(PixelAttention(in_channels=in_channels),
-                                       SpatialAttention(in_channels=in_channels, strategy=strategy))
-        self.rp_branch = nn.Sequential(PixelAttention(in_channels=in_channels),
-                                       SpatialAttention(in_channels=in_channels, strategy=strategy))
-        self.hp_branch = nn.Sequential(PixelAttention(in_channels=in_channels),
-                                       SpatialAttention(in_channels=in_channels, strategy=strategy))
+        self.gp_branch = self.get_attn_opt(use_rb=True, use_pixel_att=False, use_spatial_att=False)
+        self.rp_branch = self.get_attn_opt(use_rb=True, use_pixel_att=False, use_spatial_att=False)
+        self.hp_branch = self.get_attn_opt(use_rb=True, use_pixel_att=False, use_spatial_att=False)
 
         # --------------------------------- Mask(Downsample) --------------------------------- #
         self.gp_conv = conv3x3(in_channels, 1)
@@ -150,3 +148,19 @@ class MultiGRCPBranch(nn.Module):
         hp = self.hp_post_conv(hp)
 
         return (gp, rp, hp), (gp_mask, rp_mask_ll, rp_mask_lh, rp_mask_hl, hp_mask)
+
+    def get_attn_opt(self, use_rb=True, use_pixel_att=True, use_spatial_att=True):
+        if use_rb:
+            # 使用残差块进行先验的特征提取
+            return BasicResidualBlock(self.in_channels, self.in_channels)
+
+        if not use_pixel_att and not use_spatial_att:
+            return nn.Identity()
+
+        attn_opts = []
+        if use_pixel_att:
+            attn_opts.append(PixelAttention(self.in_channels, self.act))
+        if use_spatial_att:
+            attn_opts.append(SpatialAttention(self.in_channels, self.strategy, self.act))
+
+        return nn.Sequential(*attn_opts)

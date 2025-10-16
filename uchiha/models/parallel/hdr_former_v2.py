@@ -98,6 +98,7 @@ class HDRFormerV2(nn.Module):
         self.decoders = nn.ModuleList()
         for i in range(self.num_layers, 2 * self.num_layers - 1):
             channels_former = self.embed_dim * (2 ** (self.num_layers - 2 - i % self.num_layers))
+            channels_samples = self.embed_dim * (2 ** (self.num_layers - 1 - i % self.num_layers))
             filled_former_cfg = fill_former_cfg(cfg=cfg,
                                                 layer=self.num_layers - 1 - i % self.num_layers,
                                                 channels_former=channels_former,
@@ -107,14 +108,14 @@ class HDRFormerV2(nn.Module):
                                                 window_size=self.window_sizes[i % self.num_layers])
             self.former_samplings.append(build_module(fill_sampling_cfg(cfg=sampling_cfg,
                                                                         sampling_type=upsample_type,
-                                                                        in_channels=channels_former)))
+                                                                        in_channels=channels_samples)))
             if i != 2 * self.num_layers - 2:
                 self.decoders.append(build_module(filled_former_cfg))
             else:
                 self.decoders.append(build_module(fill_former_cfg(cfg=cfg,
                                                                   layer=self.num_layers - 1 - i % self.num_layers,
                                                                   channels_former=self.embed_dim * 2,
-                                                                  channels_prior=self.prior_dim * 2,
+                                                                  channels_prior=self.prior_dim,
                                                                   num_heads=self.num_heads[0],
                                                                   num_blocks=self.num_blocks[
                                                                                  0] + self.num_refinement_blocks,
@@ -137,19 +138,19 @@ class HDRFormerV2(nn.Module):
             nn.Conv2d(abs(self.out_channels + self.embed_dim * 2) // 2, self.out_channels, 1, bias=False)
         )
 
-    def _initialize_weights(self, m):
-        if isinstance(m, nn.Conv2d):
-            init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-            if m.bias is not None:
-                init.constant_(m.bias, 0)
-        elif isinstance(m, nn.Linear):
-            init.trunc_normal_(m.weight, std=0.02)
-            # init.xavier_normal_(m.weight)
-            if m.bias is not None:
-                init.constant_(m.bias, 0)
-        elif isinstance(m, nn.LayerNorm):
-            init.constant_(m.bias, 0)
-            init.constant_(m.weight, 1.0)
+    # def _initialize_weights(self, m):
+    #     if isinstance(m, nn.Conv2d):
+    #         init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+    #         if m.bias is not None:
+    #             init.constant_(m.bias, 0)
+    #     elif isinstance(m, nn.Linear):
+    #         init.trunc_normal_(m.weight, std=0.02)
+    #         # init.xavier_normal_(m.weight)
+    #         if m.bias is not None:
+    #             init.constant_(m.bias, 0)
+    #     elif isinstance(m, nn.LayerNorm):
+    #         init.constant_(m.bias, 0)
+    #         init.constant_(m.weight, 1.0)
 
     def forward(self, x):
         shortcut = x
@@ -183,6 +184,8 @@ class HDRFormerV2(nn.Module):
             feat, rcp_prior = decoder(feat, rcp_prior)
 
         feat = self.out_proj(feat)
+
+        # reconstruction
         feat = self.post_band_selector(feat)
         out = self.reconstruction(feat, shortcut)
 
