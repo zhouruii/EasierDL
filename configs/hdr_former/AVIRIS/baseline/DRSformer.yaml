@@ -1,4 +1,4 @@
-work_dir: experiments/hdr_former/AVIRIS/comparison/DRSformer
+work_dir: experiments/hdr_former/AVIRIS/DRSformer
 data:
   train:
     dataset:

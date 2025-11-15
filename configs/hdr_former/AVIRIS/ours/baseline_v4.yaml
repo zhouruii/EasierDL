@@ -1,6 +1,6 @@
-# 最冗余的版本，QKV都在小波域完成计算，还有Swin和Channel
+# v3基础上，删去Swin，Q做反变换，只是用RP和HP
 
-work_dir: experiments/hdr_former/AVIRIS/baseline_v3
+work_dir: experiments/hdr_former/AVIRIS/baseline_v4
 data:
   train:
     dataset:
@@ -19,9 +19,9 @@ data:
     dataloader:
       batch_size: 4
       shuffle: true
-      num_workers: 4
+      num_workers: 16
       pin_memory: true
-      persistent_workers: false
+      persistent_workers: true
       prefetch_factor: 4
       drop_last: true
   val:
@@ -40,7 +40,7 @@ num_bands: &num_bands 224       # 波段数
 embed_dim: &embed_dim 48      # 传播维度
 
 model:
-  type: HDRFormerV2
+  type: HDRFormerV3
   in_channels: *num_bands
   out_channels: *num_bands
   prior_extractor:
@@ -48,6 +48,7 @@ model:
     split_ratios: [0.33, 0.5, 0.67]
     strategy: ['sorted', 'serial', 'sorted_pw']
     split_idx: 100
+    global_as_rain: true
   prev_band_selector:
     type: BCAM
     in_channels: *num_bands
@@ -74,14 +75,13 @@ model:
     upsample: PixelShuffleUpsample
     factor: 2
   transformer_cfg:
-    type: WaveletHeterogeneousAttentionLayer
+    type: WaveletFreqWiseAttentionLayer
     num_heads: [1, 2, 4, 8]
-    window_size: [8, 4, 2, 1]
     num_blocks: [4, 6, 6, 8]
     prior_cfg:   # forward for prior
-      type: MultiGRCPBranch
+      type: RainHazeGRCPBranch
       strategy: dilation
-      act: nn.ReLU
+      act: nn.Sigmoid
     sparse_strategy: AdaptiveReLU2
     ffn_cfg:
       type: GDFN
@@ -96,28 +96,16 @@ model:
     filter_kernel_size: 3
     filter_groups: 8
     norm: GN
-#  reconstruction:
-#    type: HDRReconstruction
-#    d: 1
-#    in_channels: *num_bands
+
 
 train:
-  total_epoch: &total_epoch 100
+  total_epoch: &total_epoch 1
   use_grad_clip: true
   print_freq: 50
 
   loss:
     type: MSELoss
-#    type: AdaptiveSpatialSpectralLossV1
-#    eps: 1.0e-6
-  #  type: AdaptiveSpatialSpectralLossV2
-  #  eps: 1.0e-6
-  #  type: SpatialSpectralFreqLoss
-  #  version: v1
-  #  eps: 1.0e-6
-  #  wave: haar
-  #  J: 1
-  #  mode: reflect
+
 
   optimizer:
     type: AdamW
@@ -132,9 +120,6 @@ train:
     warmup_epochs: 10
     warmup_start_lr: 3.0e-4
     min_lr: 1.0e-6
-#    type: CosineAnnealingLR
-#    T_max: 100
-#    eta_min: 1.0e-6
 
 
 

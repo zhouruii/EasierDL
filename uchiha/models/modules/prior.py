@@ -60,8 +60,8 @@ class PixelAttention(nn.Module):
         )
 
     def forward(self, x):
-        y = self.pixel_attn(x)
-        return x * y
+        attn = self.pixel_attn(x)
+        return x * attn + x
 
 
 class SpatialAttention(nn.Module):
@@ -98,7 +98,7 @@ class SpatialAttention(nn.Module):
         attn = self.fusion_conv(multi_scale_attn)
         attn = self.act(attn)
 
-        return res * attn
+        return res * attn + res  # res.mul_(attn) +res
 
 
 @MODULE.register_module()
@@ -164,3 +164,54 @@ class MultiGRCPBranch(nn.Module):
             attn_opts.append(SpatialAttention(self.in_channels, self.strategy, self.act))
 
         return nn.Sequential(*attn_opts)
+
+
+@MODULE.register_module()
+class RainHazeGRCPBranch(nn.Module):
+    def __init__(self, in_channels, strategy='dilation', act=None, ds_scale=1, last_prior=False):
+        super().__init__()
+        self.in_channels = in_channels
+        self.strategy = strategy
+        self.ds_scale = ds_scale
+        self.act = build_act(act)
+        self.last_prior = last_prior
+
+        self.rain_branch = nn.Sequential(
+            PixelAttention(self.in_channels, self.act),
+            SpatialAttention(self.in_channels, self.strategy, self.act)
+        )
+        self.haze_branch = nn.Sequential(
+            PixelAttention(self.in_channels, self.act),
+            SpatialAttention(self.in_channels, self.strategy, self.act)
+        )
+
+        # --------------------------------- Mask(Downsample) --------------------------------- #
+
+        self.rp_conv_ll = conv3x3(in_channels, 1)
+        self.rp_conv_lh = conv3x3(in_channels, 1)
+        self.rp_conv_hl = conv3x3(in_channels, 1)
+        self.rp_conv_hh = conv3x3(in_channels, 1)
+        self.hp_conv = conv3x3(in_channels, 1)
+
+    def forward(self, x):
+        rp, hp = x
+        rp = self.rain_branch(rp)
+        hp = self.haze_branch(hp)
+
+        # --------------------------------- Mask(Downsample) --------------------------------- #
+        rp_mask_ll = self.rp_conv_ll(rp)
+        rp_mask_lh = self.rp_conv_lh(rp)
+        rp_mask_hl = self.rp_conv_hl(rp)
+        rp_mask_hh = self.rp_conv_hh(rp)
+        hp_mask = self.hp_conv(hp)
+        rp_mask_ll = F.interpolate(rp_mask_ll, scale_factor=pow(0.5, self.ds_scale), mode='bicubic')
+        rp_mask_lh = F.interpolate(rp_mask_lh, scale_factor=pow(0.5, self.ds_scale), mode='bilinear')
+        rp_mask_hl = F.interpolate(rp_mask_hl, scale_factor=pow(0.5, self.ds_scale), mode='bilinear')
+        rp_mask_hh = F.interpolate(rp_mask_hh, scale_factor=pow(0.5, self.ds_scale), mode='bilinear')
+        hp_mask = F.interpolate(hp_mask, scale_factor=pow(0.5, self.ds_scale), mode='bicubic')
+
+        if self.last_prior:
+            return None, (rp_mask_ll, rp_mask_lh, rp_mask_hl, rp_mask_hh, hp_mask)
+        else:
+            return (rp, hp), (rp_mask_ll, rp_mask_lh, rp_mask_hl, rp_mask_hh, hp_mask)
+

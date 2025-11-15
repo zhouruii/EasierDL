@@ -93,8 +93,64 @@ class SimpleDTCWTProj(nn.Module):
         return out
 
 
+class GatedWaveletProj(nn.Module):
+    """ DWT, refer to
+    https://pytorch-wavelets.readthedocs.io/en/latest/dwt.html
+    """
+
+    def __init__(self,
+                 in_channels=128,
+                 J=1,
+                 wave='haar',
+                 mode='reflect'):
+        super().__init__()
+
+        self.wavelet_transform = DWTForward(J=J, wave=wave, mode=mode)
+        self.inverse_transform = DWTInverse(wave=wave)
+
+        self.gate_ll_rain = GatedUnit(in_channels=in_channels, depth=2, kernel_size=3)
+        self.gate_ll_haze = GatedUnit(in_channels=in_channels, depth=2, kernel_size=3)
+        self.gate_lh = GatedUnit(in_channels=in_channels, depth=1, kernel_size=(3, 5), padding=(1, 2))
+        self.gate_hl = GatedUnit(in_channels=in_channels, depth=1, kernel_size=(5, 3), padding=(2, 1))
+        self.gate_hh = GatedUnit(in_channels=in_channels, depth=1, kernel_size=3)
+
+    def forward(self, x, mask):
+        LL, H = self.wavelet_transform(x)
+        LH, HL, HH = H[0][:, :, 0, :, :], H[0][:, :, 1, :, :], H[0][:, :, 2, :, :]
+        mask_rp_ll, mask_rp_lh, mask_rp_hl, mask_rp_hh, mask_hp = mask
+
+        LL_RAIN = self.gate_ll_rain(LL)
+        LL_HAZE = self.gate_ll_haze(LL)
+        LH = self.gate_lh(LH)
+        HL = self.gate_hl(HL)
+        HH = self.gate_hh(HH)
+
+        res = LL_RAIN
+        LL_RAIN = self.pw_conv1(LL_RAIN)
+        LL_RAIN = LL_RAIN * mask_rp_ll
+        LL_RAIN = LL_RAIN + res
+        res = LL_HAZE
+        LL_HAZE = self.pw_conv1(LL_HAZE)
+        LL_HAZE = LL_HAZE * mask_rp_ll
+        LL_HAZE = LL_HAZE + res
+        LL = torch.cat([LL_RAIN, LL_HAZE], dim=1)
+        LL = self.cat_conv(LL)
+        # --------------- LH --------------- #
+        LH = LH * mask_rp_lh
+        # --------------- HL --------------- #
+        HL = HL * mask_rp_hl
+        # --------------- HH --------------- #
+        HH = HH * mask_rp_hh
+
+        H = torch.stack([LH, HL, HH], dim=2)
+
+        out = self.inverse_transform((LL, [H]))  # only support J = 1
+
+        return out
+
+
 class FreqProj(nn.Module):
-    FT_TYPE = ['DWT', 'DTCWT']
+    FT_TYPE = ['DWT', 'DTCWT', 'RAIN_HAZE_DWT']
 
     def __init__(self,
                  cfg=None, ):
@@ -111,6 +167,8 @@ class FreqProj(nn.Module):
             self.proj = SimpleWaveletProj(**freq_cfg)
         elif freq == 'DTCWT':
             self.proj = SimpleDTCWTProj(**freq_cfg)
+        elif freq == 'RAIN_HAZE_DWT':
+            self.proj = GatedWaveletProj(**freq_cfg)
         else:
             raise NotImplementedError(f'transform : {freq} not supported !')
 
@@ -338,12 +396,14 @@ class ParllelFreqDecouplingReconstruction(nn.Module):
         _, high = self.high_filter(high)
 
         # low part
+        low = self.gate_low(low)
         low = self.pw_conv_low(low)
         shortcut = low
         low = chunk_mul(low, raw)  # low * raw
         low = low + raw - shortcut
 
         # high part
+        high = self.gate_high(high)
         high = self.pw_conv_high(high)
         tau = torch.exp(self.gamma * self.d)
         high = high * tau

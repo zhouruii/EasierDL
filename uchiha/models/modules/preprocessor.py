@@ -233,7 +233,11 @@ class GroupRCP(nn.Module):
 
 @MODULE.register_module()
 class PriorDecoupler(nn.Module):
-    def __init__(self, split_ratios=None, split_idx=None, strategy=None):
+    def __init__(self,
+                 split_ratios=None,
+                 split_idx=None,
+                 strategy=None,
+                 global_as_rain=False):
         """ RCP --> Global Rain Haze
 
         Args:
@@ -245,6 +249,7 @@ class PriorDecoupler(nn.Module):
         self.split_ratios = split_ratios
         self.split_idx = split_idx
         self.strategy = strategy
+        self.global_as_rain = global_as_rain
 
         self.prior_dim = len(split_ratios) * len(strategy)
 
@@ -254,15 +259,18 @@ class PriorDecoupler(nn.Module):
         global_split_bands = [int(C * ratio) for ratio in self.split_ratios]
         global_prior = GroupRCP.get_prior(x, global_split_bands, self.strategy)
 
-        rain_insensitive_bands = x[:, :self.split_idx, :, :]
-        rain_split_bands = [int(self.split_idx * ratio) for ratio in self.split_ratios]
-        derain_prior = GroupRCP.get_prior(rain_insensitive_bands, rain_split_bands, self.strategy)
-
         haze_insensitive_bands = x[:, self.split_idx:, :, :]
         haze_split_bands = [int((C - self.split_idx) * ratio) for ratio in self.split_ratios]
         dehaze_prior = GroupRCP.get_prior(haze_insensitive_bands, haze_split_bands, self.strategy)
 
-        return global_prior, derain_prior, dehaze_prior
+        if not self.global_as_rain:
+            rain_insensitive_bands = x[:, :self.split_idx, :, :]
+            rain_split_bands = [int(self.split_idx * ratio) for ratio in self.split_ratios]
+            derain_prior = GroupRCP.get_prior(rain_insensitive_bands, rain_split_bands, self.strategy)
+
+            return global_prior, derain_prior, dehaze_prior
+        else:
+            return global_prior, dehaze_prior
 
 
 if __name__ == '__main__':

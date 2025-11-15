@@ -356,7 +356,7 @@ class WaveletHeterogeneousAttention(nn.Module):
         q_ll_rain = q_ll_rain + res
         res = q_ll_haze
         q_ll_haze = self.pw_conv1(q_ll_haze)
-        q_ll_haze = q_ll_haze * mask_rp_ll
+        q_ll_haze = q_ll_haze * mask_hp
         q_ll_haze = q_ll_haze + res
         q_ll = torch.cat([q_ll_rain, q_ll_haze], dim=1)
         q_ll = self.cat_conv(q_ll)
@@ -494,6 +494,185 @@ class WaveletHeterogeneousAttentionLayer(nn.Module):
                 in_channels=in_channels,
                 num_heads=num_heads,
                 window_size=window_size,
+                prior_cfg=prior_cfg,
+                ffn_cfg=ffn_cfg,
+                sparse_strategy=sparse_strategy,
+                ln_bias=ln_bias
+            ) for _ in range(num_blocks)])
+
+    def forward(self, x, prior=None):
+        # x.shape (B,C,H,W)
+        for blk in self.blocks:
+            x, prior = blk(x, prior)
+
+        return x, prior
+
+
+class WaveletFreqWiseAttention(nn.Module):
+    def __init__(self,
+                 in_channels=128,
+                 num_heads=8,
+                 prior_cfg=None,
+                 sparse_strategy=None):
+        super().__init__()
+        self.in_channels = in_channels
+        self.num_heads = num_heads
+        self.sparse_strategy = sparse_strategy
+        self.wavelet_transform = DWTForward(J=1, wave='haar', mode='reflect')
+        self.inverse_transform = DWTInverse(wave='haar')
+
+        assert in_channels % num_heads == 0, f'in_channels:{in_channels} must be divided by num_heads:{num_heads}'
+        self.head_dim = in_channels // num_heads
+
+        # ------------------------------------------ Projection ------------------------------------------ #
+        self.linear_proj = nn.Conv2d(in_channels, in_channels * 3, kernel_size=1, padding=0)
+        self.q_proj = conv3x3(in_channels, in_channels, groups=in_channels)
+        self.k_proj = conv3x3(in_channels, in_channels, groups=in_channels)
+        self.v_proj = conv3x3(in_channels, in_channels, groups=in_channels)
+
+        # ------------------------------------------ Gate Unit ------------------------------------------ #
+        self.gate_ll_rain = GatedUnit(in_channels=in_channels, depth=2, kernel_size=3)
+        self.gate_ll_haze = GatedUnit(in_channels=in_channels, depth=2, kernel_size=3)
+        self.gate_lh = GatedUnit(in_channels=in_channels, depth=1, kernel_size=(3, 5), padding=(1, 2))
+        self.gate_hl = GatedUnit(in_channels=in_channels, depth=1, kernel_size=(5, 3), padding=(2, 1))
+        self.gate_hh = GatedUnit(in_channels=in_channels, depth=1, kernel_size=3)
+
+        # ------------------------------------------ Prior Unit ------------------------------------------ #
+        self.prior_opt = build_module(prior_cfg)
+        self.pw_conv1 = nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=1)
+        self.pw_conv2 = nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=1)
+        self.cat_conv = nn.Conv2d(in_channels=in_channels * 2, out_channels=in_channels, kernel_size=1)
+
+        # ------------------------------------------ Attn Unit ------------------------------------------ #
+        self.temperature = nn.Parameter(torch.ones(num_heads, 1, 1))
+        self.sparse_opt = SparsifyAttention(sparse_strategy)
+
+        self.proj_out = nn.Conv2d(in_channels, in_channels, 1)
+
+    def forward(self, x, prior=None):
+        # x.shape (B,C,H,W)
+        # ------------------------------------------ Projection ------------------------------------------ #
+        _, _, H, W = x.shape
+        x = self.linear_proj(x)
+        q, k, v = torch.chunk(x, chunks=3, dim=1)
+        q = self.q_proj(q)
+        k = self.k_proj(k)
+        v = self.v_proj(v)
+
+        # ------------------------------------------ Gate Unit ------------------------------------------ #
+        q_ll, q_h = self.wavelet_transform(q)
+        LH, HL, HH = q_h[0][:, :, 0, :, :], q_h[0][:, :, 1, :, :], q_h[0][:, :, 2, :, :]
+        q_ll_rain = self.gate_ll_rain(q_ll)
+        q_ll_haze = self.gate_ll_haze(q_ll)
+        q_lh = self.gate_lh(LH)
+        q_hl = self.gate_hl(HL)
+        q_hh = self.gate_hh(HH)
+
+        # ------------------------------------------ Prior Unit ------------------------------------------ #
+        # --------------- prior --------------- #
+        prior, mask = self.prior_opt(prior)
+        mask_rp_ll, mask_rp_lh, mask_rp_hl, mask_rp_hh, mask_hp = mask
+        # --------------- LL --------------- #
+        res = q_ll_rain
+        q_ll_rain = self.pw_conv1(q_ll_rain)
+        q_ll_rain = q_ll_rain * mask_rp_ll
+        q_ll_rain = q_ll_rain + res
+        res = q_ll_haze
+        q_ll_haze = self.pw_conv2(q_ll_haze)
+        q_ll_haze = q_ll_haze * mask_hp
+        q_ll_haze = q_ll_haze + res
+        q_ll = torch.cat([q_ll_rain, q_ll_haze], dim=1)
+        q_ll = self.cat_conv(q_ll)
+        # --------------- LH --------------- #
+        q_lh = q_lh * mask_rp_lh
+        # --------------- HL --------------- #
+        q_hl = q_hl * mask_rp_hl
+        # --------------- HH --------------- #
+        q_hh = q_hh * mask_rp_hh
+
+        # ------------------------------------------ IDWT ------------------------------------------ #
+        q = self.inverse_transform((q_ll, [torch.stack([q_lh, q_hl, q_hh], dim=2)]))
+
+        q = rearrange(q, 'b (nh c) h w -> b nh c (h w)', h=H, w=W, nh=self.num_heads)
+        k = rearrange(k, 'b (nh c) h w -> b nh c (h w)', h=H, w=W, nh=self.num_heads)
+        v = rearrange(v, 'b (nh c) h w -> b nh c (h w)', h=H, w=W, nh=self.num_heads)
+
+        q = F.normalize(q, dim=-1)
+        k = F.normalize(k, dim=-1)
+
+        att = (q @ k.transpose(-2, -1)) * self.temperature
+        att = self.sparse_opt(att)  # (C, C)
+
+        out = (att @ v)
+        out = rearrange(out, 'b nh c (h w) -> b (nh c) h w', nh=self.num_heads, h=H, w=W)
+
+        return self.proj_out(out), prior
+
+
+@MODULE.register_module()
+class WaveletFreqWiseAttentionBlock(nn.Module):
+    def __init__(self,
+                 in_channels=128,
+                 num_heads=8,
+                 prior_cfg=False,
+                 ffn_cfg=None,
+                 sparse_strategy=None,
+                 ln_bias=True):
+        super().__init__()
+        self.in_channels = in_channels
+        self.num_heads = num_heads
+        self.use_prior = prior_cfg is not None
+        self.ln_bias = ln_bias
+
+        self.attn = WaveletFreqWiseAttention(
+            in_channels=in_channels,
+            num_heads=num_heads,
+            prior_cfg=prior_cfg,
+            sparse_strategy=sparse_strategy
+        )
+
+        self.ffn = build_module(ffn_cfg)
+
+        self.ln1 = WithBiasLayerNorm(in_channels) if self.ln_bias else BiasFreeLayerNorm(in_channels)
+        self.ln2 = WithBiasLayerNorm(in_channels) if self.ln_bias else BiasFreeLayerNorm(in_channels)
+
+    def forward(self, x, prior=None):
+        # x.shape (B,C,H,W)
+        _, _, H, W = x.shape
+
+        shortcut = x
+        x = self.ln1(x)
+        x, prior = self.attn(x, prior)
+        x = x + shortcut
+
+        shortcut = x
+        x = self.ln2(x)
+        x = self.ffn(x)
+        x = x + shortcut
+
+        return x, prior
+
+
+@MODULE.register_module()
+class WaveletFreqWiseAttentionLayer(nn.Module):
+    def __init__(self,
+                 in_channels=128,
+                 num_heads=8,
+                 num_blocks=4,
+                 prior_cfg=None,  # forward for prior
+                 ffn_cfg=None,
+                 sparse_strategy=None,
+                 ln_bias=True,  # bias for LayerNorm
+                 ):
+        super().__init__()
+        self.in_channels = in_channels
+        self.num_heads = num_heads
+        self.num_blocks = num_blocks
+
+        self.blocks = nn.ModuleList([
+            WaveletFreqWiseAttentionBlock(
+                in_channels=in_channels,
+                num_heads=num_heads,
                 prior_cfg=prior_cfg,
                 ffn_cfg=ffn_cfg,
                 sparse_strategy=sparse_strategy,
