@@ -18,3 +18,5 @@ from .PUCCNet import PUCCNet
 from .SFAN import SFAN
 from .WaveUIR import WaveUIR
 from .CSCANet import CSCANet
+from .DehazeFormer import DehazeFormer
+from .FFA_Net import FFA

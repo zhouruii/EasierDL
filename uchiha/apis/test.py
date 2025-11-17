@@ -213,6 +213,9 @@ def hsi_test(dataloader, model, device, no_reference=False):
             ssims.append(calculate_ssim(target, pred))
             uqis.append(calculate_uqi(target, pred))
             sams.append(calculate_sam(target, pred))
+            # if no_reference:
+            #     niqes.append(calculate_niqe(pred))
+            #     ags.append(calculate_ag(pred))
 
             pbar.set_postfix(iter=f"{idx + 1}/{len(dataloader)}")
 
