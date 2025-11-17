@@ -56,13 +56,7 @@ model:
     min_proj: false
     act: ReLU
     residual: false
-  post_band_selector:
-    type: BCAM
-    in_channels: *num_bands
-    ratio: 0.5
-    min_proj: false
-    act: Sigmoid
-    residual: true
+  post_band_selector: ~
   embedding_cfg:
     type: OverlapPatchEmbedding
     in_channels: *num_bands
@@ -99,7 +93,7 @@ model:
 
 
 train:
-  total_epoch: &total_epoch 1
+  total_epoch: &total_epoch 100
   use_grad_clip: true
   print_freq: 50
 
@@ -124,7 +118,7 @@ train:
 
 
 val:
-  val_freq: 1
+  val_freq: 5
   metric: psnr
 
 checkpoint:

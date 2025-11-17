@@ -531,17 +531,17 @@ class WaveletFreqWiseAttention(nn.Module):
         self.v_proj = conv3x3(in_channels, in_channels, groups=in_channels)
 
         # ------------------------------------------ Gate Unit ------------------------------------------ #
-        self.gate_ll_rain = GatedUnit(in_channels=in_channels, depth=2, kernel_size=3)
-        self.gate_ll_haze = GatedUnit(in_channels=in_channels, depth=2, kernel_size=3)
-        self.gate_lh = GatedUnit(in_channels=in_channels, depth=1, kernel_size=(3, 5), padding=(1, 2))
-        self.gate_hl = GatedUnit(in_channels=in_channels, depth=1, kernel_size=(5, 3), padding=(2, 1))
-        self.gate_hh = GatedUnit(in_channels=in_channels, depth=1, kernel_size=3)
+        self.gate_ll = nn.Sequential(
+            conv3x3(in_channels, in_channels, groups=in_channels),
+            conv3x3(in_channels, in_channels, groups=in_channels)
+        )
+
+        self.gate_lh = nn.Conv2d(in_channels, in_channels, kernel_size=(3, 7), padding=(1, 3), groups=in_channels)
+        self.gate_hl = nn.Conv2d(in_channels, in_channels, kernel_size=(7, 3), padding=(3, 1), groups=in_channels)
+        self.gate_hh = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1, groups=in_channels)
 
         # ------------------------------------------ Prior Unit ------------------------------------------ #
         self.prior_opt = build_module(prior_cfg)
-        self.pw_conv1 = nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=1)
-        self.pw_conv2 = nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=1)
-        self.cat_conv = nn.Conv2d(in_channels=in_channels * 2, out_channels=in_channels, kernel_size=1)
 
         # ------------------------------------------ Attn Unit ------------------------------------------ #
         self.temperature = nn.Parameter(torch.ones(num_heads, 1, 1))
@@ -562,8 +562,7 @@ class WaveletFreqWiseAttention(nn.Module):
         # ------------------------------------------ Gate Unit ------------------------------------------ #
         q_ll, q_h = self.wavelet_transform(q)
         LH, HL, HH = q_h[0][:, :, 0, :, :], q_h[0][:, :, 1, :, :], q_h[0][:, :, 2, :, :]
-        q_ll_rain = self.gate_ll_rain(q_ll)
-        q_ll_haze = self.gate_ll_haze(q_ll)
+        q_ll = self.gate_ll(q_ll)
         q_lh = self.gate_lh(LH)
         q_hl = self.gate_hl(HL)
         q_hh = self.gate_hh(HH)
@@ -571,24 +570,10 @@ class WaveletFreqWiseAttention(nn.Module):
         # ------------------------------------------ Prior Unit ------------------------------------------ #
         # --------------- prior --------------- #
         prior, mask = self.prior_opt(prior)
-        mask_rp_ll, mask_rp_lh, mask_rp_hl, mask_rp_hh, mask_hp = mask
+        mask_rp, mask_hp = mask
         # --------------- LL --------------- #
-        res = q_ll_rain
-        q_ll_rain = self.pw_conv1(q_ll_rain)
-        q_ll_rain = q_ll_rain * mask_rp_ll
-        q_ll_rain = q_ll_rain + res
-        res = q_ll_haze
-        q_ll_haze = self.pw_conv2(q_ll_haze)
-        q_ll_haze = q_ll_haze * mask_hp
-        q_ll_haze = q_ll_haze + res
-        q_ll = torch.cat([q_ll_rain, q_ll_haze], dim=1)
-        q_ll = self.cat_conv(q_ll)
-        # --------------- LH --------------- #
-        q_lh = q_lh * mask_rp_lh
-        # --------------- HL --------------- #
-        q_hl = q_hl * mask_rp_hl
-        # --------------- HH --------------- #
-        q_hh = q_hh * mask_rp_hh
+        q_ll = self.res_opt(q_ll, mask_hp)
+        q_ll = self.res_opt(q_ll, mask_rp)
 
         # ------------------------------------------ IDWT ------------------------------------------ #
         q = self.inverse_transform((q_ll, [torch.stack([q_lh, q_hl, q_hh], dim=2)]))
@@ -607,6 +592,11 @@ class WaveletFreqWiseAttention(nn.Module):
         out = rearrange(out, 'b nh c (h w) -> b (nh c) h w', nh=self.num_heads, h=H, w=W)
 
         return self.proj_out(out), prior
+
+    def res_opt(self, inp, mask):
+        res = inp
+        inp = inp * mask
+        return inp + res
 
 
 @MODULE.register_module()

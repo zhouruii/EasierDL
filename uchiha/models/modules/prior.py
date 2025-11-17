@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from pytorch_wavelets import DWTForward
 
 from .common import conv3x3, build_act
 from .basic_resnet import BasicResidualBlock
@@ -176,21 +177,14 @@ class RainHazeGRCPBranch(nn.Module):
         self.act = build_act(act)
         self.last_prior = last_prior
 
-        self.rain_branch = nn.Sequential(
-            PixelAttention(self.in_channels, self.act),
-            SpatialAttention(self.in_channels, self.strategy, self.act)
-        )
-        self.haze_branch = nn.Sequential(
-            PixelAttention(self.in_channels, self.act),
-            SpatialAttention(self.in_channels, self.strategy, self.act)
-        )
+        # BasicResidualBlock(self.in_channels, self.in_channels)
+        # PixelAttention(self.in_channels, self.act)
+        # SpatialAttention(self.in_channels, self.strategy, self.act)
+        self.rain_branch = SpatialAttention(self.in_channels, self.strategy, self.act)
+        self.haze_branch = SpatialAttention(self.in_channels, self.strategy, self.act)
 
         # --------------------------------- Mask(Downsample) --------------------------------- #
-
         self.rp_conv_ll = conv3x3(in_channels, 1)
-        self.rp_conv_lh = conv3x3(in_channels, 1)
-        self.rp_conv_hl = conv3x3(in_channels, 1)
-        self.rp_conv_hh = conv3x3(in_channels, 1)
         self.hp_conv = conv3x3(in_channels, 1)
 
     def forward(self, x):
@@ -199,19 +193,12 @@ class RainHazeGRCPBranch(nn.Module):
         hp = self.haze_branch(hp)
 
         # --------------------------------- Mask(Downsample) --------------------------------- #
-        rp_mask_ll = self.rp_conv_ll(rp)
-        rp_mask_lh = self.rp_conv_lh(rp)
-        rp_mask_hl = self.rp_conv_hl(rp)
-        rp_mask_hh = self.rp_conv_hh(rp)
+        rp_mask = self.rp_conv_ll(rp)
         hp_mask = self.hp_conv(hp)
-        rp_mask_ll = F.interpolate(rp_mask_ll, scale_factor=pow(0.5, self.ds_scale), mode='bicubic')
-        rp_mask_lh = F.interpolate(rp_mask_lh, scale_factor=pow(0.5, self.ds_scale), mode='bilinear')
-        rp_mask_hl = F.interpolate(rp_mask_hl, scale_factor=pow(0.5, self.ds_scale), mode='bilinear')
-        rp_mask_hh = F.interpolate(rp_mask_hh, scale_factor=pow(0.5, self.ds_scale), mode='bilinear')
+        rp_mask = F.interpolate(rp_mask, scale_factor=pow(0.5, self.ds_scale), mode='bicubic')
         hp_mask = F.interpolate(hp_mask, scale_factor=pow(0.5, self.ds_scale), mode='bicubic')
 
         if self.last_prior:
-            return None, (rp_mask_ll, rp_mask_lh, rp_mask_hl, rp_mask_hh, hp_mask)
+            return None, (rp_mask, hp_mask)
         else:
-            return (rp, hp), (rp_mask_ll, rp_mask_lh, rp_mask_hl, rp_mask_hh, hp_mask)
-
+            return (rp, hp), (rp_mask, hp_mask)
