@@ -70,7 +70,7 @@ class Partial_conv3(nn.Module):
 
     def __init__(self, dim, n_div=4, forward='split_cat'):
         super().__init__()
-        self.forward = forward
+        self.forward_type = forward
         self.dim_conv3 = dim // n_div
         self.dim_untouched = dim - self.dim_conv3
         self.partial_conv3 = nn.Conv2d(self.dim_conv3, self.dim_conv3, 3, 1, 1, bias=False)
@@ -91,9 +91,9 @@ class Partial_conv3(nn.Module):
         return x
 
     def forward(self, x):
-        if self.forward == 'slicing':
+        if self.forward_type == 'slicing':
             return self.forward_slicing(x)
-        elif self.forward == 'split_cat':
+        elif self.forward_type == 'split_cat':
             return self.forward_split_cat(x)
         else:
             raise NotImplementedError
