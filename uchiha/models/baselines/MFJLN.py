@@ -70,16 +70,10 @@ class Partial_conv3(nn.Module):
 
     def __init__(self, dim, n_div=4, forward='split_cat'):
         super().__init__()
+        self.forward = forward
         self.dim_conv3 = dim // n_div
         self.dim_untouched = dim - self.dim_conv3
         self.partial_conv3 = nn.Conv2d(self.dim_conv3, self.dim_conv3, 3, 1, 1, bias=False)
-
-        if forward == 'slicing':
-            self.forward = self.forward_slicing
-        elif forward == 'split_cat':
-            self.forward = self.forward_split_cat
-        else:
-            raise NotImplementedError
 
     def forward_slicing(self, x):
         # only for inference
@@ -95,6 +89,14 @@ class Partial_conv3(nn.Module):
         x = torch.cat((x1, x2), 1)
 
         return x
+
+    def forward(self, x):
+        if self.forward == 'slicing':
+            return self.forward_slicing(x)
+        elif self.forward == 'split_cat':
+            return self.forward_split_cat(x)
+        else:
+            raise NotImplementedError
 
 
 class FeedForward(nn.Module):
