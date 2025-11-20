@@ -105,16 +105,23 @@ def replace_with_zoom(image, rect_coords, zoom_scale=2.0):
 
 # 使用示例
 if __name__ == "__main__":
-    img_path = 'samples/2_12_1_3-D3-AVIRIS-e30.png'
+    # show for HD 1-15.tif wo rectangle
+    img_path = 'samples/1_15-D3-HD-e30.png'
     test_img = cv2.imread(img_path)
-    test_img = cv2.cvtColor(test_img, cv2.COLOR_BGR2RGB)
+    result = crop_and_square(test_img, crop_coords=(140, 0, 512, 507))
 
-    square = 45
-    start_x = 38
-    start_y = 166
-    show = replace_with_zoom(test_img, rect_coords=(start_x, start_y, start_x + square, start_y + square),
-                             zoom_scale=2.0)
-    imageio.imwrite(img_path.replace('samples', 'results'), show)
+    imageio.imwrite('results/1_15-D3-HD-e30-wo-rectangle.png', result)
+
+    # img_path = 'samples/2_12_1_3-D3-AVIRIS-e30.png'
+    # test_img = cv2.imread(img_path)
+    # test_img = cv2.cvtColor(test_img, cv2.COLOR_BGR2RGB)
+    #
+    # square = 45
+    # start_x = 38
+    # start_y = 166
+    # show = replace_with_zoom(test_img, rect_coords=(start_x, start_y, start_x + square, start_y + square),
+    #                          zoom_scale=2.0)
+    # imageio.imwrite(img_path.replace('samples', 'results'), show)
 
     # show for HD 1-15.tif
     # img_path = 'samples/1_15-PUCCNet-HD-e120.png'
