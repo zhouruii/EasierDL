@@ -7,6 +7,8 @@ import torch.nn.functional as F
 from einops import rearrange, repeat
 import math
 
+from ..builder import MODEL
+
 
 class LinearProjection(nn.Module):
     def __init__(self, dim, heads=8, dim_head=64, bias=True):
@@ -437,6 +439,7 @@ class SpatialTransformerLayer(nn.Module):
         return output
 
 
+@MODEL.register_module()
 class IDT(nn.Module):
     def __init__(self, img_size=128, in_chans=3,
                  embed_dim=32, depths=[2, 2, 2, 2, 2, 2, 2, 2, 2], num_heads=[1, 2, 4, 8, 16, 16, 8, 4, 2],

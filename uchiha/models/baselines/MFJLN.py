@@ -6,6 +6,8 @@ import numbers
 
 from einops import rearrange
 
+from ..builder import MODEL
+
 
 def to_3d(x):
     return rearrange(x, 'b c h w -> b (h w) c')
@@ -422,6 +424,7 @@ class PromptGenBlock(nn.Module):
 
 ##########################################################################
 ##---------- Restormer -----------------------
+@MODEL.register_module()
 class MFJLN(nn.Module):
     def __init__(self,
                  patch_size=[64, 32, 16, 8],

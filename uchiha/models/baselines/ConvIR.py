@@ -51,7 +51,7 @@ class DeepPoolLayer(nn.Module):
     def __init__(self, k, k_out):
         super(DeepPoolLayer, self).__init__()
         self.pools_sizes = [8, 4, 2]
-        dilation = [7, 9, 11]
+        dilation = [3, 5, 7]
         pools, convs, dynas = [], [], []
         for j, i in enumerate(self.pools_sizes):
             pools.append(nn.AvgPool2d(kernel_size=i, stride=i))

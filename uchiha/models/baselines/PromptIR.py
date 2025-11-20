@@ -10,6 +10,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 
+from ..builder import MODEL
+
 
 ##########################################################################
 ## Layer Norm
@@ -228,7 +230,7 @@ class PromptGenBlock(nn.Module):
 
 ##########################################################################
 ##---------- PromptIR -----------------------
-
+@MODEL.register_module()
 class PromptIR(nn.Module):
     def __init__(self,
                  inp_channels=3,
