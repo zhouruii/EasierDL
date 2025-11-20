@@ -11,6 +11,7 @@ def fill_former_cfg(cfg, layer, channels_former, channels_prior, num_heads, num_
     filled_cfg['num_blocks'] = num_blocks
     filled_cfg['prior_cfg']['in_channels'] = channels_prior
     filled_cfg['prior_cfg']['ds_scale'] = layer
+    filled_cfg['prior_cfg']['num_heads'] = num_heads
     filled_cfg['ffn_cfg']['in_channels'] = channels_former
     if not last_prior:
         filled_cfg['prior_cfg']['last_prior'] = last_prior

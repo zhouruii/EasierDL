@@ -112,7 +112,7 @@ def main():
     model = build_model(cfg.model.to_dict()).to(device)
 
     # wrap with DDP: each process wraps its local model instance
-    model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
+    model = DDP(model, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=False)
 
     if rank == 0 and logger is not None:
         log_model_parameters(unwrap_model(model), logger, max_depth=args.analyze_params)

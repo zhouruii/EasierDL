@@ -169,9 +169,10 @@ class MultiGRCPBranch(nn.Module):
 
 @MODULE.register_module()
 class RainHazeGRCPBranch(nn.Module):
-    def __init__(self, in_channels, strategy='dilation', act=None, ds_scale=1, last_prior=False):
+    def __init__(self, in_channels, num_heads, strategy='dilation', act=None, ds_scale=1, last_prior=False):
         super().__init__()
         self.in_channels = in_channels
+        self.num_heads = num_heads
         self.strategy = strategy
         self.ds_scale = ds_scale
         self.act = build_act(act)
@@ -184,8 +185,10 @@ class RainHazeGRCPBranch(nn.Module):
         self.haze_branch = SpatialAttention(self.in_channels, self.strategy, self.act)
 
         # --------------------------------- Mask(Downsample) --------------------------------- #
-        self.rp_conv_ll = conv3x3(in_channels, 1)
+        self.rp_conv_ll = conv3x3(in_channels, self.num_heads)
+        self.act_rp = nn.Sigmoid()
         self.hp_conv = conv3x3(in_channels, 1)
+        self.act_hp = nn.Sigmoid()
 
     def forward(self, x):
         rp, hp = x
@@ -193,12 +196,12 @@ class RainHazeGRCPBranch(nn.Module):
         hp = self.haze_branch(hp)
 
         # --------------------------------- Mask(Downsample) --------------------------------- #
-        rp_mask = self.rp_conv_ll(rp)
-        hp_mask = self.hp_conv(hp)
-        rp_mask = F.interpolate(rp_mask, scale_factor=pow(0.5, self.ds_scale), mode='bicubic')
+        rp_mask = self.act_rp(self.rp_conv_ll(rp))
+        hp_mask = self.act_hp(self.hp_conv(hp))
+        rp_mask = F.interpolate(rp_mask, scale_factor=pow(0.5, self.ds_scale-1), mode='bicubic')
         hp_mask = F.interpolate(hp_mask, scale_factor=pow(0.5, self.ds_scale), mode='bicubic')
 
         if self.last_prior:
-            return None, (rp_mask, hp_mask)
+            return None, (rp_mask.unsqueeze(2), hp_mask)
         else:
-            return (rp, hp), (rp_mask, hp_mask)
+            return (rp, hp), (rp_mask.unsqueeze(2), hp_mask)

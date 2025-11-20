@@ -531,14 +531,14 @@ class WaveletFreqWiseAttention(nn.Module):
         self.v_proj = conv3x3(in_channels, in_channels, groups=in_channels)
 
         # ------------------------------------------ Gate Unit ------------------------------------------ #
-        self.gate_ll = nn.Sequential(
+        self.conv_ll = nn.Sequential(
             conv3x3(in_channels, in_channels, groups=in_channels),
             conv3x3(in_channels, in_channels, groups=in_channels)
         )
 
-        self.gate_lh = nn.Conv2d(in_channels, in_channels, kernel_size=(3, 7), padding=(1, 3), groups=in_channels)
-        self.gate_hl = nn.Conv2d(in_channels, in_channels, kernel_size=(7, 3), padding=(3, 1), groups=in_channels)
-        self.gate_hh = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1, groups=in_channels)
+        self.conv_lh = nn.Conv2d(in_channels, in_channels, kernel_size=(3, 7), padding=(1, 3), groups=in_channels)
+        self.conv_hl = nn.Conv2d(in_channels, in_channels, kernel_size=(7, 3), padding=(3, 1), groups=in_channels)
+        self.conv_hh = conv3x3(in_channels, in_channels, groups=in_channels)
 
         # ------------------------------------------ Prior Unit ------------------------------------------ #
         self.prior_opt = build_module(prior_cfg)
@@ -562,10 +562,10 @@ class WaveletFreqWiseAttention(nn.Module):
         # ------------------------------------------ Gate Unit ------------------------------------------ #
         q_ll, q_h = self.wavelet_transform(q)
         LH, HL, HH = q_h[0][:, :, 0, :, :], q_h[0][:, :, 1, :, :], q_h[0][:, :, 2, :, :]
-        q_ll = self.gate_ll(q_ll)
-        q_lh = self.gate_lh(LH)
-        q_hl = self.gate_hl(HL)
-        q_hh = self.gate_hh(HH)
+        q_ll = self.conv_ll(q_ll)
+        q_lh = self.conv_lh(LH)
+        q_hl = self.conv_hl(HL)
+        q_hh = self.conv_hh(HH)
 
         # ------------------------------------------ Prior Unit ------------------------------------------ #
         # --------------- prior --------------- #
@@ -573,7 +573,6 @@ class WaveletFreqWiseAttention(nn.Module):
         mask_rp, mask_hp = mask
         # --------------- LL --------------- #
         q_ll = self.res_opt(q_ll, mask_hp)
-        q_ll = self.res_opt(q_ll, mask_rp)
 
         # ------------------------------------------ IDWT ------------------------------------------ #
         q = self.inverse_transform((q_ll, [torch.stack([q_lh, q_hl, q_hh], dim=2)]))
@@ -588,7 +587,11 @@ class WaveletFreqWiseAttention(nn.Module):
         att = (q @ k.transpose(-2, -1)) * self.temperature
         att = self.sparse_opt(att)  # (C, C)
 
-        out = (att @ v)
+        res = v
+        out = att @ v
+        res = rearrange(res, 'b nh c (h w) -> b nh c h w', h=H, w=W)
+        res = res * mask_rp
+        out = out + rearrange(res, 'b nh c h w -> b nh c (h w)', h=H, w=W)
         out = rearrange(out, 'b nh c (h w) -> b (nh c) h w', nh=self.num_heads, h=H, w=W)
 
         return self.proj_out(out), prior

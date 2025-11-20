@@ -17,7 +17,7 @@ data:
         - type: EasyToTensor
           mode: CHW
     dataloader:
-      batch_size: 4
+      batch_size: 1
       shuffle: true
       num_workers: 16
       pin_memory: true
@@ -33,7 +33,7 @@ data:
         - type: EasyToTensor
           mode: CHW
     dataloader:
-      batch_size: 4
+      batch_size: 1
       shuffle: false
 
 num_bands: &num_bands 224       # 波段数
@@ -46,8 +46,8 @@ model:
   prior_extractor:
     type: PriorDecoupler
     split_ratios: [0.33, 0.5, 0.67]
-    strategy: ['sorted', 'serial', 'sorted_pw']
-    split_idx: 100
+    strategy: ['sorted', 'serial']
+    split_idx: 150
     global_as_rain: true
   prev_band_selector:
     type: BCAM
@@ -84,12 +84,18 @@ model:
     ln_bias: true
   num_refinement_blocks: 4
   reconstruction:
-    type: ParllelFreqDecouplingReconstruction
+    type: FreqDecouplingReconstruction
     d: 0.4
     in_channels: *num_bands
     filter_kernel_size: 3
     filter_groups: 8
     norm: GN
+#    type: ParllelFreqDecouplingReconstruction
+#    d: 0.4
+#    in_channels: *num_bands
+#    filter_kernel_size: 3
+#    filter_groups: 8
+#    norm: GN
 
 
 train:
@@ -122,6 +128,6 @@ val:
   metric: psnr
 
 checkpoint:
-  save_freq: 10
+  save_freq: 5
   resume_from: null
   auto_resume: false
