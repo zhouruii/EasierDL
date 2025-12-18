@@ -308,6 +308,123 @@ class GatedDynamicDecoupler(nn.Module):
         return low_part, out_high
 
 
+class FlexibleGatedDynamicDecoupler(nn.Module):
+    """
+    Gated Dynamic Decoupler (Flexible Group Version)
+    - 支持 in_channels % group != 0
+    - 主通道按 group 分组
+    - 剩余通道单独处理
+    """
+
+    def __init__(self, in_channels, kernel_size=3, group=8, norm='BN'):
+        super().__init__()
+
+        self.in_channels = in_channels
+        self.kernel_size = kernel_size
+        self.group = group
+        self.k2 = kernel_size ** 2
+
+        # 主通道 & 剩余通道
+        self.main_channels = (in_channels // group) * group
+        self.rem_channels = in_channels - self.main_channels
+
+        # === 主分组动态卷积核 ===
+        self.num_filter_params_main = group * self.k2
+        self.conv_main = nn.Conv2d(in_channels, self.num_filter_params_main, 1, bias=False)
+        self.conv_gate_main = nn.Conv2d(self.num_filter_params_main, self.num_filter_params_main, 1, bias=False)
+
+        # === 剩余通道动态卷积核 ===
+        if self.rem_channels > 0:
+            self.num_filter_params_rem = self.k2
+            self.conv_rem = nn.Conv2d(in_channels, self.num_filter_params_rem, 1, bias=False)
+            self.conv_gate_rem = nn.Conv2d(self.num_filter_params_rem, self.num_filter_params_rem, 1, bias=False)
+
+        # normalization
+        if norm == 'BN':
+            self.norm_main = nn.BatchNorm2d(self.num_filter_params_main)
+            if self.rem_channels > 0:
+                self.norm_rem = nn.BatchNorm2d(self.num_filter_params_rem)
+        elif norm == 'GN':
+            self.norm_main = nn.GroupNorm(group, self.num_filter_params_main)
+            if self.rem_channels > 0:
+                self.norm_rem = nn.GroupNorm(1, self.num_filter_params_rem)
+        else:
+            raise NotImplementedError
+
+        self.act_gate = nn.Sigmoid()
+        self.act_kernel = nn.Softmax(dim=-2)
+
+        self.pad = nn.ReflectionPad2d(kernel_size // 2)
+        self.pool = nn.AdaptiveAvgPool2d(1)
+
+    def forward(self, x):
+        """
+        x: (B, C, H, W)
+        """
+        identity = x
+        B, C, H, W = x.shape
+
+        # ===============================
+        # 1️⃣ 生成动态卷积核（主 + 剩余）
+        # ===============================
+        pooled = self.pool(x)
+
+        # --- 主分组 ---
+        kernel_main = self.conv_main(pooled)
+        kernel_main = kernel_main * self.act_gate(self.conv_gate_main(kernel_main))
+        kernel_main = self.norm_main(kernel_main)
+
+        kernel_main = kernel_main.reshape(
+            B, self.group, self.k2, 1
+        )
+        kernel_main = self.act_kernel(kernel_main)  # (B, G, K2, 1)
+
+        # --- 剩余 ---
+        if self.rem_channels > 0:
+            kernel_rem = self.conv_rem(pooled)
+            kernel_rem = kernel_rem * self.act_gate(self.conv_gate_rem(kernel_rem))
+            kernel_rem = self.norm_rem(kernel_rem)
+
+            kernel_rem = kernel_rem.reshape(B, 1, self.k2, 1)
+            kernel_rem = self.act_kernel(kernel_rem)
+
+        # ===============================
+        # 2️⃣ unfold 输入
+        # ===============================
+        x_pad = self.pad(x)
+        x_unfold = F.unfold(x_pad, kernel_size=self.kernel_size)
+        x_unfold = x_unfold.reshape(B, C, self.k2, H * W)
+
+        # --- 主通道 ---
+        x_main = x_unfold[:, :self.main_channels]
+        x_main = x_main.reshape(
+            B, self.group, self.main_channels // self.group, self.k2, H * W
+        )
+
+        out_main = torch.sum(
+            x_main * kernel_main.unsqueeze(2),
+            dim=3
+        ).reshape(B, self.main_channels, H, W)
+
+        # --- 剩余通道 ---
+        if self.rem_channels > 0:
+            x_rem = x_unfold[:, self.main_channels:].unsqueeze(1)
+            out_rem = torch.sum(
+                x_rem * kernel_rem.unsqueeze(2),
+                dim=3
+            ).reshape(B, self.rem_channels, H, W)
+
+            out = torch.cat([out_main, out_rem], dim=1)
+        else:
+            out = out_main
+
+        # ===============================
+        # 3️⃣ 高频部分
+        # ===============================
+        out_high = identity - out
+        return out, out_high
+
+
 def chunk_mul(a, b, chunk_size=64):
     output = torch.empty_like(a)
     for i in range(0, a.shape[1], chunk_size):  # 按第1维分块
@@ -319,19 +436,27 @@ def chunk_mul(a, b, chunk_size=64):
 class FreqDecouplingReconstruction(nn.Module):
     def __init__(self, d=1, in_channels=128, filter_kernel_size=3, filter_groups=8, norm='BN'):
         super().__init__()
-        assert in_channels % filter_groups == 0, \
-            f'in_channels:{in_channels} must be divided by filter_groups:{filter_groups}'
+
         self.d = d
         self.in_channels = in_channels
         self.filter_kernel_size = filter_kernel_size
         self.filter_groups = filter_groups
 
-        self.decoupler = GatedDynamicDecoupler(
-            in_channels=self.in_channels,
-            kernel_size=self.filter_kernel_size,
-            group=self.filter_groups,
-            norm=norm
-        )
+        if in_channels % filter_groups == 0:
+            self.decoupler = GatedDynamicDecoupler(
+                in_channels=self.in_channels,
+                kernel_size=self.filter_kernel_size,
+                group=self.filter_groups,
+                norm=norm
+            )
+        else:
+            self.decoupler = FlexibleGatedDynamicDecoupler(
+                in_channels=self.in_channels,
+                kernel_size=self.filter_kernel_size,
+                group=self.filter_groups,
+                norm=norm
+            )
+
         self.conv_high_freq = nn.Conv2d(in_channels, 1, 1)
         self.gamma = nn.Parameter(torch.tensor(float(1)))
 

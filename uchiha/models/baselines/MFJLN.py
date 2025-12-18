@@ -1,3 +1,7 @@
+"""
+Yang Y, Yang J, Huang S, et al. MFJLN: Multi-Frequency Feature Joint Learn-ing Network for Rain Removal[J]. IEEE Transactions on Multimedia, 2025.
+"""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
