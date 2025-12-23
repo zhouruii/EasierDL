@@ -4,7 +4,7 @@ matplotlib
 numpy==1.21.6
 opencv_python
 opencv_python_headless
-pandas
+#pandas
 Pillow
 plotly
 pystackreg
@@ -16,4 +16,4 @@ scikit-image
 tabulate
 tensorboardX
 terminaltables
-timm
+timm==1.0.15
