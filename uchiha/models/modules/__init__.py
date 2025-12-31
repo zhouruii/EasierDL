@@ -12,7 +12,7 @@ from .fusion import CatPWConvFusion
 from .head import FCHead
 from .preprocessor import DWT1d, DWT2d, GroupRCP, PriorDecoupler
 from .upsample import *
-from .postprocessor import IDWT1d, IDWT2d, WeightedSum
+from .postprocessor import IDWT1d, IDWT2d, WeightedSum, GlobalResidualAddition
 from .ffn import LeFF, GDFN
 from .prior import GRCPBranch, MultiGRCPBranch
 from .freq import ParllelFreqDecouplingReconstruction

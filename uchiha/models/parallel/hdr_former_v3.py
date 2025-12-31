@@ -168,6 +168,9 @@ class HDRFormerV3(nn.Module):
 
         # reconstruction
         feat = self.post_band_selector(feat)
-        out = self.reconstruction(feat, shortcut)
+        if isinstance(self.reconstruction, nn.Identity):
+            out = feat
+        else:
+            out = self.reconstruction(feat, shortcut)
 
         return out

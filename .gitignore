@@ -177,3 +177,5 @@ tools/visualization/*.png
 log/
 scripts/*.jpg
 scripts/*.png
+
+.run/

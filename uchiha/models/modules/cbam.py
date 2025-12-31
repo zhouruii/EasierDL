@@ -409,12 +409,12 @@ class GlobalMinPool2d(nn.Module):
 
 @MODULE.register_module()
 class BCAM(nn.Module):
-    def __init__(self, in_channels, ratio=0.5, min_proj=False, act='ReLU', residual=False):
+    def __init__(self, in_channels, ratio=0.5, min_proj=False, act='ReLU', residual=False, min_pool=True):
         super(BCAM, self).__init__()
         self.first_dwconv = conv3x3(in_channels, in_channels, groups=in_channels)
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.max_pool = nn.AdaptiveMaxPool2d(1)
-        self.min_pool = GlobalMinPool2d()
+        self.min_pool = GlobalMinPool2d() if min_pool else None
 
         self.proj = nn.Sequential(nn.Conv2d(in_channels, int(in_channels * ratio), 1, bias=False),
                                   nn.ReLU(),
@@ -443,10 +443,13 @@ class BCAM(nn.Module):
         max_out = self.proj(self.max_pool(x))
         out = avg_out + max_out
 
-        if self.proj_for_min:
-            min_out = self.proj_for_min(self.min_pool(x))
+        if self.min_pool:
+            if self.proj_for_min:
+                min_out = self.proj_for_min(self.min_pool(x))
+            else:
+                min_out = self.min_pool(x)
         else:
-            min_out = self.min_pool(x)
+            min_out = 0
 
         out -= min_out
         att = self.act(out)

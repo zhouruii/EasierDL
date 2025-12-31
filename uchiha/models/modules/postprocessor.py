@@ -84,6 +84,18 @@ class WeightedSum(nn.Module):
 
 
 @MODULE.register_module()
+class GlobalResidualAddition(nn.Module):
+    """ Add feature and global residual.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x, residual):
+        return x + residual
+
+
+@MODULE.register_module()
 class HDRReconstruction(nn.Module):
     def __init__(self, d=1, in_channels=128):
         super().__init__()
