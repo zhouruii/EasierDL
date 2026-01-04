@@ -24,3 +24,6 @@ from .DeRainNet import DeRainNet
 from .IDT import IDT
 from .MFJLN import MFJLN
 from .PromptIR import PromptIR
+from .BioIR import BioIR
+from .DMSR import DMSR
+from .AdaIR import AdaIR

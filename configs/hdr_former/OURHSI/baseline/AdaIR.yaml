@@ -1,0 +1,81 @@
+work_dir: experiments/hdr_former/OurHSI/comparison/AdaIR
+data:
+  train:
+    dataset:
+      type: HDF5MultiLevelRainHSIDataset
+      h5_path: /home/disk2/ZR/datasets/OurHSI/128/dataset.h5
+      split_file: /home/disk2/ZR/datasets/OurHSI/128/npy/train.txt
+      pipelines:
+        - type: RandomFlip
+          directions: [original, horizontal, vertical, diagonal]
+          probs: [0.3, 0.3, 0.3, 0.1]
+        - type: RandomRotation
+          angles: [0, 90, 180, 270]
+          prob: 0.5
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 4
+      shuffle: true
+      num_workers: 4
+      pin_memory: true
+      persistent_workers: false
+      prefetch_factor: 4
+      drop_last: true
+  val:
+    dataset:
+      type: HDF5MultiLevelRainHSIDataset
+      h5_path: /home/disk2/ZR/datasets/OurHSI/128/dataset.h5
+      split_file: /home/disk2/ZR/datasets/OurHSI/128/npy/val.txt
+      pipelines:
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 4
+      shuffle: false
+
+num_bands: &num_bands 467       # 波段数
+
+model:
+  type: AdaIR
+  in_channels: *num_bands
+  out_channels: *num_bands
+  dim: 48
+  num_blocks: [4, 6, 6, 8]
+  num_refinement_blocks: 4
+  heads: [1, 2, 4, 8]
+  ffn_expansion_factor: 2.66
+  bias: false
+  LayerNorm_type: WithBias
+  decoder: true
+
+train:
+  total_epoch: &total_epoch 100
+  use_grad_clip: true
+  print_freq: 50
+
+  loss:
+    type: MSELoss
+
+  optimizer:
+    type: AdamW
+    lr: 3.0e-4
+    weight_decay: 1.0e-4
+    betas: [ 0.9, 0.999 ]
+
+
+  scheduler:
+    type: LinearWarmupCosineLR
+    total_epochs: *total_epoch
+    warmup_epochs: 10
+    warmup_start_lr: 3.0e-4
+    min_lr: 1.0e-6
+
+val:
+  val_freq: 5
+  metric: psnr
+
+checkpoint:
+  save_freq: 10
+  resume_from: null
+  auto_resume: false
