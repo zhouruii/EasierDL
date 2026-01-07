@@ -1,8 +1,21 @@
 work_dir: experiments/hsi_dehaze/HD/inference/CSCANet
+#sample_path: /media/mango/系统/6636数据/2/mk/dataset/GF5最终数据/test/haze/GF9.tif
+#gt_path: /media/mango/系统/6636数据/2/mk/dataset/GF5最终数据/test/haze/GF9.tif
+#channel_indices: [58, 37, 19]
+sample_path: /media/mango/系统/6636数据/2/mk/dataset/GF5最终数据/test/haze/GF8.tif
+gt_path: /media/mango/系统/6636数据/2/mk/dataset/GF5最终数据/test/haze/GF8.tif
+channel_indices: [58, 37, 19]
+#sample_path: /media/mango/系统/6636数据/2/mk/dataset/HD/train/haze/1_15.tif
+#gt_path: /media/mango/系统/6636数据/2/mk/dataset/HD/train/clean/1.tif
+#channel_indices: [58, 37, 19]
+#sample_path: /media/mango/系统/6636数据/2/mk/dataset/HD/test/haze/18_8.tif
+#gt_path: /media/mango/系统/6636数据/2/mk/dataset/HD/test/clean/18.tif
+#channel_indices: [58, 37, 19]
+save_name: CSCANet-HD
 
 num_bands: &num_bands 305       # 波段数
 
 model:
   type: CSCANet
 
-checkpoint: experiments/hsi_dehaze/HD/comparison/CSCANet/checkpoints/30.pth
+checkpoint: experiments/hsi_dehaze/HD/comparison/CSCANet/checkpoints

@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 from scipy import io
 
 from uchiha.models.builder import build_model
+from uchiha.utils.data import normalize
 
 
 def remove_module_prefix(state_dict):
@@ -23,15 +24,6 @@ def remove_module_prefix(state_dict):
     return new_state_dict
 
 
-def normalize(data: np.ndarray) -> np.ndarray:
-    normalized = np.zeros_like(data, dtype=np.float32)
-    for c in range(data.shape[-1]):
-        channel = data[:, :, c]
-        if channel.max() - channel.min() != 0:
-            normalized[:, :, c] = (channel - channel.min()) / (channel.max() - channel.min())
-    return normalized
-
-
 def load_data(data_path, num_bands=305):
     ext = os.path.splitext(data_path)[1].lower()
     if ext == '.npy':
@@ -42,8 +34,9 @@ def load_data(data_path, num_bands=305):
             data = np.transpose(data, (1, 2, 0))
         data = data[:, :, :num_bands]
         data = np.asanyarray(data, dtype="float32")
-        # data = data / 4200
-        data = normalize(data)
+        # data = data / 2200
+        data = data / np.max(data)
+        # data = normalize(data)
     elif ext == '.mat':
         full_data = io.loadmat(data_path)
         data_key = list(full_data.keys())[3]
@@ -58,10 +51,15 @@ def load_data(data_path, num_bands=305):
 
 def single_visualize(lq, pred, gt, name, output_dir, result_name, channel_indices=(58, 37, 19)):
     def extract_rgb(data):
+        # return np.stack([
+        #     np.clip(data[:, :, channel_indices[0]], 0, 1),  # R
+        #     np.clip(data[:, :, channel_indices[1]], 0, 1),  # G
+        #     np.clip(data[:, :, channel_indices[2]], 0, 1)  # B
+        # ], axis=-1)
         return np.stack([
-            np.clip(data[:, :, channel_indices[0]], 0, 1),  # R
-            np.clip(data[:, :, channel_indices[1]], 0, 1),  # G
-            np.clip(data[:, :, channel_indices[2]], 0, 1)  # B
+            data[:, :, channel_indices[0]],  # R
+            data[:, :, channel_indices[1]],  # G
+            data[:, :, channel_indices[2]]  # B
         ], axis=-1)
 
     lq_rgb = extract_rgb(lq)
@@ -103,24 +101,31 @@ def single_inference(cfg):
     # model
     model = build_model(cfg.model.to_dict())
     model = model.cuda()
-    # resume
-    checkpoint = torch.load(cfg.checkpoint, map_location='cpu')
-    model.load_state_dict(remove_module_prefix(checkpoint['state_dict']))
-    num_bands = cfg.num_bands
 
+    num_bands = cfg.num_bands
     data = load_data(cfg.sample_path, num_bands)
     gt = load_data(cfg.gt_path, num_bands)
-    with torch.no_grad():
-        # data
-        sample = torch.from_numpy(data).permute(2, 0, 1).unsqueeze(0).cuda()
-        # forward
-        pred = model(sample)
-        pred = pred.squeeze().permute(1, 2, 0).cpu().numpy()
 
-    name = os.path.basename(cfg.sample_path).split('.')[0]
-    output_dir = cfg.work_dir
-    result_name = cfg.save_name
-    channel_indices = cfg.channel_indices
+    for ckpt in sorted(os.listdir(cfg.checkpoint)):
+        # resume
+        ckpt_path = os.path.join(cfg.checkpoint, ckpt)
+        param = torch.load(ckpt_path, map_location='cpu')
+        model.load_state_dict(remove_module_prefix(param['state_dict']))
 
-    single_visualize(lq=data, pred=pred, gt=gt, name=name, output_dir=output_dir, result_name=result_name,
-                     channel_indices=channel_indices)
+        with torch.no_grad():
+            # data
+            sample = torch.from_numpy(data).permute(2, 0, 1).unsqueeze(0).cuda()
+            # forward
+            pred = model(sample)
+            pred = pred.squeeze().permute(1, 2, 0).cpu().numpy()
+
+        pred = normalize(pred)
+        # pred = np.clip(pred, 0, 1)
+        name = os.path.basename(cfg.sample_path).split('.')[0]
+        output_dir = cfg.work_dir
+        idx = ckpt.split('.')[0]
+        result_name = f'{cfg.save_name}-e{idx}'
+        channel_indices = cfg.channel_indices
+
+        single_visualize(lq=data, pred=pred, gt=gt, name=name, output_dir=output_dir, result_name=result_name,
+                         channel_indices=channel_indices)

@@ -1,4 +1,4 @@
-work_dir: experiments/hsi_dehaze/HD/test/D3
+work_dir: experiments/hsi_dehaze/HD/test/CSCANet
 data:
   test:
     dataset:
@@ -18,7 +18,6 @@ data:
 num_bands: &num_bands 305       # 波段数
 
 model:
-  type: D3
-  in_channels: *num_bands
+  type: CSCANet
 
-checkpoint: experiments/hsi_dehaze/HD/comparison/D3/checkpoints/90.pth
+checkpoint: experiments/hsi_dehaze/HD/comparison/CSCANet/checkpoints/300.pth

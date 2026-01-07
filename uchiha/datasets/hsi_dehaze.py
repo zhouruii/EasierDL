@@ -86,8 +86,10 @@ def apply_band_exchange_with_indices(hsi, indices, first_branch_channel=102):
     return out.squeeze(0)
 
 
-def get_clean_of_HD(haze_path):
+def get_clean_of_hd(haze_path, dataset_name):
     clean_path = haze_path.replace("haze", "clean")
+    if dataset_name == 'HDD':
+        return clean_path
     clean_path = list(clean_path)
     len1 = len(clean_path)
     if clean_path[len1 - 7] == "_":
@@ -108,11 +110,16 @@ def get_loader(loader_type, path):
         raise ValueError('Invalid loader type')
 
 
-def load_hd(loader, path, exchange_bands=False, first_branch_channel=102):
+def load_hd(loader, path, dataset_name='HD', exchange_bands=False, first_branch_channel=102):
     im_data = loader(path)
-    clean_path = get_clean_of_HD(path)
+    clean_path = get_clean_of_hd(path, dataset_name)
 
-    im_data = np.asanyarray(im_data, dtype="float32") / 2200
+    if dataset_name == 'HD':
+        im_data = np.asanyarray(im_data, dtype="float32") / 2200
+    else:
+        im_data = np.asanyarray(im_data, dtype="float32")
+        im_data = im_data[:305, :, :]
+        im_data = im_data / 2200
     # im_data = torch.Tensor(im_data).permute(2, 0, 1)
 
     im_label = loader(clean_path)
@@ -168,8 +175,8 @@ class HSIDehazeDataset(Dataset):
         self.pipelines = Compose(pipelines) if pipelines else None
 
     def __getitem__(self, index):
-        if self.dataset_name == 'HD':
-            lq, gt = load_hd(self.loader, self.lq_path[index])
+        if self.dataset_name == 'HD' or self.dataset_name == 'HDD':
+            lq, gt = load_hd(self.loader, self.lq_path[index], self.dataset_name)
         elif self.dataset_name == 'AVIRIS':
             lq, gt = load_mat(self.loader, self.gt_path[index], self.lq_path[index])
         elif self.dataset_name == 'UAV':

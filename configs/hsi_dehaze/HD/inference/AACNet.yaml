@@ -1,4 +1,4 @@
-work_dir: experiments/hsi_dehaze/HD/inference/DEA_Net
+work_dir: experiments/hsi_dehaze/HD/inference/AACNet
 #sample_path: /media/mango/系统/6636数据/2/mk/dataset/GF5最终数据/test/haze/GF9.tif
 #gt_path: /media/mango/系统/6636数据/2/mk/dataset/GF5最终数据/test/haze/GF9.tif
 #channel_indices: [58, 37, 19]
@@ -11,17 +11,17 @@ channel_indices: [58, 37, 19]
 #sample_path: /media/mango/系统/6636数据/2/mk/dataset/HD/test/haze/18_8.tif
 #gt_path: /media/mango/系统/6636数据/2/mk/dataset/HD/test/clean/18.tif
 #channel_indices: [58, 37, 19]
-save_name: DEA_Net-HD
+save_name: AACNet-HD
 
 
-num_bands: &num_bands 305       # 波段数 305 197 467
+num_bands: &num_bands 305       # 波段数
 
 model:
-  type: DEANet
-  in_channels: *num_bands
-  base_dim: 32
+  type: AACNet
+  in_dim: *num_bands
+  out_dim: *num_bands
 
-checkpoint: experiments/hsi_dehaze/HD/comparison/DEA_Net/checkpoints
+checkpoint: experiments/hsi_dehaze/HD/comparison/AACNet/checkpoints
 
 
 

@@ -1,4 +1,4 @@
-work_dir: experiments/hsi_dehaze/HD/test/D3
+work_dir: experiments/hsi_dehaze/HD/test/SFAN
 data:
   test:
     dataset:
@@ -18,7 +18,15 @@ data:
 num_bands: &num_bands 305       # 波段数
 
 model:
-  type: D3
+  type: SFAN
   in_channels: *num_bands
+  out_channels: *num_bands
+  dim: 32
+  num_blocks: [1, 1, 1, 1]
+  bias: true
+  heads: [1, 2, 4, 8]
+  decoder: true
 
-checkpoint: experiments/hsi_dehaze/HD/comparison/D3/checkpoints/90.pth
+checkpoint: experiments/hsi_dehaze/HD/comparison/SFAN/checkpoints/60.pth
+
+

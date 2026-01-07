@@ -20,6 +20,8 @@ from .WaveUIR import WaveUIR
 from .CSCANet import CSCANet
 from .DehazeFormer import DehazeFormer
 from .FFA_Net import FFA
+from .AAC_Net import AACNet
+from .RSDehazeNet import RSDehazeNet
 from .DeRainNet import DeRainNet
 from .IDT import IDT
 from .MFJLN import MFJLN

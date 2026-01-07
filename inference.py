@@ -25,17 +25,17 @@ def inference():
 
 
 if __name__ == '__main__':
-    inference()
+    # inference()
 
-    # data = load_data('/media/mango/系统/6636数据/2/mk/dataset/HD/train/haze/1_15.tif')
-    # data = normalize(data)
-    # data = np.stack([
-    #     np.clip(data[:, :, 58], 0, 1),  # R
-    #     np.clip(data[:, :, 37], 0, 1),  # G
-    #     np.clip(data[:, :, 19], 0, 1)  # B
-    # ], axis=-1)
-    #
-    # data = np.uint8(data * 255)
+    data = load_data('/media/mango/系统/6636数据/2/mk/dataset/GF5最终数据/test/haze/GF8.tif')
+    data = normalize(data)
+    data = np.stack([
+        np.clip(data[:, :, 58], 0, 1),  # R
+        np.clip(data[:, :, 37], 0, 1),  # G
+        np.clip(data[:, :, 19], 0, 1)  # B
+    ], axis=-1)
+
+    data = np.uint8(data * 255)
     # data = TwoPercentLinear(data[:, :, :])  # (2, 1, 0)
-    #
-    # imageio.imwrite('org.png', data)
+
+    imageio.imwrite('GF8.png', data)

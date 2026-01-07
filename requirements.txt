@@ -17,3 +17,5 @@ tabulate
 tensorboardX
 terminaltables
 timm==1.0.15
+thop
+tqdm

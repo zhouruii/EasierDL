@@ -170,8 +170,7 @@ BSD300
 Streaks_Garg06
 tools/hyperspectral
 tools/synthesis
-tools/visualization/samples
-tools/visualization/*.png
+tools/visualization/
 .vscode/
 
 log/

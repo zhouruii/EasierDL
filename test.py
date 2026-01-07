@@ -2,14 +2,24 @@ import argparse
 from datetime import datetime
 from os.path import join
 
+from thop import profile, clever_format
 import torch
 from torch import nn
 
-from uchiha.apis import set_random_seed, hsi_test
+from uchiha.apis import set_random_seed, complex_test
 from uchiha.apis.inference_dehaze import remove_module_prefix
 from uchiha.datasets.builder import build_dataset, build_dataloader
 from uchiha.models.builder import build_model
 from uchiha.utils import load_config, get_root_logger
+
+
+def get_info(model, inp):
+    model.eval()
+
+    macs, params = profile(model, inputs=(inp,))
+    macs, params = clever_format([macs, params], "%.3f")
+
+    return macs, params
 
 
 def parse_args():
@@ -17,6 +27,7 @@ def parse_args():
     args_parser.add_argument('--seed', type=int, default=49)
     args_parser.add_argument('--config', type=str, default='configs/hsi_dehaze/HD/test/D3.yaml')
     args_parser.add_argument('--gpu_ids', nargs='+', default=['0'])
+    args_parser.add_argument('--info', type=int, default=1)
 
     return args_parser.parse_args()
 
@@ -59,13 +70,21 @@ def main():
         model.load_state_dict(remove_module_prefix(checkpoint['state_dict']))
     logger.info(f'checkpoint:{cfg.checkpoint} was loaded successfully!')
 
+    # model info
+    if args.info > 0:
+        macs, params = get_info(model, inp=torch.randn(1, 305, 512, 512).cuda())
+
+        logger.info(f"FLOPs: {macs}")
+        logger.info(f"Parameters: {params}")
+
     # train & val
     logger.info('start testing...')
 
     # evaluate
-    hsi_test(dataloader=testloader,
-             model=model,
-             device=device)
+    complex_test(dataloader=testloader,
+                 model=model,
+                 device=device,
+                 no_reference=True)
 
 
 if __name__ == '__main__':

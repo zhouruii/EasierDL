@@ -1,4 +1,4 @@
-work_dir: experiments/hsi_dehaze/HD/test/D3
+work_dir: experiments/hsi_dehaze/HD/test/FFA_Net
 data:
   test:
     dataset:
@@ -18,7 +18,8 @@ data:
 num_bands: &num_bands 305       # 波段数
 
 model:
-  type: D3
-  in_channels: *num_bands
+  type: FFA
+  in_channel: *num_bands
+  out_channel: *num_bands
 
-checkpoint: experiments/hsi_dehaze/HD/comparison/D3/checkpoints/90.pth
+checkpoint: experiments/hsi_dehaze/HD/comparison/FFA_Net/checkpoints/300.pth

@@ -1,4 +1,4 @@
-work_dir: experiments/hsi_dehaze/HD/test/D3
+work_dir: experiments/hsi_dehaze/HD/test/FS_Net
 data:
   test:
     dataset:
@@ -15,10 +15,17 @@ data:
       batch_size: 1
       shuffle: false
 
-num_bands: &num_bands 305       # 波段数
+num_bands: &num_bands 305       # 波段数 305 197 467
 
 model:
-  type: D3
+  type: FSNet
   in_channels: *num_bands
+  num_res: 16
 
-checkpoint: experiments/hsi_dehaze/HD/comparison/D3/checkpoints/90.pth
+checkpoint: experiments/hsi_dehaze/HD/comparison/FS_Net/checkpoints/120.pth
+
+
+
+
+
+

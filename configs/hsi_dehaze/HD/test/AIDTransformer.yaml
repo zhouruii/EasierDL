@@ -1,4 +1,4 @@
-work_dir: experiments/hsi_dehaze/HD/test/D3
+work_dir: experiments/hsi_dehaze/HD/test/AIDTransformer
 data:
   test:
     dataset:
@@ -18,7 +18,9 @@ data:
 num_bands: &num_bands 305       # 波段数
 
 model:
-  type: D3
+  type: AIDTransformer
+  img_size: 512
   in_channels: *num_bands
+  embed_dim: 48
 
-checkpoint: experiments/hsi_dehaze/HD/comparison/D3/checkpoints/90.pth
+checkpoint: experiments/hsi_dehaze/HD/comparison/AIDTransformer/checkpoints/60.pth
