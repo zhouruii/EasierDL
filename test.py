@@ -25,7 +25,7 @@ def get_info(model, inp):
 def parse_args():
     args_parser = argparse.ArgumentParser()
     args_parser.add_argument('--seed', type=int, default=49)
-    args_parser.add_argument('--config', type=str, default='configs/hsi_dehaze/HD/test/D3.yaml')
+    args_parser.add_argument('--config', type=str, default='configs/hdr_former/AVIRIS/test/Restormer.yaml')
     args_parser.add_argument('--gpu_ids', nargs='+', default=['0'])
     args_parser.add_argument('--info', type=int, default=1)
 
@@ -72,19 +72,16 @@ def main():
 
     # model info
     if args.info > 0:
-        macs, params = get_info(model, inp=torch.randn(1, 305, 512, 512).cuda())
+        macs, params = get_info(model, inp=torch.randn(1, 224, 128, 128).cuda())   # 224  467
 
         logger.info(f"FLOPs: {macs}")
         logger.info(f"Parameters: {params}")
-
-    # train & val
-    logger.info('start testing...')
 
     # evaluate
     complex_test(dataloader=testloader,
                  model=model,
                  device=device,
-                 no_reference=True)
+                 no_reference=False)
 
 
 if __name__ == '__main__':

@@ -1,28 +1,8 @@
-work_dir: experiments/hdr_former/AVIRIS/ablation/absm_wo_min_pool
+# v3基础上，删去Swin，Q做反变换，只是用RP和HP
+
+work_dir: experiments/hdr_former/AVIRIS/test/ours
 data:
-  train:
-    dataset:
-      type: HDF5MultiLevelRainHSIDataset
-      h5_path: /home/disk2/ZR/datasets/AVIRIS/128/dataset.h5
-      split_file: /home/disk2/ZR/datasets/AVIRIS/128/npy/train.txt
-      pipelines:
-        - type: RandomFlip
-          directions: [original, horizontal, vertical, diagonal]
-          probs: [0.3, 0.3, 0.3, 0.1]
-        - type: RandomRotation
-          angles: [0, 90, 180, 270]
-          prob: 0.5
-        - type: EasyToTensor
-          mode: CHW
-    dataloader:
-      batch_size: 1
-      shuffle: true
-      num_workers: 16
-      pin_memory: true
-      persistent_workers: true
-      prefetch_factor: 4
-      drop_last: true
-  val:
+  test:
     dataset:
       type: HDF5MultiLevelRainHSIDataset
       h5_path: /home/disk2/ZR/datasets/AVIRIS/128/dataset.h5
@@ -33,6 +13,11 @@ data:
     dataloader:
       batch_size: 1
       shuffle: false
+      num_workers: 4
+      pin_memory: true
+      persistent_workers: true
+      prefetch_factor: 1
+      drop_last: false
 
 num_bands: &num_bands 224       # 波段数
 embed_dim: &embed_dim 48      # 传播维度
@@ -54,7 +39,6 @@ model:
     min_proj: false
     act: ReLU
     residual: false
-    min_pool: false
   post_band_selector: ~
   embedding_cfg:
     type: OverlapPatchEmbedding
@@ -89,44 +73,6 @@ model:
     filter_kernel_size: 3
     filter_groups: 8
     norm: GN
-#    type: ParllelFreqDecouplingReconstruction
-#    d: 0.4
-#    in_channels: *num_bands
-#    filter_kernel_size: 3
-#    filter_groups: 8
-#    norm: GN
 
 
-train:
-  total_epoch: &total_epoch 100
-  use_grad_clip: true
-  print_freq: 50
-
-  loss:
-    type: MSELoss
-
-
-  optimizer:
-    type: AdamW
-    lr: 3.0e-4
-    weight_decay: 1.0e-4
-    betas: [ 0.9, 0.999 ]
-
-
-  scheduler:
-    type: LinearWarmupCosineLR
-    total_epochs: *total_epoch
-    warmup_epochs: 10
-    warmup_start_lr: 3.0e-4
-    min_lr: 1.0e-6
-
-
-
-val:
-  val_freq: 5
-  metric: psnr
-
-checkpoint:
-  save_freq: 5
-  resume_from: null
-  auto_resume: false
+checkpoint: experiments/hdr_former/AVIRIS/ours/baseline_v4/checkpoints/100.pth

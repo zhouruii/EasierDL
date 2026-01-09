@@ -107,6 +107,8 @@ def single_inference(cfg):
     gt = load_data(cfg.gt_path, num_bands)
 
     for ckpt in sorted(os.listdir(cfg.checkpoint)):
+        # if ckpt != '100.pth':
+        #     continue
         # resume
         ckpt_path = os.path.join(cfg.checkpoint, ckpt)
         param = torch.load(ckpt_path, map_location='cpu')

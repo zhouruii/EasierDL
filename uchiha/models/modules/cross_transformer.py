@@ -678,3 +678,205 @@ class WaveletFreqWiseAttentionLayer(nn.Module):
             x, prior = blk(x, prior)
 
         return x, prior
+
+
+# -------------------------------------------------------------------------------------------------- #
+#                                      Ablation Study Modules                                        #
+# -------------------------------------------------------------------------------------------------- #
+
+class AblationWaveletFreqWiseAttention(nn.Module):
+    """
+    专门用于消融实验的注意力模块。
+    支持开关：小波处理、稀疏化、先验指导全取消、先验指导部分取消。
+    """
+    def __init__(self,
+                 in_channels=128,
+                 num_heads=8,
+                 prior_cfg=None,
+                 sparse_strategy=None,
+                 use_wavelet=True,
+                 use_sparse=True,
+                 use_prior_guide=True,
+                 use_mask_hp=True):
+        super().__init__()
+        self.in_channels = in_channels
+        self.num_heads = num_heads
+        self.use_wavelet = use_wavelet
+        self.use_sparse = use_sparse
+        self.use_prior_guide = use_prior_guide
+        self.use_mask_hp = use_mask_hp
+
+        if self.use_wavelet:
+            self.wavelet_transform = DWTForward(J=1, wave='haar', mode='reflect')
+            self.inverse_transform = DWTInverse(wave='haar')
+
+        assert in_channels % num_heads == 0, f'in_channels:{in_channels} must be divided by num_heads:{num_heads}'
+        self.head_dim = in_channels // num_heads
+
+        # ------------------------------------------ Projection ------------------------------------------ #
+        self.linear_proj = nn.Conv2d(in_channels, in_channels * 3, kernel_size=1, padding=0)
+        self.q_proj = conv3x3(in_channels, in_channels, groups=in_channels)
+        self.k_proj = conv3x3(in_channels, in_channels, groups=in_channels)
+        self.v_proj = conv3x3(in_channels, in_channels, groups=in_channels)
+
+        # ------------------------------------------ Gate Unit ------------------------------------------ #
+        if self.use_wavelet:
+            self.conv_ll = nn.Sequential(
+                conv3x3(in_channels, in_channels, groups=in_channels),
+                conv3x3(in_channels, in_channels, groups=in_channels)
+            )
+            self.conv_lh = nn.Conv2d(in_channels, in_channels, kernel_size=(3, 7), padding=(1, 3), groups=in_channels)
+            self.conv_hl = nn.Conv2d(in_channels, in_channels, kernel_size=(7, 3), padding=(3, 1), groups=in_channels)
+            self.conv_hh = conv3x3(in_channels, in_channels, groups=in_channels)
+
+        # ------------------------------------------ Prior Unit ------------------------------------------ #
+        self.prior_opt = build_module(prior_cfg) if prior_cfg is not None and self.use_prior_guide else None
+
+        # ------------------------------------------ Attn Unit ------------------------------------------ #
+        self.temperature = nn.Parameter(torch.ones(num_heads, 1, 1))
+        self.sparse_opt = SparsifyAttention(sparse_strategy) if self.use_sparse else nn.Identity()
+
+        self.proj_out = nn.Conv2d(in_channels, in_channels, 1)
+
+    def forward(self, x, prior=None):
+        _, _, H, W = x.shape
+        x = self.linear_proj(x)
+        q, k, v = torch.chunk(x, chunks=3, dim=1)
+        q = self.q_proj(q)
+        k = self.k_proj(k)
+        v = self.v_proj(v)
+
+        # 先验处理逻辑
+        mask_rp, mask_hp = None, None
+        if self.prior_opt is not None and prior is not None:
+            prior, mask = self.prior_opt(prior)
+            mask_rp, mask_hp = mask
+        
+        # 消融开关控制先验
+        if not self.use_prior_guide:
+            mask_rp, mask_hp = None, None
+        if not self.use_mask_hp:
+            mask_hp = None
+
+        if self.use_wavelet:
+            q_ll, q_h = self.wavelet_transform(q)
+            LH, HL, HH = q_h[0][:, :, 0, :, :], q_h[0][:, :, 1, :, :], q_h[0][:, :, 2, :, :]
+            q_ll = self.conv_ll(q_ll)
+            q_lh = self.conv_lh(LH)
+            q_hl = self.conv_hl(HL)
+            q_hh = self.conv_hh(HH)
+
+            if mask_hp is not None:
+                q_ll = self.res_opt(q_ll, mask_hp)
+
+            q = self.inverse_transform((q_ll, [torch.stack([q_lh, q_hl, q_hh], dim=2)]))
+
+        q = rearrange(q, 'b (nh c) h w -> b nh c (h w)', h=H, w=W, nh=self.num_heads)
+        k = rearrange(k, 'b (nh c) h w -> b nh c (h w)', h=H, w=W, nh=self.num_heads)
+        v = rearrange(v, 'b (nh c) h w -> b nh c (h w)', h=H, w=W, nh=self.num_heads)
+
+        q = F.normalize(q, dim=-1)
+        k = F.normalize(k, dim=-1)
+
+        att = (q @ k.transpose(-2, -1)) * self.temperature
+        att = self.sparse_opt(att)
+
+        out = att @ v
+
+        if mask_rp is not None:
+            res = v
+            res = rearrange(res, 'b nh c (h w) -> b nh c h w', h=H, w=W)
+            res = res * mask_rp
+            out = out + rearrange(res, 'b nh c h w -> b nh c (h w)', h=H, w=W)
+
+        out = rearrange(out, 'b nh c (h w) -> b (nh c) h w', nh=self.num_heads, h=H, w=W)
+        return self.proj_out(out), prior
+
+    def res_opt(self, inp, mask):
+        res = inp
+        inp = inp * mask
+        return inp + res
+
+
+@MODULE.register_module()
+class AblationWaveletFreqWiseAttentionBlock(nn.Module):
+    def __init__(self,
+                 in_channels=128,
+                 num_heads=8,
+                 prior_cfg=None,
+                 ffn_cfg=None,
+                 sparse_strategy=None,
+                 ln_bias=True,
+                 use_wavelet=True,
+                 use_sparse=True,
+                 use_prior_guide=True,
+                 use_mask_hp=True):
+        super().__init__()
+        self.in_channels = in_channels
+        self.num_heads = num_heads
+        self.ln_bias = ln_bias
+
+        self.attn = AblationWaveletFreqWiseAttention(
+            in_channels=in_channels,
+            num_heads=num_heads,
+            prior_cfg=prior_cfg,
+            sparse_strategy=sparse_strategy,
+            use_wavelet=use_wavelet,
+            use_sparse=use_sparse,
+            use_prior_guide=use_prior_guide,
+            use_mask_hp=use_mask_hp
+        )
+        self.ffn = build_module(ffn_cfg)
+        self.ln1 = WithBiasLayerNorm(in_channels) if self.ln_bias else BiasFreeLayerNorm(in_channels)
+        self.ln2 = WithBiasLayerNorm(in_channels) if self.ln_bias else BiasFreeLayerNorm(in_channels)
+
+    def forward(self, x, prior=None):
+        shortcut = x
+        x = self.ln1(x)
+        x, prior = self.attn(x, prior)
+        x = x + shortcut
+
+        shortcut = x
+        x = self.ln2(x)
+        x = self.ffn(x)
+        x = x + shortcut
+        return x, prior
+
+
+@MODULE.register_module()
+class AblationWaveletFreqWiseAttentionLayer(nn.Module):
+    def __init__(self,
+                 in_channels=128,
+                 num_heads=8,
+                 num_blocks=4,
+                 prior_cfg=None,
+                 ffn_cfg=None,
+                 sparse_strategy=None,
+                 ln_bias=True,
+                 use_wavelet=True,
+                 use_sparse=True,
+                 use_prior_guide=True,
+                 use_mask_hp=True):
+        super().__init__()
+        self.in_channels = in_channels
+        self.num_heads = num_heads
+        self.num_blocks = num_blocks
+
+        self.blocks = nn.ModuleList([
+            AblationWaveletFreqWiseAttentionBlock(
+                in_channels=in_channels,
+                num_heads=num_heads,
+                prior_cfg=prior_cfg,
+                ffn_cfg=ffn_cfg,
+                sparse_strategy=sparse_strategy,
+                ln_bias=ln_bias,
+                use_wavelet=use_wavelet,
+                use_sparse=use_sparse,
+                use_prior_guide=use_prior_guide,
+                use_mask_hp=use_mask_hp
+            ) for _ in range(num_blocks)])
+
+    def forward(self, x, prior=None):
+        for blk in self.blocks:
+            x, prior = blk(x, prior)
+        return x, prior

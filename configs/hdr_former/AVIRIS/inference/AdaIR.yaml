@@ -1,0 +1,24 @@
+work_dir: experiments/hdr_former/AVIRIS/inference/AdaIR
+
+sample_path: /home/disk2/ZR/datasets/AVIRIS/512/rain/storm/f130410t01p00r15rdn_e_3.npy
+gt_path: /home/disk2/ZR/datasets/AVIRIS/512/gt/f130410t01p00r15rdn_e_3.npy
+channel_indices: [36, 19, 8]
+
+save_name: AdaIR-AVIRIS
+
+num_bands: &num_bands 224       # 波段数
+
+model:
+  type: AdaIR
+  in_channels: *num_bands
+  out_channels: *num_bands
+  dim: 48
+  num_blocks: [4, 6, 6, 8]
+  num_refinement_blocks: 4
+  heads: [1, 2, 4, 8]
+  ffn_expansion_factor: 2.66
+  bias: false
+  LayerNorm_type: WithBias
+  decoder: true
+
+checkpoint: experiments/hdr_former/AVIRIS/comparison/AdaIR/checkpoints

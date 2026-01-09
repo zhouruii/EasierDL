@@ -1,0 +1,15 @@
+work_dir: experiments/hdr_former/AVIRIS/inference/PReNet
+
+sample_path: /home/disk2/ZR/datasets/AVIRIS/512/rain/storm/f130410t01p00r15rdn_e_3.npy
+gt_path: /home/disk2/ZR/datasets/AVIRIS/512/gt/f130410t01p00r15rdn_e_3.npy
+channel_indices: [36, 19, 8]
+
+save_name: PReNet-AVIRIS
+
+num_bands: &num_bands 224       # 波段数
+
+model:
+  type: PReNet
+  in_channels: *num_bands
+
+checkpoint: experiments/hdr_former/AVIRIS/comparison/PReNet/checkpoints

@@ -1,0 +1,20 @@
+work_dir: experiments/hdr_former/AVIRIS/inference/FADformer
+
+sample_path: /home/disk2/ZR/datasets/AVIRIS/512/rain/storm/f130410t01p00r15rdn_e_3.npy
+gt_path: /home/disk2/ZR/datasets/AVIRIS/512/gt/f130410t01p00r15rdn_e_3.npy
+channel_indices: [36, 19, 8]
+
+save_name: FADformer-AVIRIS
+
+num_bands: &num_bands 224       # 波段数
+
+model:
+  type: FADformer
+  in_channels: *num_bands
+  out_channels: *num_bands
+  embed_dim: [24, 48, 96, 48, 24]
+  depth: [2, 3, 4, 3, 2]
+  local_size: [4, 4, 4, 4, 4]
+  embed_kernel_size: 3
+
+checkpoint: experiments/hdr_former/AVIRIS/comparison/FADformer/checkpoints

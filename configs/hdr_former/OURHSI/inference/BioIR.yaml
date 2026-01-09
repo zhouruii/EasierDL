@@ -1,0 +1,24 @@
+work_dir: experiments/hdr_former/OURHSI/inference/BioIR
+
+sample_path: /home/disk2/ZR/datasets/OURHSI/256/rain/storm/12_20_2_registered_raw_4773_rd_rf_or_256_512.npy
+gt_path: /home/disk2/ZR/datasets/OURHSI/256/gt/12_20_2_registered_raw_4773_rd_rf_or_256_512.npy
+channel_indices: [136, 67, 18]
+
+save_name: BioIR-OURHSI
+
+num_bands: &num_bands 467       # 波段数
+
+model:
+  type: BioIR
+  in_channels: *num_bands
+  out_channels: *num_bands
+  dim: 48
+  num_blocks: [6, 6, 14]
+  num_refinement_blocks: 4
+  ffn_expansion_factor: 3
+  heads: [1, 2, 4, 8]
+  bias: false
+  LayerNorm_type: WithBias
+  decoder: false
+
+checkpoint: experiments/hdr_former/OurHSI/comparison/BioIR/checkpoints

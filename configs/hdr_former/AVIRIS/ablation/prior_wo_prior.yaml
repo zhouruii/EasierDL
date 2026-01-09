@@ -1,4 +1,6 @@
-work_dir: experiments/hdr_former/AVIRIS/ablation/absm2rb
+# 消融实验 4：取消所有的先验指导
+
+work_dir: experiments/hdr_former/AVIRIS/ablation/prior_wo_prior
 data:
   train:
     dataset:
@@ -41,16 +43,14 @@ model:
   type: HDRFormerV3
   in_channels: *num_bands
   out_channels: *num_bands
-  prior_extractor:
-    type: PriorDecoupler
-    split_ratios: [0.33, 0.5, 0.67]
-    strategy: ['sorted', 'serial']
-    split_idx: 150
-    global_as_rain: true
+  prior_extractor: ~
   prev_band_selector:
-    type: BasicResidualBlock
-    inplanes: *num_bands
-    planes: *num_bands
+    type: BCAM
+    in_channels: *num_bands
+    ratio: 0.5
+    min_proj: false
+    act: ReLU
+    residual: false
   post_band_selector: ~
   embedding_cfg:
     type: OverlapPatchEmbedding
@@ -64,7 +64,11 @@ model:
     upsample: PixelShuffleUpsample
     factor: 2
   transformer_cfg:
-    type: WaveletFreqWiseAttentionLayer
+    type: AblationWaveletFreqWiseAttentionLayer
+    use_wavelet: true
+    use_sparse: true
+    use_prior_guide: false
+    use_mask_hp: false
     num_heads: [1, 2, 4, 8]
     num_blocks: [4, 6, 6, 8]
     prior_cfg:   # forward for prior
@@ -85,12 +89,6 @@ model:
     filter_kernel_size: 3
     filter_groups: 8
     norm: GN
-#    type: ParllelFreqDecouplingReconstruction
-#    d: 0.4
-#    in_channels: *num_bands
-#    filter_kernel_size: 3
-#    filter_groups: 8
-#    norm: GN
 
 
 train:

@@ -55,7 +55,7 @@ class HDRFormerV3(nn.Module):
         self.post_band_selector = build_module(post_band_selector)
         self.reconstruction = build_module(reconstruction)
 
-        self.prior_dim = len(prior_extractor.get('split_ratios')) * len(prior_extractor.get('strategy'))
+        self.prior_dim = len(prior_extractor.get('split_ratios')) * len(prior_extractor.get('strategy')) if prior_extractor is not None else 0
         self.embed_dim = embedding_cfg.get('embed_dim')
         self.num_heads = transformer_cfg.get('num_heads')
         self.num_blocks = transformer_cfg.get('num_blocks')
@@ -136,7 +136,7 @@ class HDRFormerV3(nn.Module):
     def forward(self, x):
         shortcut = x
         depth = len(self.encoders)
-        rcp_prior = self.prior_extractor(x)
+        rcp_prior = self.prior_extractor(x) if not isinstance(self.prior_extractor, nn.Identity) else None
         feat = self.embedding(self.prev_band_selector(x))
 
         # encode

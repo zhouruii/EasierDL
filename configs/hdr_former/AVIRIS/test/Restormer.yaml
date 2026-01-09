@@ -1,0 +1,39 @@
+# v3基础上，删去Swin，Q做反变换，只是用RP和HP
+
+work_dir: experiments/hdr_former/AVIRIS/test/Restormer
+data:
+  test:
+    dataset:
+      type: HDF5MultiLevelRainHSIDataset
+      h5_path: /home/disk2/ZR/datasets/AVIRIS/128/dataset.h5
+      split_file: /home/disk2/ZR/datasets/AVIRIS/128/npy/val.txt
+      pipelines:
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 1
+      shuffle: false
+      num_workers: 4
+      pin_memory: true
+      persistent_workers: true
+      prefetch_factor: 1
+      drop_last: false
+
+num_bands: &num_bands 224       # 波段数
+embed_dim: &embed_dim 48      # 传播维度
+
+model:
+  type: Restormer
+  in_channels: *num_bands
+  out_channels: *num_bands
+  dim: 48
+  num_blocks: [4, 6, 6, 8]
+  num_refinement_blocks: 4
+  heads: [1, 2, 4, 8]
+  ffn_expansion_factor: 2.66
+  bias: false
+  LayerNorm_type: WithBias
+  dual_pixel_task: false
+
+
+checkpoint: experiments/hdr_former/AVIRIS/comparison/restormer/checkpoints/100.pth

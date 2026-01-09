@@ -1,0 +1,31 @@
+work_dir: experiments/hdr_former/AVIRIS/test/FADformer
+data:
+  test:
+    dataset:
+      type: HDF5MultiLevelRainHSIDataset
+      h5_path: /home/disk2/ZR/datasets/AVIRIS/128/dataset.h5
+      split_file: /home/disk2/ZR/datasets/AVIRIS/128/npy/val.txt
+      pipelines:
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 1
+      shuffle: false
+      num_workers: 4
+      pin_memory: true
+      persistent_workers: true
+      prefetch_factor: 1
+      drop_last: false
+
+num_bands: &num_bands 224       # 波段数
+
+model:
+  type: FADformer
+  in_channels: *num_bands
+  out_channels: *num_bands
+  embed_dim: [24, 48, 96, 48, 24]
+  depth: [2, 3, 4, 3, 2]
+  local_size: [4, 4, 4, 4, 4]
+  embed_kernel_size: 3
+
+checkpoint: experiments/hdr_former/AVIRIS/comparison/FADformer/checkpoints/100.pth

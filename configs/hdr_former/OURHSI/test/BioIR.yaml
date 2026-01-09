@@ -1,0 +1,36 @@
+work_dir: experiments/hdr_former/OURHSI/test/BioIR
+
+data:
+  test:
+    dataset:
+      type: HDF5MultiLevelRainHSIDataset
+      h5_path: /home/disk2/ZR/datasets/OURHSI/128/dataset.h5
+      split_file: /home/disk2/ZR/datasets/OURHSI/128/npy/val.txt
+      pipelines:
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 1
+      shuffle: false
+      num_workers: 4
+      pin_memory: true
+      persistent_workers: true
+      prefetch_factor: 2
+      drop_last: false
+
+num_bands: &num_bands 467       # 波段数
+
+model:
+  type: BioIR
+  in_channels: *num_bands
+  out_channels: *num_bands
+  dim: 48
+  num_blocks: [6, 6, 14]
+  num_refinement_blocks: 4
+  ffn_expansion_factor: 3
+  heads: [1, 2, 4, 8]
+  bias: false
+  LayerNorm_type: WithBias
+  decoder: false
+
+checkpoint: experiments/hdr_former/OurHSI/comparison/BioIR/checkpoints/100.pth

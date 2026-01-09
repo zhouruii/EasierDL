@@ -1,0 +1,22 @@
+work_dir: experiments/hdr_former/OURHSI/inference/DRSformer
+
+sample_path: /home/disk2/ZR/datasets/OURHSI/256/rain/storm/12_20_2_registered_raw_4773_rd_rf_or_256_512.npy
+gt_path: /home/disk2/ZR/datasets/OURHSI/256/gt/12_20_2_registered_raw_4773_rd_rf_or_256_512.npy
+channel_indices: [136, 67, 18]
+
+save_name: DRSformer-OURHSI
+
+num_bands: &num_bands 467       # 波段数
+
+model:
+  type: DRSformer
+  in_channels: *num_bands
+  out_channels: *num_bands
+  dim: 48
+  num_blocks: [4, 6, 6, 8]
+  heads: [1, 2, 4, 8]
+  ffn_expansion_factor: 2.66
+  bias: false
+  LayerNorm_type: WithBias
+
+checkpoint: experiments/hdr_former/OurHSI/comparison/DRSformer/checkpoints

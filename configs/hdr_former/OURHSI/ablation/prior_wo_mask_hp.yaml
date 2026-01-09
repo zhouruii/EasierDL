@@ -1,10 +1,12 @@
-work_dir: experiments/hdr_former/AVIRIS/ablation/wo_res
+# 消融实验 5：只取消雾分支的先验指导（mask_hp）
+
+work_dir: experiments/hdr_former/OURHSI/ablation/prior_wo_mask_hp
 data:
   train:
     dataset:
       type: HDF5MultiLevelRainHSIDataset
-      h5_path: /home/disk2/ZR/datasets/AVIRIS/128/dataset.h5
-      split_file: /home/disk2/ZR/datasets/AVIRIS/128/npy/train.txt
+      h5_path: /home/disk2/ZR/datasets/OURHSI/128/dataset.h5
+      split_file: /home/disk2/ZR/datasets/OURHSI/128/npy/train.txt
       pipelines:
         - type: RandomFlip
           directions: [original, horizontal, vertical, diagonal]
@@ -17,16 +19,16 @@ data:
     dataloader:
       batch_size: 1
       shuffle: true
-      num_workers: 16
+      num_workers: 8
       pin_memory: true
       persistent_workers: true
-      prefetch_factor: 4
+      prefetch_factor: 2
       drop_last: true
   val:
     dataset:
       type: HDF5MultiLevelRainHSIDataset
-      h5_path: /home/disk2/ZR/datasets/AVIRIS/128/dataset.h5
-      split_file: /home/disk2/ZR/datasets/AVIRIS/128/npy/val.txt
+      h5_path: /home/disk2/ZR/datasets/OURHSI/128/dataset.h5
+      split_file: /home/disk2/ZR/datasets/OURHSI/128/npy/val.txt
       pipelines:
         - type: EasyToTensor
           mode: CHW
@@ -34,7 +36,7 @@ data:
       batch_size: 1
       shuffle: false
 
-num_bands: &num_bands 224       # 波段数
+num_bands: &num_bands 467       # 波段数
 embed_dim: &embed_dim 48      # 传播维度
 
 model:
@@ -67,11 +69,15 @@ model:
     upsample: PixelShuffleUpsample
     factor: 2
   transformer_cfg:
-    type: WaveletFreqWiseAttentionLayer
+    type: AblationWaveletFreqWiseAttentionLayer
+    use_wavelet: true
+    use_sparse: true
+    use_prior_guide: true
+    use_mask_hp: false
     num_heads: [1, 2, 4, 8]
     num_blocks: [4, 6, 6, 8]
     prior_cfg:   # forward for prior
-      type: RainHazeGRCPBranch
+      type: RainGRCPBranch
       strategy: dilation
       act: nn.Sigmoid
     sparse_strategy: AdaptiveReLU2
@@ -81,7 +87,13 @@ model:
       bias: false
     ln_bias: true
   num_refinement_blocks: 4
-  reconstruction: ~
+  reconstruction:
+    type: FreqDecouplingReconstruction
+    d: 0.4
+    in_channels: *num_bands
+    filter_kernel_size: 3
+    filter_groups: 8
+    norm: GN
 
 
 train:
@@ -114,6 +126,6 @@ val:
   metric: psnr
 
 checkpoint:
-  save_freq: 10
+  save_freq: 5
   resume_from: null
   auto_resume: false

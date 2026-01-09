@@ -1,0 +1,20 @@
+work_dir: experiments/hdr_former/OURHSI/inference/FADformer
+
+sample_path: /home/disk2/ZR/datasets/OURHSI/256/rain/storm/12_20_2_registered_raw_4773_rd_rf_or_256_512.npy
+gt_path: /home/disk2/ZR/datasets/OURHSI/256/gt/12_20_2_registered_raw_4773_rd_rf_or_256_512.npy
+channel_indices: [136, 67, 18]
+
+save_name: FADformer-OURHSI
+
+num_bands: &num_bands 467       # 波段数
+
+model:
+  type: FADformer
+  in_channels: *num_bands
+  out_channels: *num_bands
+  embed_dim: [24, 48, 96, 48, 24]
+  depth: [2, 3, 4, 3, 2]
+  local_size: [4, 4, 4, 4, 4]
+  embed_kernel_size: 3
+
+checkpoint: experiments/hdr_former/OURHSI/comparison/FADformer/checkpoints

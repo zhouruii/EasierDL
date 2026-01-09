@@ -1,0 +1,65 @@
+work_dir: experiments/hdr_former/AVIRIS/inference/ours
+
+sample_path: /home/disk2/ZR/datasets/AVIRIS/512/rain/storm/f130410t01p00r15rdn_e_3.npy
+gt_path: /home/disk2/ZR/datasets/AVIRIS/512/gt/f130410t01p00r15rdn_e_3.npy
+channel_indices: [36, 19, 8]
+
+save_name: ours-AVIRIS
+
+num_bands: &num_bands 224       # 波段数
+embed_dim: &embed_dim 48      # 传播维度
+
+model:
+  type: HDRFormerV3
+  in_channels: *num_bands
+  out_channels: *num_bands
+  prior_extractor:
+    type: PriorDecoupler
+    split_ratios: [0.33, 0.5, 0.67]
+    strategy: ['sorted', 'serial']
+    split_idx: 150
+    global_as_rain: true
+  prev_band_selector:
+    type: BCAM
+    in_channels: *num_bands
+    ratio: 0.5
+    min_proj: false
+    act: ReLU
+    residual: false
+  post_band_selector: ~
+  embedding_cfg:
+    type: OverlapPatchEmbedding
+    in_channels: *num_bands
+    embed_dim: *embed_dim
+    bias: false
+  fusion_cfg:
+    type: CatPWConvFusion
+  sampling_cfg:
+    downsample: PixelShuffleDownsample
+    upsample: PixelShuffleUpsample
+    factor: 2
+  transformer_cfg:
+    type: WaveletFreqWiseAttentionLayer
+    num_heads: [1, 2, 4, 8]
+    num_blocks: [4, 6, 6, 8]
+    prior_cfg:   # forward for prior
+      type: RainHazeGRCPBranch
+      strategy: dilation
+      act: nn.Sigmoid
+    sparse_strategy: AdaptiveReLU2
+    ffn_cfg:
+      type: GDFN
+      ffn_expansion_factor: 2.66
+      bias: false
+    ln_bias: true
+  num_refinement_blocks: 4
+  reconstruction:
+    type: FreqDecouplingReconstruction
+    d: 0.4
+    in_channels: *num_bands
+    filter_kernel_size: 3
+    filter_groups: 8
+    norm: GN
+
+
+checkpoint: experiments/hdr_former/AVIRIS/ours/baseline_v4/checkpoints

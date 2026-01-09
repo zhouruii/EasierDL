@@ -298,7 +298,7 @@ class MultiLevelRainHSIDatasetV0(Dataset):
             'index': idx
         }
 
-        return self.pipelines(results) if self.pipelines else results
+        return self.pipelines(results) if self.pipelines else results  # pyright: ignore[reportReturnType]
 
     def get_rain_types(self) -> List[str]:
         """获取支持的噪声类型列表"""

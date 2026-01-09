@@ -205,3 +205,38 @@ class RainHazeGRCPBranch(nn.Module):
             return None, (rp_mask.unsqueeze(2), hp_mask)
         else:
             return (rp, hp), (rp_mask.unsqueeze(2), hp_mask)
+
+
+@MODULE.register_module()
+class RainGRCPBranch(nn.Module):
+    def __init__(self, in_channels, num_heads, strategy='dilation', act=None, ds_scale=1, last_prior=False):
+        super().__init__()
+        self.in_channels = in_channels
+        self.num_heads = num_heads
+        self.strategy = strategy
+        self.ds_scale = ds_scale
+        self.act = build_act(act)
+        self.last_prior = last_prior
+
+        self.rain_branch = SpatialAttention(self.in_channels, self.strategy, self.act)
+
+        # --------------------------------- Mask(Downsample) --------------------------------- #
+        self.rp_conv_ll = conv3x3(in_channels, self.num_heads)
+        self.act_rp = nn.Sigmoid()
+
+    def forward(self, x):
+        if isinstance(x, (list, tuple)):
+            rp = x[0]
+        else:
+            rp = x
+            
+        rp = self.rain_branch(rp)
+
+        # --------------------------------- Mask(Downsample) --------------------------------- #
+        rp_mask = self.act_rp(self.rp_conv_ll(rp))
+        rp_mask = F.interpolate(rp_mask, scale_factor=pow(0.5, self.ds_scale-1), mode='bicubic')
+
+        if self.last_prior:
+            return None, (rp_mask.unsqueeze(2), None)
+        else:
+            return (rp, None), (rp_mask.unsqueeze(2), None)

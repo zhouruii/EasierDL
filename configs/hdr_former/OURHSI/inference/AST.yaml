@@ -1,0 +1,20 @@
+work_dir: experiments/hdr_former/OURHSI/inference/AST
+
+sample_path: /home/disk2/ZR/datasets/OURHSI/256/rain/storm/12_20_2_registered_raw_4773_rd_rf_or_256_512.npy
+gt_path: /home/disk2/ZR/datasets/OURHSI/256/gt/12_20_2_registered_raw_4773_rd_rf_or_256_512.npy
+channel_indices: [136, 67, 18]
+
+save_name: AST-OURHSI
+
+num_bands: &num_bands 467       # 波段数
+
+model:
+  type: AST
+  img_size: 128
+  in_channels: *num_bands
+  dd_in: *num_bands
+  embed_dim: 32
+  depths: [2, 2, 2, 2, 2, 2, 2, 2, 2]
+  num_heads: [1, 2, 4, 8, 16, 16, 8, 4, 2]
+
+checkpoint: experiments/hdr_former/OURHSI/comparison/AST/checkpoints

@@ -1,0 +1,16 @@
+work_dir: experiments/hdr_former/AVIRIS/inference/FS_Net
+
+sample_path: /home/disk2/ZR/datasets/AVIRIS/512/rain/storm/f130410t01p00r15rdn_e_3.npy
+gt_path: /home/disk2/ZR/datasets/AVIRIS/512/gt/f130410t01p00r15rdn_e_3.npy
+channel_indices: [36, 19, 8]
+
+save_name: FS_Net-AVIRIS
+
+num_bands: &num_bands 224       # 波段数
+
+model:
+  type: FSNet
+  in_channels: *num_bands
+  num_res: 16
+
+checkpoint: experiments/hdr_former/AVIRIS/comparison/FS_Net/checkpoints

@@ -1,0 +1,20 @@
+work_dir: experiments/hdr_former/AVIRIS/inference/AST
+
+sample_path: /home/disk2/ZR/datasets/AVIRIS/512/rain/storm/f130410t01p00r15rdn_e_3.npy
+gt_path: /home/disk2/ZR/datasets/AVIRIS/512/gt/f130410t01p00r15rdn_e_3.npy
+channel_indices: [36, 19, 8]
+
+save_name: AST-AVIRIS
+
+num_bands: &num_bands 224       # 波段数
+
+model:
+  type: AST
+  img_size: 128
+  in_channels: *num_bands
+  dd_in: *num_bands
+  embed_dim: 32
+  depths: [2, 2, 2, 2, 2, 2, 2, 2, 2]
+  num_heads: [1, 2, 4, 8, 16, 16, 8, 4, 2]
+
+checkpoint: experiments/hdr_former/AVIRIS/comparison/AST/checkpoints

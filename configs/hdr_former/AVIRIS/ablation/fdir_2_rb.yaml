@@ -1,4 +1,4 @@
-work_dir: experiments/hdr_former/AVIRIS/ablation/res_2_rb
+work_dir: experiments/hdr_former/AVIRIS/ablation/fdir_2_rb
 data:
   train:
     dataset:

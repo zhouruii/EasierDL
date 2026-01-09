@@ -1,0 +1,28 @@
+work_dir: experiments/hdr_former/OURHSI/test/FS_Net
+
+data:
+  test:
+    dataset:
+      type: HDF5MultiLevelRainHSIDataset
+      h5_path: /home/disk2/ZR/datasets/OURHSI/128/dataset.h5
+      split_file: /home/disk2/ZR/datasets/OURHSI/128/npy/val.txt
+      pipelines:
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 1
+      shuffle: false
+      num_workers: 4
+      pin_memory: true
+      persistent_workers: true
+      prefetch_factor: 2
+      drop_last: false
+
+num_bands: &num_bands 467       # 波段数
+
+model:
+  type: FSNet
+  in_channels: *num_bands
+  num_res: 16
+
+checkpoint: experiments/hdr_former/OURHSI/comparison/FS_Net/checkpoints/100.pth

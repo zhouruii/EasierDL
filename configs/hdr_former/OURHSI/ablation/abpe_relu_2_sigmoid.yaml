@@ -1,0 +1,125 @@
+work_dir: experiments/hdr_former/OURHSI/ablation/abpe_relu_2_sigmoid
+data:
+  train:
+    dataset:
+      type: HDF5MultiLevelRainHSIDataset
+      h5_path: /home/disk2/ZR/datasets/OURHSI/128/dataset.h5
+      split_file: /home/disk2/ZR/datasets/OURHSI/128/npy/train.txt
+      pipelines:
+        - type: RandomFlip
+          directions: [original, horizontal, vertical, diagonal]
+          probs: [0.3, 0.3, 0.3, 0.1]
+        - type: RandomRotation
+          angles: [0, 90, 180, 270]
+          prob: 0.5
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 1
+      shuffle: true
+      num_workers: 8
+      pin_memory: true
+      persistent_workers: true
+      prefetch_factor: 2
+      drop_last: true
+  val:
+    dataset:
+      type: HDF5MultiLevelRainHSIDataset
+      h5_path: /home/disk2/ZR/datasets/OURHSI/128/dataset.h5
+      split_file: /home/disk2/ZR/datasets/OURHSI/128/npy/val.txt
+      pipelines:
+        - type: EasyToTensor
+          mode: CHW
+    dataloader:
+      batch_size: 1
+      shuffle: false
+
+num_bands: &num_bands 467       # 波段数
+embed_dim: &embed_dim 48      # 传播维度
+
+model:
+  type: HDRFormerV3
+  in_channels: *num_bands
+  out_channels: *num_bands
+  prior_extractor:
+    type: PriorDecoupler
+    split_ratios: [0.33, 0.5, 0.67]
+    strategy: ['sorted', 'serial']
+    split_idx: 150
+    global_as_rain: true
+  prev_band_selector:
+    type: BCAM
+    in_channels: *num_bands
+    ratio: 0.5
+    min_proj: false
+    act: Sigmoid
+    residual: false
+  post_band_selector: ~
+  embedding_cfg:
+    type: OverlapPatchEmbedding
+    in_channels: *num_bands
+    embed_dim: *embed_dim
+    bias: false
+  fusion_cfg:
+    type: CatPWConvFusion
+  sampling_cfg:
+    downsample: PixelShuffleDownsample
+    upsample: PixelShuffleUpsample
+    factor: 2
+  transformer_cfg:
+    type: WaveletFreqWiseAttentionLayer
+    num_heads: [1, 2, 4, 8]
+    num_blocks: [4, 6, 6, 8]
+    prior_cfg:   # forward for prior
+      type: RainHazeGRCPBranch
+      strategy: dilation
+      act: nn.Sigmoid
+    sparse_strategy: AdaptiveReLU2
+    ffn_cfg:
+      type: GDFN
+      ffn_expansion_factor: 2.66
+      bias: false
+    ln_bias: true
+  num_refinement_blocks: 4
+  reconstruction:
+    type: FreqDecouplingReconstruction
+    d: 0.4
+    in_channels: *num_bands
+    filter_kernel_size: 3
+    filter_groups: 8
+    norm: GN
+
+
+train:
+  total_epoch: &total_epoch 100
+  use_grad_clip: true
+  print_freq: 50
+
+  loss:
+    type: MSELoss
+
+
+  optimizer:
+    type: AdamW
+    lr: 3.0e-4
+    weight_decay: 1.0e-4
+    betas: [ 0.9, 0.999 ]
+
+
+  scheduler:
+    type: LinearWarmupCosineLR
+    total_epochs: *total_epoch
+    warmup_epochs: 10
+    warmup_start_lr: 3.0e-4
+    min_lr: 1.0e-6
+
+
+
+val:
+  val_freq: 5
+  metric: psnr
+
+checkpoint:
+  save_freq: 5
+  resume_from: null
+  auto_resume: false
